@@ -46,6 +46,21 @@ CROCHETS_STATUTS = ["ouverte", "resolvee", "abandonnee"]
 # Les 3 piliers d'un scénario (Exploration / Interaction sociale / Combat).
 PILIERS = ["exploration", "social", "combat"]
 
+# Modes de création d'un scénario : « guide » (construit avec le MJ) ou
+# « surprise » (le MJ l'invente en secret et ne révèle que l'accroche).
+MODES = ["guide", "surprise"]
+
+# Durées visées (orientent le nombre de scènes/blocs conseillé).
+DUREES = ["one-shot", "courte", "moyenne", "longue"]
+
+# Nombre de scènes/blocs conseillé selon la durée visée (advisory, jamais imposé).
+_NB_SCENES_PAR_DUREE = {
+    "one-shot": (3, 4),
+    "courte": (5, 7),
+    "moyenne": (8, 12),
+    "longue": (12, 20),
+}
+
 # Alias de statuts de crochet que le LLM emploie parfois (normalisés vers CROCHETS_STATUTS).
 _CROCHET_ALIAS = {
     "actif": "ouverte",
@@ -69,6 +84,54 @@ def _slug(texte: str) -> str:
     t = unicodedata.normalize("NFKD", texte or "").encode("ascii", "ignore").decode("ascii")
     t = re.sub(r"[^a-zA-Z0-9]+", "-", t).strip("-").lower()
     return t or "bloc"
+
+
+def _entier(valeur: Any) -> int:
+    """Convertit une valeur quelconque en entier (0 si invalide/absent)."""
+    try:
+        return int(valeur)
+    except (TypeError, ValueError):
+        return 0
+
+
+def conseil_cadrage(age_joueur: int, duree: str) -> dict[str, Any]:
+    """Conseil de cadrage narratif selon l'âge du joueur et la durée visée.
+
+    Le moteur **informe, il ne décide pas** : il suggère un registre de ton et
+    un niveau de violence adaptés à l'âge, ainsi qu'un nombre de scènes indicatif
+    selon la durée. Le MJ/LLM garde la main sur l'écriture.
+    """
+    conseil: dict[str, Any] = {}
+    if age_joueur and age_joueur > 0:
+        if age_joueur < 10:
+            conseil["ton"] = (
+                "Enfants : merveilleux et humoristique, violence implicite et "
+                "sans gore, enjeux simples et optimistes."
+            )
+            conseil["violence"] = "implicite"
+        elif age_joueur < 13:
+            conseil["ton"] = (
+                "Préados : aventure palpitante, tension sans horreur graphique, "
+                "méchants menaçants mais combat reste « propre »."
+            )
+            conseil["violence"] = "moderee"
+        elif age_joueur < 16:
+            conseil["ton"] = (
+                "Ados : enjeux moraux plus nuancés, tension et sacrifice "
+                "possibles, violence sans sadisme gratuit."
+            )
+            conseil["violence"] = "assumee"
+        else:
+            conseil["ton"] = (
+                "Adultes : tous registres permis (sombre, moralité grise, "
+                "horreur, romance), violence et conséquences assumées."
+            )
+            conseil["violence"] = "sans_restriction"
+    if duree in _NB_SCENES_PAR_DUREE:
+        mini, maxi = _NB_SCENES_PAR_DUREE[duree]
+        conseil["duree"] = duree
+        conseil["scenes_conseillees"] = f"{mini}-{maxi}"
+    return conseil
 
 
 # Actions déclaratives acceptées par `Campagne.modifier` (le PATCH du routeur).
@@ -333,6 +396,15 @@ class Campagne:
     indices: list[str] = field(default_factory=list)
     recompenses: list[str] = field(default_factory=list)
     chronologie: list[str] = field(default_factory=list)
+    # -- cadrage de la création (renseigné par le joueur, exploité par le MJ) --
+    mode: str = "guide"  # "guide" | "surprise"
+    age_joueur: int = 0  # âge du joueur (0 = non renseigné) — oriente le ton
+    duree: str = ""  # "one-shot" | "courte" | "moyenne" | "longue"
+    nb_joueurs: int = 0  # effectif du groupe (0 = non renseigné)
+    niveaux: list[int] = field(default_factory=list)  # niveau de chaque PJ
+    piliers: list[str] = field(default_factory=list)  # piliers préférés
+    ton: str = ""  # ton souhaité (sombre, épique, humoristique…)
+    theme: str = ""  # thème / point de départ libre
 
     # -- accès ---------------------------------------------------------------
 
@@ -527,6 +599,14 @@ class Campagne:
             "indices": list(self.indices),
             "recompenses": list(self.recompenses),
             "chronologie": list(self.chronologie),
+            "mode": self.mode,
+            "age_joueur": self.age_joueur,
+            "duree": self.duree,
+            "nb_joueurs": self.nb_joueurs,
+            "niveaux": list(self.niveaux),
+            "piliers": list(self.piliers),
+            "ton": self.ton,
+            "theme": self.theme,
         }
 
     @classmethod
@@ -550,6 +630,14 @@ class Campagne:
             indices=[str(x) for x in d.get("indices", [])],
             recompenses=[str(x) for x in d.get("recompenses", [])],
             chronologie=[str(x) for x in d.get("chronologie", [])],
+            mode=str(d.get("mode", "guide")),
+            age_joueur=_entier(d.get("age_joueur", 0)),
+            duree=str(d.get("duree", "")),
+            nb_joueurs=_entier(d.get("nb_joueurs", 0)),
+            niveaux=[_entier(n) for n in d.get("niveaux", [])],
+            piliers=[str(x) for x in d.get("piliers", [])],
+            ton=str(d.get("ton", "")),
+            theme=str(d.get("theme", "")),
         )
 
     # -- rendu ---------------------------------------------------------------
@@ -579,6 +667,15 @@ class Campagne:
             "indices": list(self.indices),
             "recompenses": list(self.recompenses),
             "chronologie": list(self.chronologie),
+            "mode": self.mode,
+            "age_joueur": self.age_joueur,
+            "duree": self.duree,
+            "nb_joueurs": self.nb_joueurs,
+            "niveaux": list(self.niveaux),
+            "piliers": list(self.piliers),
+            "ton": self.ton,
+            "theme": self.theme,
+            "conseil_cadrage": conseil_cadrage(self.age_joueur, self.duree),
         }
 
 

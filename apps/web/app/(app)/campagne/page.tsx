@@ -5,6 +5,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { jdr, ErreurJdr } from "@/lib/jdr";
+import CreationCampagne from "@/components/CreationCampagne";
 
 type PNJ = { nom: string; objectif: string; faille: string; attitude: string; rencontre: boolean };
 type Lieu = { nom: string; description: string; decouvert: boolean };
@@ -40,6 +41,15 @@ type Etat = {
   indices: string[];
   recompenses: string[];
   chronologie: string[];
+  mode?: string;
+  age_joueur?: number;
+  duree?: string;
+  nb_joueurs?: number;
+  niveaux?: number[];
+  piliers?: string[];
+  ton?: string;
+  theme?: string;
+  conseil_cadrage?: { ton?: string; violence?: string; duree?: string; scenes_conseillees?: string };
 };
 type Resume = { id: string; titre: string; phase: string; active: boolean };
 
@@ -49,6 +59,7 @@ export default function PageCampagne() {
   const [etat, setEtat] = useState<Etat | null>(null);
   const [erreur, setErreur] = useState("");
   const [advisory, setAdvisory] = useState<Advisory | null>(null);
+  const [wizard, setWizard] = useState(false);
 
   const chargerListe = useCallback(async () => {
     try {
@@ -98,8 +109,14 @@ export default function PageCampagne() {
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
       <section className="w-full md:w-80 shrink-0 overflow-y-auto border-b md:border-b-0 md:border-r border-white/10 bg-black/10">
-        <div className="p-3 border-b border-white/10 font-bold text-or">
-          Campagnes
+        <div className="p-3 border-b border-white/10 font-bold text-or flex items-center justify-between">
+          <span>Campagnes</span>
+          <button
+            onClick={() => setWizard((w) => !w)}
+            className="rounded bg-or/80 hover:bg-or text-encre text-xs font-semibold px-2 py-1"
+          >
+            {wizard ? "Fermer" : "+ Nouvelle"}
+          </button>
         </div>
         <div className="p-2 space-y-1">
           {liste.length === 0 && (
@@ -132,6 +149,18 @@ export default function PageCampagne() {
 
       <section className="flex-1 overflow-y-auto p-4">
         {erreur && <div className="text-red-400 text-sm mb-2">{erreur}</div>}
+        {wizard && (
+          <div className="mb-4 rounded-lg border border-or/30 bg-black/20">
+            <CreationCampagne
+              onOuverte={(nouvelId) => {
+                setWizard(false);
+                chargerListe();
+                setId(nouvelId);
+              }}
+              onAnnuler={() => setWizard(false)}
+            />
+          </div>
+        )}
         {!etat ? (
           <p className="text-parchemin/40 italic">Sélectionne ou importe une campagne.</p>
         ) : (
@@ -155,6 +184,8 @@ export default function PageCampagne() {
                 </button>
               )}
             </div>
+
+            <Cadrage etat={etat} />
 
             {!etat.structure_valide && (
               <div className="rounded border border-sang/40 bg-sang/10 p-2 text-xs text-parchemin/80">
@@ -382,6 +413,37 @@ function Ligne({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2 rounded bg-white/5 px-3 py-1.5 text-sm">
       {children}
+    </div>
+  );
+}
+
+function Cadrage({ etat }: { etat: Etat }) {
+  const cc = etat.conseil_cadrage;
+  const chips: string[] = [];
+  if (etat.mode) chips.push(etat.mode === "surprise" ? "🎭 Surprise" : "🧭 Guidé");
+  if (etat.age_joueur) chips.push(`Âge ${etat.age_joueur} ans`);
+  if (etat.duree) chips.push(`Durée : ${etat.duree}`);
+  if (etat.nb_joueurs) chips.push(`${etat.nb_joueurs} joueur(s)`);
+  if (etat.niveaux?.length) chips.push(`Niveaux ${etat.niveaux.join(",")}`);
+  if (etat.piliers?.length) chips.push(`Piliers : ${etat.piliers.join(", ")}`);
+  if (etat.ton) chips.push(`Ton : ${etat.ton}`);
+  if (chips.length === 0) return null;
+  return (
+    <div className="rounded border border-white/10 bg-black/20 p-2 text-xs space-y-1">
+      <div className="flex flex-wrap gap-1.5">
+        {chips.map((c, i) => (
+          <span key={i} className="rounded bg-white/5 px-2 py-0.5 text-parchemin/80">
+            {c}
+          </span>
+        ))}
+      </div>
+      {etat.theme && <div className="text-parchemin/60 italic">{etat.theme}</div>}
+      {cc?.ton && (
+        <div className="text-parchemin/50">
+          Conseil MJ : ton {cc.ton}, violence {cc.violence}
+          {cc.scenes_conseillees ? ` · ${cc.scenes_conseillees} scènes` : ""}.
+        </div>
+      )}
     </div>
   );
 }
