@@ -33,6 +33,9 @@ export default function CreationWizard({
   const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState("");
+  // Double confirmation pour « Finaliser » : cette action complète TOUTES les
+  // étapes restantes au hasard et clôture la fiche. On évite le clic accidentel.
+  const [confirmerFinal, setConfirmerFinal] = useState(false);
   // Sélection en cours pour les étapes à choix multiples (compétences, sorts) :
   // le moteur attend TOUTES les options en une seule réponse (sinon il n'en
   // voit qu'une, tire le reste au hasard et passe à l'étape suivante).
@@ -84,6 +87,7 @@ export default function CreationWizard({
         setQ(r);
         setSaisie("");
         setSelection([]);
+        setConfirmerFinal(false);
         if (r.type === "fiche") setEtat("fini");
         else if (r.type === "abandon") setEtat("abandon");
       } catch (e) {
@@ -106,6 +110,7 @@ export default function CreationWizard({
       setQ(r);
       setSaisie("");
       setSelection([]);
+      setConfirmerFinal(false);
     } catch (e) {
       setErreur(e instanceof ErreurJdr ? e.message : "Erreur de retour.");
     } finally {
@@ -117,6 +122,7 @@ export default function CreationWizard({
     if (enCours) return;
     setEnCours(true);
     setErreur("");
+    setConfirmerFinal(false);
     try {
       const r = await jdr.post<Reponse>(
         `/creation/${encodeURIComponent(chatId)}/finaliser`,
@@ -312,13 +318,23 @@ export default function CreationWizard({
         >
           🎲 Au hasard
         </button>
-        <button
-          onClick={finaliser}
-          disabled={enCours}
-          className="rounded bg-emerald-700/60 hover:bg-emerald-700 px-2 py-1 disabled:opacity-40"
-        >
-          Finaliser
-        </button>
+        {confirmerFinal ? (
+          <button
+            onClick={finaliser}
+            disabled={enCours}
+            className="rounded bg-emerald-600 hover:bg-emerald-500 text-encre font-semibold px-2 py-1 disabled:opacity-40"
+          >
+            Confirmer ? Le reste sera tiré au hasard
+          </button>
+        ) : (
+          <button
+            onClick={() => setConfirmerFinal(true)}
+            disabled={enCours}
+            className="rounded bg-emerald-700/60 hover:bg-emerald-700 px-2 py-1 disabled:opacity-40"
+          >
+            Finaliser
+          </button>
+        )}
         <button
           onClick={abandonner}
           disabled={enCours}
