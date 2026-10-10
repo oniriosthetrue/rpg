@@ -6,7 +6,7 @@ Interface MJ autonome pour le JDR D&D 5.2.1 (SRD), en remplacement d'Open WebUI.
 - **Backend** : FastAPI + Pydantic-AI — `apps/api`
 - **Moteur de règles** : `packages/dnd_perso` (stdlib only, réutilisé de l'existant)
 - **Corpus SRD** : `packages/corpus` (~861 fiches markdown + PDF source en Git LFS)
-- **RAG** : Qdrant + service d'embeddings OpenAI-compatible
+- **RAG** : recherche hybride BM25 + Qdrant et service d'embeddings OpenAI-compatible
 
 ## Principe directeur
 
@@ -83,6 +83,31 @@ Idempotent (upsert par id dérivé) : relancer met à jour sans doublon. Le text
 vectorisé est tronqué à 4 000 caractères (le service embeddings est CPU-bound) ;
 le texte COMPLET reste dans le payload Qdrant pour les citations. Ne pas
 `docker restart mj-api` pendant l'ingestion (cela tue le job).
+
+### Sauvegardes
+
+Le script `scripts/backup.py` produit une archive protégée contenant les fiches
+de `data-perso/` et un snapshot cohérent de la collection Qdrant. Il supprime
+les snapshots temporaires de Qdrant après téléchargement et conserve 14 jours
+d'archives par défaut.
+
+```bash
+python3 scripts/backup.py
+```
+
+Par défaut, les archives sont écrites dans `~/backups/mj-dnd`. Le dossier
+doit être accessible en écriture par l'utilisateur qui exécute le script ; on
+peut choisir une autre destination avec `--destination` ou `DND_BACKUP_DIR`.
+Pour une exécution quotidienne à 03:00, ajouter cette ligne au crontab de
+l'utilisateur propriétaire des conteneurs Docker :
+
+```cron
+0 3 * * * /usr/bin/python3 /home/linus/mj-dnd/scripts/backup.py --destination /home/linus/backups/mj-dnd --retention-days 14 >> /home/linus/backups/mj-dnd/backup.log 2>&1
+```
+
+Adapter les chemins si le dépôt ou le répertoire d'archives se trouvent
+ailleurs. Le dossier d'archives contient des données de personnages : le garder
+hors Git et prévoir une copie hors machine pour se protéger d'une panne disque.
 
 ## Documentation
 

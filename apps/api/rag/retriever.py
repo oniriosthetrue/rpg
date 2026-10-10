@@ -7,7 +7,48 @@ pertinentes et on les injecte en contexte, chacune suivie de sa **source**
 
 from __future__ import annotations
 
-from rag import embeddings, qdrant_store
+import logging
+from typing import Any
+
+from rag import embeddings, keyword_search, qdrant_store
+
+_LOGGER = logging.getLogger(__name__)
+
+
+def _cle_fiche(fiche: dict[str, Any]) -> str:
+    return str(fiche.get("id") or fiche.get("nom") or "")
+
+
+def _fusionner(
+    semantiques: list[dict[str, Any]],
+    lexicales: list[dict[str, Any]],
+    limite: int,
+) -> list[dict[str, Any]]:
+    """Fusionne les rangs par RRF, avec priorité au nom exact trouvé par BM25."""
+    fusion: dict[str, dict[str, Any]] = {}
+    scores: dict[str, float] = {}
+    noms_exacts: set[str] = set()
+    rangs: tuple[tuple[list[dict[str, Any]], float], ...] = (
+        (semantiques, 1.5),
+        (lexicales, 1.0),
+    )
+
+    for fiches, poids in rangs:
+        for rang, fiche in enumerate(fiches, start=1):
+            cle = _cle_fiche(fiche)
+            if not cle:
+                continue
+            fusion.setdefault(cle, {}).update(fiche)
+            scores[cle] = scores.get(cle, 0.0) + poids / (60 + rang)
+            if fiche.get("_keyword_exact_name"):
+                noms_exacts.add(cle)
+
+    classement = sorted(
+        fusion,
+        key=lambda cle: (cle in noms_exacts, scores[cle]),
+        reverse=True,
+    )
+    return [fusion[cle] for cle in classement[:limite]]
 
 
 def _formater_source(payload: dict) -> str:
@@ -22,11 +63,21 @@ def recuperer_contexte(question: str, top_k: int | None = None) -> str:
     """Renvoie un bloc de contexte markdown (fiches + sources), ou "" si rien."""
     if not question or not question.strip():
         return ""
+    limite = top_k or qdrant_store.settings.rag_top_k
+    semantiques: list[dict[str, Any]] = []
     try:
         vecteur = embeddings.embed_un(question)
-        fiches = qdrant_store.rechercher(vecteur, top_k=top_k)
+        semantiques = qdrant_store.rechercher(vecteur, top_k=limite)
     except Exception:  # le RAG ne doit jamais bloquer une réponse du MJ
-        return ""
+        _LOGGER.exception("Recherche vectorielle indisponible.")
+
+    try:
+        lexicales = keyword_search.rechercher(question, limite)
+    except Exception:
+        _LOGGER.exception("Recherche BM25 indisponible.")
+        lexicales = []
+
+    fiches = _fusionner(semantiques, lexicales, limite)
     if not fiches:
         return ""
     blocs: list[str] = []

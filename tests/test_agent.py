@@ -209,6 +209,43 @@ class TestContexteRag(unittest.TestCase):
             retriever.embeddings.embed_un = emb_orig
             retriever.qdrant_store.rechercher = rech_orig
 
+    def test_hybride_retient_un_nom_exact_absent_du_top_vectoriel(self):
+        from rag import corpus, keyword_search, retriever
+
+        cape = next(
+            fiche
+            for fiche in corpus.iterer_fiches()
+            if fiche.id == "objets/cape-dinvisibilite"
+        ).payload()
+        resultats_lexicaux = keyword_search.rechercher("Cape d'invisibilité", 5)
+        self.assertEqual(resultats_lexicaux[0]["id"], cape["id"])
+        self.assertTrue(resultats_lexicaux[0]["_keyword_exact_name"])
+
+        bruit_vectoriel = {
+            "id": "objets/amulette-de-protection",
+            "nom": "Amulette de protection",
+            "source": "SRD 5.2.1",
+            "contenu": "Une amulette protectrice.",
+        }
+        emb_orig, rech_orig = (
+            retriever.embeddings.embed_un,
+            retriever.qdrant_store.rechercher,
+        )
+        retriever.embeddings.embed_un = lambda q: [0.0]
+        retriever.qdrant_store.rechercher = lambda v, top_k=None: [
+            bruit_vectoriel
+        ]
+        try:
+            contexte = retriever.recuperer_contexte("Cape d'invisibilité")
+        finally:
+            retriever.embeddings.embed_un = emb_orig
+            retriever.qdrant_store.rechercher = rech_orig
+
+        self.assertIn(cape["nom"], contexte)
+        self.assertIn(cape["contenu"], contexte)
+        premier_bloc = contexte.split("\n\n---\n\n", maxsplit=1)[0]
+        self.assertIn(f"\n\n### {cape['nom']}", premier_bloc)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
