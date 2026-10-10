@@ -154,6 +154,23 @@ le ton et un thème. Ces champs sont **portés par la campagne** (`etat_de_la_ca
   campagne qu'avec l'**accroche** ; tu ne dévoiles jamais la structure cachée au joueur.
 - **Mode guidé** : tu construis la trame avec le joueur, une décision à la fois.
 
+**Adaptation au groupe de PJ (quand la campagne porte une liste `pj`).** Si
+`etat_de_la_campagne` renvoie un champ `pj` non vide, ces personnages sont **les
+porteurs du scénario** : le scénario doit être écrit **pour eux**, pas générique.
+- **Charge la fiche de chaque PJ** (`charger_le_personnage(nom)`) avant d'écrire la
+  trame : tu y lis classe, niveau, caractéristiques, compétences, sorts et équipement.
+- **Crochets liés au background** : attache **au moins un crochet par PJ** à son
+  histoire (champ `lie_a_pj` du crochet) — une dette, un proche, une quête personnelle.
+  Un PJ sans crochet personnel est une occasion manquée.
+- **Équilibrage** : calibre les rencontres sur les **niveaux réels** du groupe
+  (`advisory_de_difficulte` s'appuie déjà sur les fiches des PJ de la campagne).
+- **Épreuves variées** : conçois les défis pour **utiliser les aptitudes présentes**
+  dans le groupe (un groupe sans crochet de force propose des énigmes et du social ;
+  un roublard mérite des serrures et des ombres ; un érudit des savoirs à dénicher…),
+  sans jamais rendre une compétence obligatoire et bloquante.
+- **L'accroche doit mettre en scène le PJ** (ou le groupe) : explique **pourquoi eux**
+  se trouvent là, à partir de ce que disent leurs fiches.
+
 ---
 
 # Amorce de partie

@@ -7,6 +7,7 @@
 
 import { useCallback, useState } from "react";
 import { jdr, ErreurJdr } from "@/lib/jdr";
+import { usePerso } from "./PersoContext";
 
 type Ouverture = { ok: boolean; type: string; id: string; erreur?: string };
 
@@ -34,6 +35,7 @@ export default function CreationCampagne({
 }: {
   onAnnuler: () => void;
 }) {
+  const { personnages } = usePerso();
   const [etape, setEtape] = useState<Etape>("mode");
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState("");
@@ -41,12 +43,17 @@ export default function CreationCampagne({
   const [mode, setMode] = useState("guide");
   const [age, setAge] = useState("");
   const [duree, setDuree] = useState("");
-  const [nbJoueurs, setNbJoueurs] = useState("");
-  const [niveaux, setNiveaux] = useState("");
+  // PJ porteurs du scénario : sélection parmi les fiches existantes. Le scénario
+  // sera adapté à ce groupe précis (crochets liés au background, équilibrage,
+  // épreuves selon les aptitudes). `niveaux` et `nb_joueurs` en sont dérivés.
+  const [pjSel, setPjSel] = useState<string[]>([]);
   const [piliers, setPiliers] = useState<string[]>([]);
   const [ton, setTon] = useState("");
   const [titre, setTitre] = useState("");
   const [theme, setTheme] = useState("");
+
+  const basculerPj = (nom: string) =>
+    setPjSel((p) => (p.includes(nom) ? p.filter((x) => x !== nom) : [...p, nom]));
 
   const idx = ETAPES.indexOf(etape);
   const precedent = () => idx > 0 && setEtape(ETAPES[idx - 1]);
@@ -75,11 +82,11 @@ export default function CreationCampagne({
         titre: titre.trim(),
         age_joueur: Number(age) || 0,
         duree,
-        nb_joueurs: Number(nbJoueurs) || 0,
-        niveaux: niveaux
-          .split(",")
-          .map((n) => Number(n.trim()))
-          .filter((n) => !Number.isNaN(n) && n > 0),
+        pj: pjSel,
+        nb_joueurs: pjSel.length,
+        niveaux: pjSel
+          .map((n) => personnages.find((p) => p.nom === n)?.niveau ?? 1)
+          .filter((n) => n > 0),
         piliers,
         ton: ton.trim(),
         theme: theme.trim(),
@@ -87,10 +94,18 @@ export default function CreationCampagne({
       const j = await jdr.post<Ouverture>("/campagne/ouvrir", corps);
       // On enchaîne sur le chat, lié à cette campagne, avec une amorce de génération.
       const titreCamp = titre.trim() || "la campagne";
+      const groupe = pjSel.length
+        ? ` Le scénario est destiné à ce groupe de PJ : ${pjSel.join(
+            ", ",
+          )}. Charge la fiche de chacun (charger_le_personnage) et adapte-lui le scénario : `
+        : "";
       const consigne =
         `Construis le scénario de la campagne « ${titreCamp} » en respectant le ` +
         `cadrage (relis etat_de_la_campagne pour le mode, l'âge, la durée, les piliers, ` +
         `le ton et le conseil_cadrage). ` +
+        groupe +
+        `attache chaque crochet au background d'un PJ (lie_a_pj), équilibre les ` +
+        `rencontres sur leurs niveaux, et varie les épreuves selon leurs aptitudes. ` +
         (mode === "surprise"
           ? "Mode surprise : conçois tout en secret et ne révèle que l'accroche."
           : "Mode guidé : propose-moi la trame étape par étape.");
@@ -101,13 +116,13 @@ export default function CreationCampagne({
     } finally {
       setEnCours(false);
     }
-  }, [enCours, mode, titre, age, duree, nbJoueurs, niveaux, piliers, ton, theme]);
+  }, [enCours, mode, titre, age, duree, pjSel, personnages, piliers, ton, theme]);
 
   const titreEtape: Record<Etape, string> = {
     mode: "Quel mode de création ?",
     age: "Quel est l'âge du joueur ?",
     duree: "Quelle durée visée pour la partie ?",
-    groupe: "Combien de joueurs, et à quel niveau ?",
+    groupe: "Quels personnages portent le scénario ?",
     piliers: "Quels piliers privilégier ?",
     ton: "Quel ton souhaites-tu ?",
     theme: "Titre et idée de départ ?",
@@ -178,20 +193,45 @@ export default function CreationCampagne({
 
       {etape === "groupe" && (
         <div className="space-y-2">
-          <input
-            type="number"
-            min={0}
-            value={nbJoueurs}
-            onChange={(e) => setNbJoueurs(e.target.value)}
-            placeholder="Nombre de joueurs (option)"
-            className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-or/50"
-          />
-          <input
-            value={niveaux}
-            onChange={(e) => setNiveaux(e.target.value)}
-            placeholder="Niveaux des PJ, ex. 3,3,4 (option)"
-            className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-or/50"
-          />
+          {personnages.length === 0 ? (
+            <p className="text-xs text-parchemin/50">
+              Aucun personnage créé. Va d'abord en créer un dans « Personnages »,
+              ou passe cette étape pour un cadrage sans PJ.
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-parchemin/50">
+                Sélectionne le ou les PJ qui porteront le scénario. Le MJ adaptera
+                les crochets, l'équilibrage et les épreuves à ce groupe.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {personnages.map((p) => {
+                  const actif = pjSel.includes(p.nom);
+                  return (
+                    <button
+                      key={p.nom}
+                      onClick={() => basculerPj(p.nom)}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${
+                        actif
+                          ? "bg-or/20 text-or ring-1 ring-or/50"
+                          : "bg-white/5 hover:bg-white/10"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 shrink-0 rounded border ${
+                          actif ? "border-or bg-or/40" : "border-parchemin/30"
+                        }`}
+                      />
+                      <span className="font-semibold">{p.nom}</span>
+                      <span className="text-xs text-parchemin/50">
+                        {p.espece} · {p.classe} niv.{p.niveau}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       )}
 
