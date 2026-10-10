@@ -241,6 +241,23 @@ def advisory(
     return enveloppe(res)
 
 
+@router.delete("/api/campagne/{id}")
+def supprimer(
+    id: str,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict[str, Any]:
+    """Supprime définitivement une campagne (son fichier JSON persisté)."""
+    if (err := autorise(x_api_key)) is not None:
+        return err
+    if (err := _valider_id(id)) is not None:
+        return err
+    chemin = _chemin(id)
+    if not chemin.exists():
+        return {"ok": False, "v": V, "type": "erreur", "erreur": f"Campagne introuvable : {id}"}
+    chemin.unlink(missing_ok=True)
+    return {"ok": True, "v": V, "type": "supprime", "id": id}
+
+
 @router.post("/api/campagne/{id}/cloturer")
 def cloturer(
     id: str,

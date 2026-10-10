@@ -106,6 +106,22 @@ export default function PageCampagne() {
     return v == null ? null : v.trim();
   };
 
+  const supprimer = useCallback(
+    async (cid: string, titre: string) => {
+      if (!window.confirm(`Supprimer définitivement la campagne « ${titre || cid} » ?`))
+        return;
+      setErreur("");
+      try {
+        await jdr.del(`/campagne/${encodeURIComponent(cid)}`);
+        if (cid === id) setId("");
+        await chargerListe();
+      } catch (e) {
+        setErreur(e instanceof ErreurJdr ? e.message : "Erreur de suppression.");
+      }
+    },
+    [id, chargerListe],
+  );
+
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
       <section className="w-full md:w-80 shrink-0 overflow-y-auto border-b md:border-b-0 md:border-r border-white/10 bg-black/10">
@@ -125,18 +141,30 @@ export default function PageCampagne() {
             </p>
           )}
           {liste.map((c) => (
-            <button
+            <div
               key={c.id}
               onClick={() => setId(c.id)}
-              className={`w-full text-left rounded-lg px-3 py-2 text-sm ${
+              className={`group flex items-center gap-2 w-full text-left rounded-lg px-3 py-2 text-sm cursor-pointer ${
                 c.id === id ? "bg-or/20 text-or" : "hover:bg-white/5"
               }`}
             >
-              <div className="truncate">{c.titre || c.id}</div>
-              <div className="text-[11px] text-parchemin/50">
-                {c.active ? c.phase : "clôturée"}
+              <div className="flex-1 min-w-0">
+                <div className="truncate">{c.titre || c.id}</div>
+                <div className="text-[11px] text-parchemin/50">
+                  {c.active ? c.phase : "clôturée"}
+                </div>
               </div>
-            </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  supprimer(c.id, c.titre);
+                }}
+                title="Supprimer la campagne"
+                className="shrink-0 opacity-0 group-hover:opacity-100 text-parchemin/50 hover:text-red-400"
+              >
+                🗑
+              </button>
+            </div>
           ))}
         </div>
         <FormulaireImport
