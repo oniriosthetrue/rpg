@@ -20,3 +20,8 @@ body {
 .mj-prose h1, .mj-prose h2, .mj-prose h3 { @apply font-bold mt-3 mb-1; }
 .mj-prose ul { @apply list-disc pl-5 my-2; }
 .mj-prose code { @apply bg-white/10 px-1 rounded text-sm; }
+.mj-prose table { @apply w-full border-collapse text-sm my-2; }
+.mj-prose th {
+  @apply border border-or/30 px-2 py-1 text-left font-bold text-or bg-white/5;
+}
+.mj-prose td { @apply border border-or/20 px-2 py-1 align-top; }

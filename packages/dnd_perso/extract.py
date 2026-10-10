@@ -104,6 +104,20 @@ APERCU_CLASSES: dict[str, tuple[str, str, str]] = {
     "Roublard": ("Discrétion", "Dextérité", "Basse"),
 }
 
+# Caractéristique d'incantation par classe lanceuse (SRD 5.2.1). Sert à calculer
+# le **bonus d'attaque de sort** (bonus de maîtrise + mod de cette carac), que la
+# fiche pré-calcule pour que le MJ l'annonce sans jamais le recalculer lui-même.
+CARAC_INCANTATION: dict[str, str] = {
+    "Barde": "Charisme",
+    "Clerc": "Sagesse",
+    "Druide": "Sagesse",
+    "Ensorceleur": "Charisme",
+    "Magicien": "Intelligence",
+    "Occultiste": "Charisme",
+    "Paladin": "Charisme",
+    "Rôdeur": "Sagesse",
+}
+
 # Données complètes par classe (constantes vérifiées, markdown dégradé).
 # nb_cantrips / nb_prepares : comptage confirmé sur les fiches `dnd/classes`.
 #   - « sorts mineurs » (cantrips) : 2 ou 3 selon la classe.

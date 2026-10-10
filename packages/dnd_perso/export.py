@@ -65,6 +65,13 @@ def en_markdown(p: models.Personnage) -> str:
     lignes += ["", "**Jets de sauvegarde :**"]
     for carac, total in jets["sauvegardes"].items():
         lignes.append(f"- Sauvegarde de {carac} : d20 {total:+d}")
+    if jets.get("carac_incantation"):
+        lignes += ["", "**Attaque de sort :**"]
+        lignes.append(
+            f"- Caractéristique d'incantation : {jets['carac_incantation']}"
+        )
+        lignes.append(f"- Bonus d'attaque de sort : {jets['attaque_sort']:+d}")
+        lignes.append(f"- DD des sauvegardes contre tes sorts : {jets['dd_sort']}")
     lignes += ["", "## Langues", ""]
     lignes.append("- " + ", ".join(p.langues))
     if p.don:

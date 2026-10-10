@@ -193,49 +193,6 @@ def roller_attaque(
     return resoudre_attaque(attaquant, defenseur, jet, rng)
 
 
-def resoudre_degats_auto(
-    defenseur: Combattant,
-    des: str,
-    mod: int = 0,
-    nb_fois: int = 1,
-    rng: random.Random | None = None,
-) -> dict[str, Any]:
-    """Lance les dés de dégâts d'un effet qui **touche automatiquement** (pas de
-    jet d'attaque ni de CA) : `projectile magique`, `coup au but`, dégâts de chute,
-    acide de dissolution, etc.
-
-    Le serveur lance les dés — le LLM ne calcule jamais rien. `des` = expression
-    des dés (ex. « 1d4+1 » pour un projectile, « 3d4+3 » pour trois projectiles :
-    passer alors `nb_fois=3` sur l'expression sans modificateur, ou « 3d4+3 » en
-    une fois). `mod` = modificateur ajouté une seule fois au total. `nb_fois`
-    multiplie le nombre de lancers de `des` (pour N projectiles identiques).
-
-    Applique les dégâts aux PV du défenseur et renvoie le détail (dés lancés).
-    """
-    rng = rng or random.Random()
-    try:
-        des_sans_mod, mod_expr = dice.decomposer(des)
-    except ValueError as exc:
-        return {"ok": False, "type": "erreur", "erreur": str(exc)}
-    nb = max(1, int(nb_fois))
-    des_lances = [dice.roll(des_sans_mod, rng) for _ in range(nb)]
-    total_mod = mod_expr + int(mod)
-    degats = max(0, sum(des_lances) + total_mod)
-    defenseur.pv = max(0, defenseur.pv - degats)
-    return {
-        "ok": True,
-        "type": "degats_auto",
-        "cible": defenseur.cle,
-        "des": des,
-        "nb_fois": nb,
-        "des_lances": des_lances,
-        "modificateur": total_mod,
-        "degats": degats,
-        "pv_restants": defenseur.pv,
-        "hors_combat": not defenseur.vivant,
-    }
-
-
 def resoudre_sauvegarde(
     combattant: Combattant,
     bonus_sauvegarde: int,

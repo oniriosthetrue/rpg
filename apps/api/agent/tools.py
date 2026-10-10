@@ -155,23 +155,6 @@ def enregistrer_le_jet_du_joueur(
     return r_combat.jet_joueur(combat_id, corps, _CLE)
 
 
-def lancer_les_degats_d_un_effet_auto(
-    combat_id: str, cible: str, des: str, mod: int = 0, nb_fois: int = 1
-) -> dict[str, Any]:
-    """Lancer les dés d'un effet qui **touche automatiquement** (AUCUN jet d'attaque,
-    AUCUNE CA) : `projectile magique`, `coup au but`, dégâts de zone, chute, acide…
-    **Le serveur lance les dés — ne calcule jamais les dégâts toi-même.**
-    `des` = expression des dés lue dans la fiche du sort (ex. « 1d4+1 » pour un
-    projectile) ; `nb_fois` = nombre de lancers (ex. 3 pour les 3 projectiles de
-    `projectile magique`, en passant alors `des=« 1d4 »` et `mod=1`) ; `mod` =
-    modificateur ajouté une fois au total. Renvoie `degats` et `pv_restants`."""
-    return r_combat.degats_auto(
-        combat_id,
-        {"cible": cible, "des": des, "mod": mod, "nb_fois": nb_fois},
-        _CLE,
-    )
-
-
 def tour_suivant_du_combat(combat_id: str) -> dict[str, Any]:
     """Avancer d'une case dans l'ordre d'initiative (saute les hors-combat) et
     renvoyer qui joue maintenant (champ « actif »)."""
@@ -250,7 +233,6 @@ OUTILS_PLAIN = [
     etat_du_combat,
     lancer_le_jet_d_un_monstre,
     enregistrer_le_jet_du_joueur,
-    lancer_les_degats_d_un_effet_auto,
     tour_suivant_du_combat,
     appliquer_au_combat,
     clore_le_combat,

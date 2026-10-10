@@ -231,10 +231,22 @@ class Personnage:
             sauvegardes[carac] = mods[carac] + (
                 self.bonus_maitrise if carac in sauvegardes_pro else 0
             )
+        # Bonus d'attaque de sort et DD de sauvegarde de sort (pré-calculés) :
+        # le MJ les annonce tels quels et ne les recalcule jamais (sinon il
+        # dérive d'un tour à l'autre, ex. +4 puis +3 pour le même cantrip).
+        carac_sort = extract.CARAC_INCANTATION.get(self.classe, "")
+        attaque_sort = dd_sort = 0
+        if carac_sort:
+            mod_sort = mods[carac_sort]
+            attaque_sort = self.bonus_maitrise + mod_sort
+            dd_sort = 8 + self.bonus_maitrise + mod_sort
         return {
             "bonus_maitrise": self.bonus_maitrise,
             "competences": competences,
             "sauvegardes": sauvegardes,
+            "carac_incantation": carac_sort,
+            "attaque_sort": attaque_sort,
+            "dd_sort": dd_sort,
         }
 
     def vers_dict(self) -> dict[str, Any]:
