@@ -166,3 +166,42 @@ Options (non faites) :
 - **CI GitHub Actions** : lancer les 68 tests au push.
 - **Partie test** en conditions réelles (créer un vrai PJ, jouer une scène).
 - **PDF SRD** hors repo (ne sert qu'à régénérer le corpus, déjà en markdown).
+
+## 11. Référence API (routes + auth + enveloppe)
+
+**Auth** : en-tête `X-API-Key` vérifié par `commun.autorise()` (lit `DND_API_KEY`). Vide =
+accès libre. Sinon une enveloppe `{"ok":false,"v":1,"type":"erreur","erreur":…}` est renvoyée.
+Côté prod, la clé est injectée par Next (`lib/api.ts`) — le navigateur ne la voit jamais.
+
+**Enveloppe v1** (`commun.enveloppe`) : toute réponse porte `v:1` + `ok` + `type` + message
+données. Ne jamais casser ce contrat (cf. `docs/CONTRAT-API-JDR.md`).
+
+**Routes** (`jdr_api/routers/*`, toutes sous `/api` sauf `/health` et `/panel`) :
+
+| Méthode | Route | Rôle |
+|---|---|---|
+| GET | `/health` | sonde (pas d'auth) |
+| POST | `/api/chat` | chat MJ — **SSE** (§6) |
+| POST | `/api/creation` | démarrer création (body `{chat_id}`) |
+| POST | `/api/creation/{chat_id}/reponse` | réponse à une étape |
+| GET | `/api/creation/{chat_id}/options` | options d'une étape (`?etape=`) |
+| GET | `/api/creation/{chat_id}/etat` | état de la session de création |
+| POST | `/api/creation/{chat_id}/finaliser` · `/abandon` | finaliser / abandonner |
+| GET | `/api/personnages` · `/{nom}` | liste / fiche (dict + markdown) |
+| PATCH | `/api/personnages/{nom}` | actions closes (`{actions:[{action,valeur}]}`) |
+| DELETE | `/api/personnages/{nom}` | supprimer |
+| POST | `/api/combat/ouvrir` | rencontre → ordre d'initiative (`id`, `ordre`, `actif`) |
+| GET | `/api/combat/{id}` | état (ordre, tour, actif, PV/CA/conditions) |
+| POST | `/api/combat/{id}/jet-monstre` · `/jet-joueur` | jets (serveur lance / enregistre) |
+| POST | `/api/combat/{id}/tour-suivant` · `/cloturer` | avancement / fin |
+| PATCH | `/api/combat/{id}` | `degats`/`soigner`/`condition` sur un combattant |
+| GET | `/api/campagne` · `/{id}` | liste / état campagne |
+| POST | `/api/campagne/ouvrir` · `/importer` | créer / importer un scénario |
+| PATCH | `/api/campagne/{id}` | mutation d'intrigue (`action` + params) |
+| POST | `/api/campagne/{id}/advisory` · `/cloturer` | avis difficulté / fin |
+| GET | `/api/infos` | tooltips sorts/compétences (pour le panneau) |
+| GET | `/panel` | page HTML fiche joueur (lecture seule, autonome) |
+
+**Outils agent** (`agent/tools.py`) : wrappers in-process des routes ci-dessus. `OUTILS_CTX`
+(3 : `nouveau_personnage`, `lister_les_options`, `abandonner_la_creation` — prennent
+`RunContext[Deps]`, `Deps.chat_id` = session de création) ; `OUTILS_PLAIN` (16 autres).
