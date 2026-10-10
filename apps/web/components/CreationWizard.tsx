@@ -13,7 +13,7 @@ type Reponse = {
   question?: string;
   options?: string[];
   limites?: Record<string, number> | null;
-  progression?: string;
+  progression?: string | null;
   avertissements?: string[];
   message?: string;
   erreur?: string;
@@ -94,6 +94,24 @@ export default function CreationWizard({
     },
     [chatId, enCours],
   );
+
+  const revenir = useCallback(async () => {
+    if (enCours) return;
+    setEnCours(true);
+    setErreur("");
+    try {
+      const r = await jdr.post<Reponse>(
+        `/creation/${encodeURIComponent(chatId)}/retour`,
+      );
+      setQ(r);
+      setSaisie("");
+      setSelection([]);
+    } catch (e) {
+      setErreur(e instanceof ErreurJdr ? e.message : "Erreur de retour.");
+    } finally {
+      setEnCours(false);
+    }
+  }, [chatId, enCours]);
 
   const finaliser = useCallback(async () => {
     if (enCours) return;
@@ -278,6 +296,13 @@ export default function CreationWizard({
       </div>
 
       <div className="flex gap-2 text-xs">
+        <button
+          onClick={revenir}
+          disabled={enCours}
+          className="rounded bg-white/10 hover:bg-white/20 px-2 py-1 disabled:opacity-40"
+        >
+          ⬅ Retour
+        </button>
         <button
           onClick={() => repondre("au hasard")}
           disabled={enCours}

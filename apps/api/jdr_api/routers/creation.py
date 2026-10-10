@@ -43,6 +43,17 @@ def repondre(
     return enveloppe(mj.continuer(chat_id, reponse))
 
 
+@router.post("/api/creation/{chat_id}/retour")
+def revenir(
+    chat_id: str,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict[str, Any]:
+    """Revient à l'étape précédente (efface cette étape et les suivantes)."""
+    if (err := autorise(x_api_key)) is not None:
+        return err
+    return enveloppe(mj.revenir(chat_id))
+
+
 @router.post("/api/creation/{chat_id}/abandon")
 def abandonner(
     chat_id: str,

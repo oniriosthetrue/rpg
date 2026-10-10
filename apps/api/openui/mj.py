@@ -150,6 +150,22 @@ _CONTINUE = (
     "reposez la question",
 )
 
+# Réponses signifiant « je reviens à l'étape précédente ».
+_RETOUR = (
+    "retour",
+    "retour en arriere",
+    "en arriere",
+    "revenir en arriere",
+    "reviens en arriere",
+    "revenir",
+    "etape precedente",
+    "precedent",
+    "precedente",
+    "annuler la derniere etape",
+    "annuler derniere etape",
+    "annuler la derniere",
+)
+
 # Questions posées au joueur (relaisées par le MJ, une étape à la fois).
 _QUESTIONS = {
     "classe": "Commençons par la classe : qu'aimeriez-vous jouer ?",
@@ -651,9 +667,65 @@ def continuer(chat_id: str, reponse: str) -> dict[str, Any]:
         # « continue » / « réessaye » : on garde ce qui est déjà retenu et on
         # passe à la suite sans rien re-remplir.
         avertis = []
+    elif np_ in _RETOUR or "en arriere" in nr or "etape precedente" in nr:
+        return revenir(chat_id)
     else:
         avertis = _remplir(session, r)
     return _suivant(session, avertis)
+
+
+def revenir(chat_id: str) -> dict[str, Any]:
+    """Revient à l'étape précédente : efface la réponse de l'étape courante et
+    de TOUTES les étapes suivantes (cascade), puis re-pose la question visée.
+
+    La cascade est nécessaire car certaines réponses dépendent de choix
+    antérieurs (compétences et sorts dépendent de la classe, etc.) : en
+    remonter une invalide les suivantes. On peut enchaîner plusieurs retours.
+    """
+    session = _SESSIONS.get(chat_id)
+    if session is None or session.get("fini"):
+        return {
+            "ok": False,
+            "type": "erreur",
+            "erreur": "Aucune création en cours : utilisez /nouveau-perso pour commencer.",
+        }
+    etat = session["etat"]
+    courante = _premiere_non_remplie(etat)
+    # L'étape « courante » n'a pas encore de réponse : on recule d'une étape
+    # remplie. Sinon on efface la courante (cas où elle aurait une valeur).
+    idx = ETAPES.index(courante) if courante in ETAPES else len(ETAPES)
+    if courante == "finalisation" or courante is None:
+        idx = len(ETAPES)
+    # Index de la dernière étape réellement remplie, en sautant « sorts » si la
+    # classe n'est pas lanceuse (cette étape n'a jamais été remplie).
+    cible = None
+    for i in range(idx - 1, -1, -1):
+        et = ETAPES[i]
+        if et == "finalisation":
+            continue
+        if et == "sorts" and not _classe_lanceuse(etat):
+            continue
+        cle = "carac" if et == "caracteristiques" else et
+        if cle in etat:
+            cible = et
+            break
+    if cible is None:
+        return {
+            "ok": True,
+            "type": "question",
+            "etape": _premiere_non_remplie(etat) or ETAPES[0],
+            "question": "Nous sommes déjà au début de la création.",
+            "options": _options(_premiere_non_remplie(etat) or "classe", etat),
+            "limites": _limites(_premiere_non_remplie(etat) or "classe", etat),
+            "progression": None,
+            "avertissements": [],
+        }
+    # Cascade : on retire la clé cible et toutes celles des étapes suivantes.
+    cle_cible = "carac" if cible == "caracteristiques" else cible
+    for et in ETAPES[ETAPES.index(cible):]:
+        cle = "carac" if et == "caracteristiques" else et
+        etat.pop(cle, None)
+    return _suivant(session, [f"Retour à l'étape « {cible} ». Les choix suivants ont été effacés."])
 
 
 def abandonner(chat_id: str) -> dict[str, Any]:
