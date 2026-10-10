@@ -204,6 +204,7 @@ données. Ne jamais casser ce contrat (cf. `docs/CONTRAT-API-JDR.md`).
 | POST | `/api/campagne/ouvrir` · `/importer` | créer / importer un scénario |
 | PATCH | `/api/campagne/{id}` | mutation d'intrigue (`action` + params) |
 | POST | `/api/campagne/{id}/advisory` · `/cloturer` | avis difficulté / fin |
+| DELETE | `/api/campagne/{id}` | supprimer définitivement (unlink JSON) |
 | GET | `/api/infos` | tooltips sorts/compétences (pour le panneau) |
 | GET | `/panel` | page HTML fiche joueur (lecture seule, autonome) |
 
