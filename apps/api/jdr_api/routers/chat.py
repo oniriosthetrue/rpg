@@ -56,6 +56,7 @@ async def chat(
 
     message = str(body.get("message", "") or "").strip()
     chat_id = str(body.get("chat_id") or "defaut")
+    campagne_id = str(body.get("campagne_id") or "").strip()
     historique = body.get("historique") or []
     if not message:
         raise HTTPException(status_code=400, detail="« message » requis.")
@@ -67,6 +68,16 @@ async def chat(
     # 2) Construction du prompt utilisateur (contexte RAG + question).
     prompt = message if not contexte else f"{contexte}\n\n---\n\n{message}"
 
+    # 2bis) Campagne active choisie dans l'app : on l'ancre explicitement pour que
+    # le MJ cible la bonne campagne (sinon il devrait la deviner via la liste).
+    if campagne_id:
+        prompt = (
+            f"[Campagne active : `{campagne_id}`. C'est LA campagne sur laquelle tu "
+            f"travailles : passe cet identifiant à tous les outils de campagne "
+            f"(etat_de_la_campagne, faire_avancer_la_campagne, …) sans le redemander "
+            f"au joueur.]\n\n{prompt}"
+        )
+
     async def flux() -> AsyncIterator[str]:
         texte_final: list[str] = []
         # Citations émises dès le début (le frontend peut les afficher sous le message).
@@ -76,7 +87,7 @@ async def chat(
             # API pydantic-ai 2.55 : on parcourt les noeuds du run et on streame
             # chaque noeud (requête modèle = texte ; appel d'outils = tool events).
             async with agent.iter(
-                prompt, deps=Deps(chat_id=chat_id), message_history=_historique(historique)
+                prompt, deps=Deps(chat_id=chat_id, campagne_id=campagne_id), message_history=_historique(historique)
             ) as run:
                 async for node in run:
                     # Stop serveur : si le client a fermé le flux (bouton Stop),

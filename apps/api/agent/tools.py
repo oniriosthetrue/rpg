@@ -25,9 +25,11 @@ from settings import settings
 
 @dataclass
 class Deps:
-    """Déps d'exécution de l'agent. `chat_id` = clé de session de création."""
+    """Déps d'exécution de l'agent. `chat_id` = clé de session de création ;
+    `campagne_id` = campagne/scénario actif choisi par le joueur (ancre le MJ)."""
 
     chat_id: str = "defaut"
+    campagne_id: str = ""
 
 
 # Clé interne : les routes appellent autorise(); on la fournit pour le mode interne.

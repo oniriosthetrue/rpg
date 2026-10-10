@@ -46,6 +46,7 @@ export default function Chat() {
   const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [outil, setOutil] = useState("");
+  const [campagneId, setCampagneId] = useState("");
   const fondRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -61,6 +62,14 @@ export default function Chat() {
       const c = nouveauChat(nom);
       setConversations([c]);
       setActifId(c.id);
+    }
+    // Liaison depuis l'écran Campagne : /chat?campagne=<id>&message=<texte>.
+    if (typeof window !== "undefined") {
+      const p = new URLSearchParams(window.location.search);
+      const camp = p.get("campagne");
+      if (camp) setCampagneId(camp);
+      const msg = p.get("message");
+      if (msg) setSaisie(msg);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -155,6 +164,7 @@ export default function Chat() {
           chat_id: actif.id,
           historique,
           personnage: nom,
+          campagne_id: campagneId,
         }),
       });
       const lecteur = r.body!.getReader();
@@ -204,7 +214,7 @@ export default function Chat() {
       setOutil("");
       abortRef.current = null;
     }
-  }, [saisie, enCours, actif, nom, majConversation, onChangementFiche]);
+  }, [saisie, enCours, actif, nom, campagneId, majConversation, onChangementFiche]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();

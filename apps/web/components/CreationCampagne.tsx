@@ -30,10 +30,8 @@ const ETAPES = ["mode", "age", "duree", "groupe", "piliers", "ton", "theme"] as 
 type Etape = (typeof ETAPES)[number];
 
 export default function CreationCampagne({
-  onOuverte,
   onAnnuler,
 }: {
-  onOuverte: (id: string) => void;
   onAnnuler: () => void;
 }) {
   const [etape, setEtape] = useState<Etape>("mode");
@@ -87,13 +85,23 @@ export default function CreationCampagne({
         theme: theme.trim(),
       };
       const j = await jdr.post<Ouverture>("/campagne/ouvrir", corps);
-      onOuverte(j.id);
+      // On enchaîne sur le chat, lié à cette campagne, avec une amorce de génération.
+      const titreCamp = titre.trim() || "la campagne";
+      const consigne =
+        `Construis le scénario de la campagne « ${titreCamp} » en respectant le ` +
+        `cadrage (relis etat_de_la_campagne pour le mode, l'âge, la durée, les piliers, ` +
+        `le ton et le conseil_cadrage). ` +
+        (mode === "surprise"
+          ? "Mode surprise : conçois tout en secret et ne révèle que l'accroche."
+          : "Mode guidé : propose-moi la trame étape par étape.");
+      const url = `/chat?campagne=${encodeURIComponent(j.id)}&message=${encodeURIComponent(consigne)}`;
+      window.location.href = url;
     } catch (e) {
       setErreur(e instanceof ErreurJdr ? e.message : "Erreur à l'ouverture.");
     } finally {
       setEnCours(false);
     }
-  }, [enCours, mode, titre, age, duree, nbJoueurs, niveaux, piliers, ton, theme, onOuverte]);
+  }, [enCours, mode, titre, age, duree, nbJoueurs, niveaux, piliers, ton, theme]);
 
   const titreEtape: Record<Etape, string> = {
     mode: "Quel mode de création ?",

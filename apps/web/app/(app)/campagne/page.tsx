@@ -151,14 +151,7 @@ export default function PageCampagne() {
         {erreur && <div className="text-red-400 text-sm mb-2">{erreur}</div>}
         {wizard && (
           <div className="mb-4 rounded-lg border border-or/30 bg-black/20">
-            <CreationCampagne
-              onOuverte={(nouvelId) => {
-                setWizard(false);
-                chargerListe();
-                setId(nouvelId);
-              }}
-              onAnnuler={() => setWizard(false)}
-            />
+            <CreationCampagne onAnnuler={() => setWizard(false)} />
           </div>
         )}
         {!etat ? (
