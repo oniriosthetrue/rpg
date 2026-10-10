@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from typing import Any, AsyncIterator
 
-from fastapi import APIRouter, Body, Header, HTTPException
+from fastapi import APIRouter, Body, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from pydantic_ai.messages import (
@@ -47,6 +47,7 @@ def _sse(event: str, data: dict[str, Any]) -> str:
 
 @router.post("/api/chat")
 async def chat(
+    request: Request,
     body: dict[str, Any] = Body(...),
     x_api_key: str | None = Header(default=None, alias="X-API-Key"),
 ) -> StreamingResponse:
@@ -59,14 +60,18 @@ async def chat(
     if not message:
         raise HTTPException(status_code=400, detail="« message » requis.")
 
-    # 1) Retrieval RAG : contexte SRD pertinent (citations incluses).
+    # 1) Retrieval RAG : contexte SRD pertinent + citations structurées.
     contexte = retriever.recuperer_contexte(message)
+    sources = retriever.recuperer_sources(message)
 
     # 2) Construction du prompt utilisateur (contexte RAG + question).
     prompt = message if not contexte else f"{contexte}\n\n---\n\n{message}"
 
     async def flux() -> AsyncIterator[str]:
         texte_final: list[str] = []
+        # Citations émises dès le début (le frontend peut les afficher sous le message).
+        if sources:
+            yield _sse("citations", {"sources": sources})
         try:
             # API pydantic-ai 2.55 : on parcourt les noeuds du run et on streame
             # chaque noeud (requête modèle = texte ; appel d'outils = tool events).
@@ -74,9 +79,15 @@ async def chat(
                 prompt, deps=Deps(chat_id=chat_id), message_history=_historique(historique)
             ) as run:
                 async for node in run:
+                    # Stop serveur : si le client a fermé le flux (bouton Stop),
+                    # on interrompt le run pour libérer le GPU au plus tôt.
+                    if await request.is_disconnected():
+                        return
                     if agent.is_model_request_node(node):
                         async with node.stream(run.ctx) as flux_modele:
                             async for event in flux_modele:
+                                if await request.is_disconnected():
+                                    return
                                 if isinstance(event, PartStartEvent):
                                     part = event.part
                                     if isinstance(part, TextPart) and part.content:

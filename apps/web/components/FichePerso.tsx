@@ -1,9 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { jdr, ErreurJdr } from "@/lib/jdr";
 
 // Panneau « fiche de personnage » — rendu du JSON canonique `personnage`
-// (contrat §8), pas du markdown. Auto-refresh léger quand `nom` change.
+// (contrat §8) + barre d'actions closes (soigner, dégâts, or, objet, sort, XP)
+// envoyées en PATCH /api/personnages/{nom}.
 
 type Personnage = {
   nom: string;
@@ -37,6 +39,8 @@ function signe(n: number) {
 export default function FichePerso({ nom }: { nom: string }) {
   const [p, setP] = useState<Personnage | null>(null);
   const [erreur, setErreur] = useState("");
+  const [msg, setMsg] = useState("");
+  const [enCours, setEnCours] = useState(false);
 
   const charger = useCallback(async () => {
     if (!nom) return;
@@ -51,15 +55,48 @@ export default function FichePerso({ nom }: { nom: string }) {
       } else {
         setErreur(j.erreur ?? "Fiche introuvable.");
       }
-    } catch (e) {
+    } catch {
       setErreur("Erreur réseau.");
     }
   }, [nom]);
 
   useEffect(() => {
     setP(null);
+    setMsg("");
     charger();
   }, [charger]);
+
+  const appliquer = useCallback(
+    async (action: string, valeur: unknown) => {
+      if (!nom || enCours) return;
+      setEnCours(true);
+      setMsg("");
+      try {
+        const j = await jdr.patch<{
+          modifications?: string[];
+          personnage?: Personnage;
+        }>(`/personnages/${encodeURIComponent(nom)}`, {
+          actions: [{ action, valeur }],
+        });
+        if (j.personnage) setP(j.personnage);
+        setMsg(j.modifications?.join(" · ") ?? "Mis à jour.");
+      } catch (e) {
+        setMsg(e instanceof ErreurJdr ? e.message : "Erreur inconnue.");
+      } finally {
+        setEnCours(false);
+      }
+    },
+    [nom, enCours],
+  );
+
+  const demander = useCallback(
+    (action: string, invite: string, nombre = true) => {
+      const t = window.prompt(invite);
+      if (t == null || t.trim() === "") return;
+      appliquer(action, nombre ? Number(t) : t.trim());
+    },
+    [appliquer],
+  );
 
   if (!nom)
     return (
@@ -78,6 +115,53 @@ export default function FichePerso({ nom }: { nom: string }) {
           {p.espece} · {p.classe} niv. {p.niveau} · {p.alignement}
         </div>
       </div>
+
+      {/* Barre d'actions closes (PATCH) */}
+      <div className="flex flex-wrap gap-1.5">
+        <button
+          onClick={() => demander("soigner", "PV à soigner ?")}
+          disabled={enCours}
+          className="rounded bg-emerald-700/60 hover:bg-emerald-700 px-2 py-1 text-xs disabled:opacity-40"
+        >
+          + PV
+        </button>
+        <button
+          onClick={() => demander("degats", "Dégâts encaissés ?")}
+          disabled={enCours}
+          className="rounded bg-sang/70 hover:bg-sang px-2 py-1 text-xs disabled:opacity-40"
+        >
+          − PV
+        </button>
+        <button
+          onClick={() => demander("gagner_xp", "XP à gagner ?")}
+          disabled={enCours}
+          className="rounded bg-white/10 hover:bg-white/20 px-2 py-1 text-xs disabled:opacity-40"
+        >
+          + XP
+        </button>
+        <button
+          onClick={() => demander("ajouter_or", "Or (po) à ajouter ?")}
+          disabled={enCours}
+          className="rounded bg-white/10 hover:bg-white/20 px-2 py-1 text-xs disabled:opacity-40"
+        >
+          + Or
+        </button>
+        <button
+          onClick={() => demander("ajouter_objet", "Nom de l'objet ?", false)}
+          disabled={enCours}
+          className="rounded bg-white/10 hover:bg-white/20 px-2 py-1 text-xs disabled:opacity-40"
+        >
+          + Objet
+        </button>
+        <button
+          onClick={() => demander("apprendre_sort", "Nom du sort ?", false)}
+          disabled={enCours}
+          className="rounded bg-white/10 hover:bg-white/20 px-2 py-1 text-xs disabled:opacity-40"
+        >
+          + Sort
+        </button>
+      </div>
+      {msg && <div className="text-xs text-or/80">{msg}</div>}
 
       <div className="grid grid-cols-4 gap-2 text-center">
         {[

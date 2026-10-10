@@ -5,10 +5,14 @@ import { enTetes, url } from "@/lib/api";
 // Le navigateur ne voit jamais la clé X-API-Key (injectée ici côté serveur).
 export async function POST(req: NextRequest) {
   const corps = await req.json();
+  // `signal: req.signal` propage l'annulation du navigateur (bouton Stop) vers
+  // le backend : la connexion proxy<->api se ferme, et `request.is_disconnected()`
+  // devient vrai côté FastAPI pour interrompre le run et libérer le GPU.
   const reponse = await fetch(url("/api/chat"), {
     method: "POST",
     headers: enTetes(),
     body: JSON.stringify(corps),
+    signal: req.signal,
   });
 
   return new Response(reponse.body, {

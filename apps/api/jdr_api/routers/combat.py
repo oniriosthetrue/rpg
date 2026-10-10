@@ -193,6 +193,31 @@ def ouvrir(
     return enveloppe(r.etat())
 
 
+@router.get("/api/combat")
+def lister(
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict[str, Any]:
+    """Liste les rencontres persistées (id, titre, actif, tour, nb_combattants)."""
+    if (err := autorise(x_api_key)) is not None:
+        return err
+    dossier = extract.COMBAT_DIR
+    rencontres: list[dict[str, Any]] = []
+    if dossier.exists():
+        for chemin in sorted(dossier.glob("rencontre-*.json")):
+            try:
+                d = json.loads(chemin.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            rencontres.append({
+                "id": d.get("id", ""),
+                "titre": d.get("titre", ""),
+                "active": bool(d.get("active", True)),
+                "tour": d.get("tour", 0),
+                "nb_combattants": len(d.get("ordre", [])),
+            })
+    return enveloppe({"ok": True, "type": "liste", "rencontres": rencontres})
+
+
 @router.get("/api/combat/{id}")
 def etat(
     id: str,

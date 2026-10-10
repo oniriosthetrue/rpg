@@ -12,7 +12,7 @@ description: >-
   comprendre le chemin chat (SSE events token/outil/fin/erreur) et le split outils
   OUTILS_CTX/OUTILS_PLAIN ; diagnostiquer les PIÈGES connus (réseau externe préfixé,
   modèle litellm « IA », streaming pydantic-ai 2.55 agent.iter, embeddings CPU-bound +
-  troncature, PYTHONPATH packages) ; faire tourner/étendre les tests (68 tests) ; reprendre
+  troncature, PYTHONPATH packages) ; faire tourner/étendre les tests (72 tests) ; reprendre
   le projet là où il en est (terminé, options futures listées). NE PAS confondre avec le
   skill owui-mj-dnd (l'ancienne version Open WebUI, remplacée par cette app).
 ---
@@ -64,7 +64,7 @@ apps/api/        FastAPI. jdr_api/{main,commun}.py + routers/{chat,creation,pers
 packages/dnd_perso/  moteur de règles stdlib (models,dice,combat,campagne,creation,extract,export,io).
 packages/corpus/srd-5.2.1/  ~861 fiches markdown (sorts/objets/monstres/chapitres/tables).
 scripts/ingest_corpus.py    embed + upsert le corpus dans Qdrant (idempotent).
-tests/                      test_{combat,campagne,dnd_perso,agent}.py (68 tests).
+tests/                      test_{combat,campagne,dnd_perso,agent,ui_routes}.py (72 tests).
 ```
 
 ## 3. Démarrage / déploiement
@@ -133,14 +133,14 @@ consomme ce flux et rafraîchit la fiche au `fin`.
 (masque `CA : 15`/`PV : 7` en bloc — libellé reste, chiffre→• — mais PAS une valeur
 différentielle « tu perds 5 PV ») + retrait des étiquettes `[MÉCANIQUE]`/`[NARRATION]`.
 
-## 8. Tests (68)
+## 8. Tests (72)
 
 ```bash
 cd /home/linus/mj-dnd
 export PYTHONPATH="$PWD/apps/api:$PWD/packages"
 export DND_CORPUS_DIR="$PWD/packages/corpus/srd-5.2.1"
 export DND_PERSO_DIR="$PWD/data-perso" DND_COMBAT_DIR="$PWD/data-combat" DND_CAMPAGNE_DIR="$PWD/data-campagne"
-PYDANTIC_AI_NO_BANNER=1 .venv/bin/python -m unittest tests.test_combat tests.test_campagne tests.test_dnd_perso tests.test_agent
+PYDANTIC_AI_NO_BANNER=1 .venv/bin/python -m unittest tests.test_combat tests.test_campagne tests.test_dnd_perso tests.test_agent tests.test_ui_routes
 ```
 `test_agent.py` (Phase 4) = déterministe via `pydantic_ai.models.function.FunctionModel(fake)` :
 `fake(messages,info)` renvoie `ModelResponse(parts=[ToolCallPart(nom,args)])` au 1er tour puis
@@ -157,13 +157,18 @@ Remote `origin` = https://github.com/oniriosthetrue/rpg, `main` poussée. `.giti
 
 ## 10. État & options futures
 
-**TERMINÉ** : Phases 0–4, stack montée + validée bout-en-bout, routeur `rpg` concurrent
+**TERMINÉ** : Phases 0–4 backend, stack montée + validée bout-en-bout, routeur `rpg` concurrent
 nettoyé (l'app récupère rpg.minervia.fr), ingestion 861/861, dépôt Git publié.
+**UI v2 TERMINÉE** (2026-10) : refonte frontend multi-pages sous `apps/web/app/(app)/`
+(chat multi-conversations + stop + citations, `/persos` fiche éditable + wizard, `/combat`,
+`/campagne`). Client `lib/jdr.ts`, proxy `app/api/jdr/[...chemin]` (GET/POST/PATCH/DELETE),
+`PersoContext`. Route backend ajoutée `GET /api/combat` (lister). Checkette recette :
+`docs/SMOKE-UI.md`. Tests = **72** (68 + `tests/test_ui_routes.py`).
 
 Options (non faites) :
 - **Rappel hybride** : le vectoriel coiffe un nom exact court (« Cape d'invisibilité ») sur
   d'autres objets ; la périphrase marche bien. Durcir via BM25/keyword en complément.
-- **CI GitHub Actions** : lancer les 68 tests au push.
+- **CI GitHub Actions** : lancer les 72 tests au push.
 - **Partie test** en conditions réelles (créer un vrai PJ, jouer une scène).
 - **PDF SRD** hors repo (ne sert qu'à régénérer le corpus, déjà en markdown).
 

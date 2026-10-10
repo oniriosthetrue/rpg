@@ -59,10 +59,12 @@ def _formater_source(payload: dict) -> str:
     return edition or "SRD"
 
 
-def recuperer_contexte(question: str, top_k: int | None = None) -> str:
-    """Renvoie un bloc de contexte markdown (fiches + sources), ou "" si rien."""
+def _rechercher_fiches(
+    question: str, top_k: int | None
+) -> list[dict[str, Any]]:
+    """Retourne les fiches fusionnées (vectoriel + lexical), ou [] si rien."""
     if not question or not question.strip():
-        return ""
+        return []
     limite = top_k or qdrant_store.settings.rag_top_k
     semantiques: list[dict[str, Any]] = []
     try:
@@ -77,7 +79,36 @@ def recuperer_contexte(question: str, top_k: int | None = None) -> str:
         _LOGGER.exception("Recherche BM25 indisponible.")
         lexicales = []
 
-    fiches = _fusionner(semantiques, lexicales, limite)
+    return _fusionner(semantiques, lexicales, limite)
+
+
+def _sources(fiches: list[dict[str, Any]]) -> list[dict[str, str]]:
+    """Dérive la liste de citations structurées des fiches retenues."""
+    sources: list[dict[str, str]] = []
+    for f in fiches:
+        corps = (f.get("contenu") or "").strip()
+        if not corps:
+            continue
+        sources.append(
+            {
+                "nom": str(f.get("nom") or f.get("id") or ""),
+                "source": _formater_source(f),
+                "edition": str((f.get("edition") or "").strip()),
+            }
+        )
+    return sources
+
+
+def recuperer_sources(
+    question: str, top_k: int | None = None
+) -> list[dict[str, str]]:
+    """Retourne les citations structurées ({nom, source, edition}) pour une question."""
+    return _sources(_rechercher_fiches(question, top_k))
+
+
+def recuperer_contexte(question: str, top_k: int | None = None) -> str:
+    """Renvoie un bloc de contexte markdown (fiches + sources), ou "" si rien."""
+    fiches = _rechercher_fiches(question, top_k)
     if not fiches:
         return ""
     blocs: list[str] = []

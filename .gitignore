@@ -32,3 +32,6 @@ data-campagne/*.json
 logs/
 *.log
 .DS_Store
+
+# Artefacts runtime (moteur écrit ici en chemin relatif pendant les tests)
+packages/data-combat/
