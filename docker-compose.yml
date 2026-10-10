@@ -1,0 +1,99 @@
+# =============================================================================
+# MJ D&D — app dédiée (frontend Next.js + backend FastAPI/Pydantic-AI + Qdrant)
+# -----------------------------------------------------------------------------
+# Ce dépôt ne déploie QUE web + api + qdrant. La stack LLM (vllm, litellm,
+# embedding) reste dans qwen_3.8_vnimanieAI et est lancée UNIQUEMENT par
+# l'opérateur. On rejoint son réseau docker `mynetwork` (network externe) pour
+# joindre litellm/embedding en HTTP interne, et Traefik (de l'autre stack)
+# découvre les labels ci-dessous pour exposer l'app sur rpg.minervia.fr.
+#
+# Lancement (par l'opérateur uniquement) :
+#   docker network create mynetwork   # déjà créé par l'autre stack en pratique
+#   docker compose up -d qdrant
+#   docker compose build api web && docker compose up -d
+# =============================================================================
+
+name: mj-dnd
+
+services:
+  # ─── Frontend Next.js — servi sur rpg.minervia.fr ────────────────────────
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: mj-web
+    environment:
+      # Base de l'API, côté SERVEUR Next (route handlers) — jamais dans le navigateur.
+      - API_INTERNAL_URL=http://api:8000
+      # Clé injectée par Next dans l'en-tête X-API-Key des appels serveur → api.
+      - DND_API_KEY=${DND_API_KEY}
+      - NEXT_PUBLIC_APP_HOST=rpg.minervia.fr
+    depends_on:
+      - api
+    networks: [mynetwork]
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      # L'app prend tout rpg.minervia.fr (/). Priorité haute pour gagner l'hôte
+      # face à l'ancien routeur nginx `rpg` (à retirer/abaisser dans l'autre stack).
+      - "traefik.http.routers.mj-web.rule=Host(`rpg.minervia.fr`)"
+      - "traefik.http.routers.mj-web.entrypoints=web"
+      - "traefik.http.routers.mj-web.priority=100"
+      - "traefik.http.services.mj-web.loadbalancer.server.port=3000"
+      # Streaming SSE : pas de bufferisation/timeout court sur la réponse.
+      - "traefik.http.routers.mj-web.middlewares=mj-web-headers"
+      - "traefik.http.middlewares.mj-web-headers.headers.customresponseheaders.X-Accel-Buffering=no"
+
+  # ─── Backend FastAPI + Pydantic-AI — interne uniquement ──────────────────
+  # Non exposé sur Traefik : seul `web` (route handlers Next) l'appelle en HTTP
+  # interne via mynetwork. La clé X-API-Key est injectée côté serveur Next.
+  api:
+    build:
+      context: ./
+      dockerfile: apps/api/Dockerfile
+    container_name: mj-api
+    environment:
+      - DND_PERSO_DIR=/app/data/perso
+      - DND_COMBAT_DIR=/app/data/combat
+      - DND_CAMPAGNE_DIR=/app/data/campagne
+      - DND_API_KEY=${DND_API_KEY}
+      # LLM (OpenAI-compatible via litellm de la stack existante).
+      - LITELLM_BASE_URL=${LITELLM_BASE_URL}
+      - LITELLM_API_KEY=${LITELLM_API_KEY}
+      - MJ_MODEL=${MJ_MODEL}
+      # Embeddings (service embedding de la stack existante).
+      - EMBED_BASE_URL=${EMBED_BASE_URL}
+      - EMBED_MODEL_NAME=${EMBED_MODEL_NAME}
+      # RAG / Qdrant.
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_COLLECTION=${QDRANT_COLLECTION}
+      - RAG_TOP_K=${RAG_TOP_K}
+    volumes:
+      - ./data-perso:/app/data/perso:rw
+      - ./data-combat:/app/data/combat:rw
+      - ./data-campagne:/app/data/campagne:rw
+    depends_on:
+      qdrant:
+        condition: service_started
+    networks: [mynetwork]
+    restart: unless-stopped
+
+  # ─── Qdrant — vector store du corpus SRD (interne) ───────────────────────
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: mj-qdrant
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks: [mynetwork]
+    restart: unless-stopped
+
+networks:
+  # Réseau de la stack LLM existante (qwen_3.8_vnimanieAI) — réseau EXTERNE ici.
+  # Le nom réel est préfixé par le projet compose de l'autre stack :
+  #   qwen_38_vnimanieai_mynetwork  (à adapter via DOCKER_NETWORK dans .env).
+  mynetwork:
+    external: true
+    name: ${DOCKER_NETWORK:-qwen_38_vnimanieai_mynetwork}
+
+volumes:
+  qdrant-data:

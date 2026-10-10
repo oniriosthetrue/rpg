@@ -1,0 +1,79 @@
+{
+  "Ensorceleur": [
+    "Aspersion acide",
+    "Bouffée de poison",
+    "Contact glacial",
+    "Coup au but",
+    "Élémentalisme",
+    "Éruption ensorcelée",
+    "Illusion mineure",
+    "Lumière",
+    "Lumières dansantes",
+    "Main du mage",
+    "Message",
+    "Poigne électrique",
+    "Prestidigitation",
+    "Rayon de givre",
+    "Réparation",
+    "Trait de feu"
+  ],
+  "Magicien": [
+    "Aspersion acide",
+    "Bouffée de poison",
+    "Contact glacial",
+    "Coup au but",
+    "Élémentalisme",
+    "Illusion mineure",
+    "Lumière",
+    "Lumières dansantes",
+    "Main du mage",
+    "Message",
+    "Poigne électrique",
+    "Prestidigitation",
+    "Rayon de givre",
+    "Réparation",
+    "Trait de feu"
+  ],
+  "Clerc": [
+    "Assistance",
+    "Flamme sacrée",
+    "Lumière",
+    "Réparation",
+    "Résistance",
+    "Stabilisation",
+    "Thaumaturgie"
+  ],
+  "Druide": [
+    "Assistance",
+    "Bouffée de poison",
+    "Crosse des druides",
+    "Druidisme",
+    "Élémentalisme",
+    "Flammes",
+    "Message",
+    "Poussière d’étoile",
+    "Réparation",
+    "Résistance",
+    "Stabilisation"
+  ],
+  "Occultiste": [
+    "Bouffée de poison",
+    "Contact glacial",
+    "Coup au but",
+    "Décharge occulte",
+    "Illusion mineure",
+    "Main du mage",
+    "Prestidigitation"
+  ],
+  "Barde": [
+    "Coup au but",
+    "Illusion mineure",
+    "Lumière",
+    "Lumières dansantes",
+    "Main du mage",
+    "Message",
+    "Poussière d’étoile",
+    "Prestidigitation",
+    "Réparation"
+  ]
+}

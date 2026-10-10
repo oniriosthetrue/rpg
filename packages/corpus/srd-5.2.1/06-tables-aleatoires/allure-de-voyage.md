@@ -1,0 +1,13 @@
+<<<FICHE>>>
+id: tables/allure-de-voyage
+nom: Allure de voyage
+type: table-aléatoire
+edition: SRD 5.2.1
+mots_cles: table, d100, allure-de-voyage
+<<<CONTENU>>>
+
+# Allure de voyage
+
+Un groupe de personnages peut voyager par voie terrestre à allure normale, lente ou rapide, comme décrit à la section « Comment jouer ». Quelle que soit l’étape, l’environnement prédominant détermine l’allure de voyage maximale des aventuriers, comme indiqué en colonne « Allure maximale » de la table « Environnements de voyage ». Certains facteurs peuvent influer sur l’allure de voyage. La présence d’une bonne route augmente l’allure maxi- Qualité des routes male du groupe d’un cran (de lente à normale ou de normale à rapide). Votre groupe doit évoluer à allure lente si la Vitesse d’au Voyageurs lents moins un compagnon est réduite de moitié ou plus. Les personnages peuvent s’astreindre à voyager plus Voyage prolongé de 8 heures par jour, au risque de s’épuiser. À l’issue de chaque heure supplémentaire de voyage au-delà de cette limite, chaque PJ doit réussir un jet de sau- vegarde de Constitution sous peine de subir 1 niveau d’Épuisement. Le DD est de 10 + 1 par heure au-delà de la huitième. Si le groupe est en mesure de maintenir longtemps Déplacement spécial une allure rapide, par le biais du sort , vent divin Environnements de voyage Environnement Allure maximale Distance de rencontre Arctique Rapide* 6d6 × 3 m Collines Normale 2d10 × 3 m Désert Normale 6d6 × 3 m Forêt Normale 2d8 × 3 m Littoral Normale 2d10 × 3 m Marais Lente 2d8 × 3 m Montagnes Lente 4d10 × 3 m Outreterre Normale 2d6 × 3 m Plaine Rapide 6d6 × 3 m Urbain Normale 2d6 × 3 m Voie d’eau Spéciale 6d6 × 3 m † *Du matériel adéquat (comme des skis) est nécessaire pour maintenir une allure rapide en environnement arctique. Le rythme de progression des personnages par voie d’eau dépend du véhicule employé ; cf. « Véhicules ». † par exemple, ou d’un objet magique tel qu’un , la Vitesse du groupe se convertit en rythme de progression selon ces règles : tapis volant Km par heure = Vitesse ÷ 2 Km/jour (allure normale) = km/h × heures de voyage (généralement 8) Allure rapide = km/jour × 4/3 (arrondir à l’inférieur) Si les personnages volent ou si leur déplacement spé- Allure lente = km/jour × 2/3 (arrondir à l’inférieur) cial les met à l’abri du Terrain difficile, ils peuvent se déplacer à allure rapide quel que soit l’environnement. Les aventuriers qui voyagent à bord d’un véhicule Véhicules reprennent sa vitesse en km/h (comme indiqué à « Équipement ») pour le calcul de leur rythme de pro- gression, sans choisir d’allure de voyage.
+
+<<<FIN>>>

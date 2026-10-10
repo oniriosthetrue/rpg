@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+
+# Données d'exécution (état de jeu — hors repo, monté en volume)
+data-perso/*.json
+data-perso/*.md
+data-combat/*.json
+data-campagne/*.json
+!data-perso/.gitkeep
+!data-combat/.gitkeep
+!data-campagne/.gitkeep
+
+# Qdrant local
+.qdrant/
+
+# Logs / OS
+logs/
+*.log
+.DS_Store

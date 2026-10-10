@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-encre text-parchemin font-serif;
+}
+
+/* Rendu du markdown du MJ (narration) — minimal, sans dépendance. */
+.mj-prose p { @apply my-2 leading-relaxed; }
+.mj-prose blockquote {
+  @apply my-2 border-l-2 border-or/60 pl-3 italic text-parchemin/80;
+}
+.mj-prose strong { @apply font-bold text-or; }
+.mj-prose em { @apply italic; }
+.mj-prose h1, .mj-prose h2, .mj-prose h3 { @apply font-bold mt-3 mb-1; }
+.mj-prose ul { @apply list-disc pl-5 my-2; }
+.mj-prose code { @apply bg-white/10 px-1 rounded text-sm; }

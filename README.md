@@ -1,0 +1,90 @@
+# MJ D&D — Maître de Jeu D&D 5e (app dédiée)
+
+Interface MJ autonome pour le JDR D&D 5.2.1 (SRD), en remplacement d'Open WebUI.
+
+- **Frontend** : Next.js (App Router + Tailwind) — `apps/web`
+- **Backend** : FastAPI + Pydantic-AI — `apps/api`
+- **Moteur de règles** : `packages/dnd_perso` (stdlib only, réutilisé de l'existant)
+- **Corpus SRD** : `packages/corpus` (~861 fiches markdown + PDF source en Git LFS)
+- **RAG** : Qdrant + service d'embeddings OpenAI-compatible
+
+## Principe directeur
+
+Un vrai JDR a **deux cerveaux distincts** :
+
+| | Cerveau narratif | Cerveau règles |
+|---|---|---|
+| Contenu | descriptions, dialogues, ambiance | chiffres, jets, tables, statistiques |
+| Support | le **modèle** (créativité) | les **outils** + le **RAG** (déterminisme) |
+
+**Règle d'or : le LLM ne calcule jamais rien.** Il *demande* une action (`roller_des`),
+il *lit* une fiche (`lookup`), et il *raconte* le résultat. Tout ce qui est chiffré vient
+d'un outil qui renvoie du JSON. Tout ce qui est factuel vient du RAG, avec citation.
+
+## Structure
+
+```
+mj-dnd/
+├─ apps/
+│  ├─ web/          # Next.js — chat streaming + panneaux fiche/combat/campagne
+│  └─ api/          # FastAPI + Pydantic-AI — agent, tools, RAG, contrat JSON v1
+├─ packages/
+│  ├─ dnd_perso/    # moteur de règles (stdlib only)
+│  └─ corpus/       # srd-5.2.1/ — corpus RAG (fiches .md) + PDF (LFS)
+├─ docs/            # CONTRAT-API-JDR.md, ARCHITECTURE.md, ADR/
+├─ scripts/         # ingest_corpus.py, embedding_server.py, check_corpus.py, arena.py
+├─ tests/           # tests purs du moteur + tests agent
+├─ docker-compose.yml
+└─ .env.example
+```
+
+## Démarrage rapide
+
+> ⚠️ La stack LLM (vllm, litellm, embedding) tourne dans le dépôt `qwen_3.8_vnimanieAI`
+> et est lancée **uniquement manuellement** par l'opérateur. Ce dépôt ne démarre que
+> `web`, `api` et `qdrant`, qui se branchent sur l'existant via le réseau docker
+> **externe** de cette stack.
+
+### Réseau
+
+Le réseau à rejoindre est préfixé par le nom du projet compose de l'autre stack :
+`qwen_38_vnimanieai_mynetwork` (et non `mynetwork`). Il est configurable via
+`DOCKER_NETWORK` dans `.env` (reporté sous `networks.mynetwork.name`).
+
+### Démarrage
+
+```bash
+cp .env.example .env          # renseigner URL/clés + DOCKER_NETWORK de la stack existante
+# MJ_MODEL = le nom exposé par litellm (GET /v1/models), pas l'id vLLM (ex. « IA »).
+docker compose up -d qdrant
+docker compose build api web
+docker compose up -d api web
+```
+
+Vérification (les conteneurs `api`/`web` n'ont pas de port publié — on teste depuis
+l'intérieur) :
+
+```bash
+docker exec mj-api python3 -c "import urllib.request;print(urllib.request.urlopen('http://localhost:8000/health').read().decode())"
+docker exec mj-web node -e "fetch('http://localhost:3000').then(r=>console.log(r.status))"
+```
+
+L'app est exposée sur **rpg.minervia.fr** (routeur Traefik `mj-web`, priorité 100).
+
+### Ingestion du corpus (une fois)
+
+```bash
+# Long (~2,5 h sur CPU) : lancer en tâche de fond pour ne pas bloquer le shell.
+docker exec -d mj-api sh -c 'cd /app && python3 -m scripts.ingest_corpus > /tmp/ingest.log 2>&1'
+tail -f /tmp/ingest.log
+```
+
+Idempotent (upsert par id dérivé) : relancer met à jour sans doublon. Le texte
+vectorisé est tronqué à 4 000 caractères (le service embeddings est CPU-bound) ;
+le texte COMPLET reste dans le payload Qdrant pour les citations. Ne pas
+`docker restart mj-api` pendant l'ingestion (cela tue le job).
+
+## Documentation
+
+- [`docs/CONTRAT-API-JDR.md`](docs/CONTRAT-API-JDR.md) — le contrat JSON v1 (à ne pas casser).
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — architecture et décisions.

@@ -1,0 +1,319 @@
+---
+id: index/monstres
+nom: Index des monstres
+type: index
+edition: SRD 5.2.1
+mots_cles: index, monstres, bestiaire, pnj, adversaire
+---
+
+# Index des monstres
+
+Ce domaine contient les fiches de monstres du SRD 5.2.1 (« Monstres de A à Z »
+et « Animaux »). Une fiche = un monstre. Utiliser `lookup_monstre` ou une
+requête RAG avec le nom exact (ou un alias FR) pour récupérer la fiche.
+
+- Abattis de troll → monstres/abattis-de-troll.md
+- Aboleth → monstres/aboleth.md
+- Acolyte → monstres/acolyte.md
+- Aigle géant → monstres/aigle-geant.md
+- Aigle → monstres/aigle.md
+- Allosaure → monstres/allosaure.md
+- Âme-en-peine → monstres/ame-en-peine.md
+- Ankheg → monstres/ankheg.md
+- Ankylosaure → monstres/ankylosaure.md
+- Araignée de phase → monstres/araignee-de-phase.md
+- Araignée géante → monstres/araignee-geante.md
+- Araignée-loup géante → monstres/araignee-loup-geante.md
+- Araignée → monstres/araignee.md
+- Arbre éveillé → monstres/arbre-eveille.md
+- Arbuste éveillé → monstres/arbuste-eveille.md
+- Archélon → monstres/archelon.md
+- Archimage → monstres/archimage.md
+- Armure animée → monstres/armure-animee.md
+- Assassin → monstres/assassin.md
+- Autrache → monstres/autrache.md
+- Babélien → monstres/babelien.md
+- Babouin → monstres/babouin.md
+- Balor → monstres/balor.md
+- Bandit → monstres/bandit.md
+- Basilic → monstres/basilic.md
+- Béhir → monstres/behir.md
+- Belette géante → monstres/belette-geante.md
+- Belette → monstres/belette.md
+- Berserker → monstres/berserker.md
+- Blaireau géant → monstres/blaireau-geant.md
+- Blaireau → monstres/blaireau.md
+- Blême → monstres/bleme.md
+- Bulette → monstres/bulette.md
+- Capitaine de la garde → monstres/capitaine-de-la-garde.md
+- Capitaine hobgobelin → monstres/capitaine-hobgobelin.md
+- Capitaine pirate → monstres/capitaine-pirate.md
+- Cervidé géant → monstres/cervide-geant.md
+- Chacal → monstres/chacal.md
+- Chameau → monstres/chameau.md
+- Chat → monstres/chat.md
+- Chauve-souris géante → monstres/chauve-souris-geante.md
+- Chauve-souris → monstres/chauve-souris.md
+- Chef de bande → monstres/chef-de-bande.md
+- Chef gobelin → monstres/chef-gobelin.md
+- Chef gros-bras → monstres/chef-gros-bras.md
+- Cheval de selle → monstres/cheval-de-selle.md
+- Cheval de trait → monstres/cheval-de-trait.md
+- Chevalier → monstres/chevalier.md
+- Chèvre géante → monstres/chevre-geante.md
+- Chèvre → monstres/chevre.md
+- Chien du trépas → monstres/chien-du-trepas.md
+- Chien esquiveur → monstres/chien-esquiveur.md
+- Chimère → monstres/chimere.md
+- Chouette géante → monstres/chouette-geante.md
+- Chouette → monstres/chouette.md
+- Chtuul → monstres/chtuul.md
+- Cockatrice → monstres/cockatrice.md
+- Combattant gnoll → monstres/combattant-gnoll.md
+- Combattant gobelin → monstres/combattant-gobelin.md
+- Combattant gobelours → monstres/combattant-gobelours.md
+- Combattant hobgobelin → monstres/combattant-hobgobelin.md
+- Combattant kobold → monstres/combattant-kobold.md
+- Combattant sahuagin → monstres/combattant-sahuagin.md
+- Corbeau → monstres/corbeau.md
+- Couatl → monstres/couatl.md
+- Crabe géant → monstres/crabe-geant.md
+- Crabe → monstres/crabe.md
+- Crapaud géant → monstres/crapaud-geant.md
+- Criard → monstres/criard.md
+- Crocodile géant → monstres/crocodile-geant.md
+- Crocodile → monstres/crocodile.md
+- Demi-dragon → monstres/demi-dragon.md
+- Destrier squelette → monstres/destrier-squelette.md
+- Destrier → monstres/destrier.md
+- Déva → monstres/deva.md
+- Diable barbelé → monstres/diable-barbele.md
+- Diable barbu → monstres/diable-barbu.md
+- Diable cornu → monstres/diable-cornu.md
+- Diable des chaînes → monstres/diable-des-chaines.md
+- Diable gelé → monstres/diable-gele.md
+- Diable osseux → monstres/diable-osseux.md
+- Diablotin → monstres/diablotin.md
+- Diantrefosse → monstres/diantrefosse.md
+- Djinn → monstres/djinn.md
+- Doppelganger → monstres/doppelganger.md
+- Dragon blanc adulte → monstres/dragon-blanc-adulte.md
+- Dragon bleu adulte → monstres/dragon-bleu-adulte.md
+- Dragon d’airain adulte → monstres/dragon-dairain-adulte.md
+- Dragon d’argent adulte → monstres/dragon-dargent-adulte.md
+- Dragon de bronze adulte → monstres/dragon-de-bronze-adulte.md
+- Dragon de cuivre adulte → monstres/dragon-de-cuivre-adulte.md
+- Dragon d’or adulte → monstres/dragon-dor-adulte.md
+- Dragon noir adulte → monstres/dragon-noir-adulte.md
+- Dragon rouge adulte → monstres/dragon-rouge-adulte.md
+- Dragon vert adulte → monstres/dragon-vert-adulte.md
+- Dragonnet blanc → monstres/dragonnet-blanc.md
+- Dragonnet bleu → monstres/dragonnet-bleu.md
+- Dragonnet d’airain → monstres/dragonnet-dairain.md
+- Dragonnet d’argent → monstres/dragonnet-dargent.md
+- Dragonnet de bronze → monstres/dragonnet-de-bronze.md
+- Dragonnet de cuivre → monstres/dragonnet-de-cuivre.md
+- Dragonnet d’or → monstres/dragonnet-dor.md
+- Dragonnet noir → monstres/dragonnet-noir.md
+- Dragonnet rouge → monstres/dragonnet-rouge.md
+- Dragonnet vert → monstres/dragonnet-vert.md
+- Dretch → monstres/dretch.md
+- Drider → monstres/drider.md
+- Druide → monstres/druide.md
+- Dryade → monstres/dryade.md
+- Éclaireur → monstres/eclaireur.md
+- Éfrit → monstres/efrit.md
+- Élémentaire de la terre → monstres/elementaire-de-la-terre.md
+- Élémentaire de l’air → monstres/elementaire-de-lair.md
+- Élémentaire de l’eau → monstres/elementaire-de-leau.md
+- Élémentaire du feu → monstres/elementaire-du-feu.md
+- Éléphant → monstres/elephant.md
+- Enlaceur → monstres/enlaceur.md
+- Épaulard → monstres/epaulard.md
+- Épée volante → monstres/epee-volante.md
+- Érinye → monstres/erinye.md
+- Espion → monstres/espion.md
+- Esprit follet → monstres/esprit-follet.md
+- Ettercap → monstres/ettercap.md
+- Ettin → monstres/ettin.md
+- Familier de vampire → monstres/familier-de-vampire.md
+- Fanatique de secte → monstres/fanatique-de-secte.md
+- Fantassin → monstres/fantassin.md
+- Fantôme → monstres/fantome.md
+- Faucon de sang → monstres/faucon-de-sang.md
+- Faucon → monstres/faucon.md
+- Feu follet → monstres/feu-follet.md
+- Garde animé → monstres/garde-anime.md
+- Garde → monstres/garde.md
+- Gargouille → monstres/gargouille.md
+- Géant des collines → monstres/geant-des-collines.md
+- Géant des nuages → monstres/geant-des-nuages.md
+- Géant des pierres → monstres/geant-des-pierres.md
+- Géant des tempêtes → monstres/geant-des-tempetes.md
+- Géant du feu → monstres/geant-du-feu.md
+- Géant du givre → monstres/geant-du-givre.md
+- Glabrezu → monstres/glabrezu.md
+- Gladiateur → monstres/gladiateur.md
+- Golem d’argile → monstres/golem-dargile.md
+- Golem de chair → monstres/golem-de-chair.md
+- Golem de fer → monstres/golem-de-fer.md
+- Golem de pierre → monstres/golem-de-pierre.md
+- Gorgone → monstres/gorgone.md
+- Goule → monstres/goule.md
+- Grand cervidé → monstres/grand-cervide.md
+- Grand singe → monstres/grand-singe.md
+- Grenouille géante → monstres/grenouille-geante.md
+- Grenouille → monstres/grenouille.md
+- Grick → monstres/grick.md
+- Griffon → monstres/griffon.md
+- Gros-bras → monstres/gros-bras.md
+- Guenaude marine → monstres/guenaude-marine.md
+- Guenaude nocturne → monstres/guenaude-nocturne.md
+- Guenaude verte → monstres/guenaude-verte.md
+- Guêpe géante → monstres/guepe-geante.md
+- Harpie → monstres/harpie.md
+- Hezrou → monstres/hezrou.md
+- Hibours → monstres/hibours.md
+- Hippocampe géant → monstres/hippocampe-geant.md
+- Hippocampe → monstres/hippocampe.md
+- Hippogriffe → monstres/hippogriffe.md
+- Hippopotame → monstres/hippopotame.md
+- Homoncule → monstres/homoncule.md
+- Horriflamme → monstres/horriflamme.md
+- Hydre → monstres/hydre.md
+- Hyène géante → monstres/hyene-geante.md
+- Hyène → monstres/hyene.md
+- Incube → monstres/incube.md
+- Aboleth → monstres/index.md
+- Jeune dragon blanc → monstres/jeune-dragon-blanc.md
+- Jeune dragon bleu → monstres/jeune-dragon-bleu.md
+- Jeune dragon d’airain → monstres/jeune-dragon-dairain.md
+- Jeune dragon d’argent → monstres/jeune-dragon-dargent.md
+- Jeune dragon de bronze → monstres/jeune-dragon-de-bronze.md
+- Jeune dragon de cuivre → monstres/jeune-dragon-de-cuivre.md
+- Jeune dragon d’or → monstres/jeune-dragon-dor.md
+- Jeune dragon noir → monstres/jeune-dragon-noir.md
+- Jeune dragon rouge → monstres/jeune-dragon-rouge.md
+- Jeune dragon vert → monstres/jeune-dragon-vert.md
+- Lamie → monstres/lamie.md
+- Lémure → monstres/lemure.md
+- Lézard géant → monstres/lezard-geant.md
+- Lézard → monstres/lezard.md
+- Liche → monstres/liche.md
+- Licorne → monstres/licorne.md
+- Lion → monstres/lion.md
+- Loup arctique → monstres/loup-arctique.md
+- Loup-garou → monstres/loup-garou.md
+- Loup sanguinaire → monstres/loup-sanguinaire.md
+- Loup → monstres/loup.md
+- Mage → monstres/mage.md
+- Magmatique → monstres/magmatique.md
+- Mammouth → monstres/mammouth.md
+- Mante obscure → monstres/mante-obscure.md
+- Manteleur → monstres/manteleur.md
+- Manticore → monstres/manticore.md
+- Marilith → monstres/marilith.md
+- Méduse → monstres/meduse.md
+- Méphite gelé → monstres/mephite-gele.md
+- Méphite magmatique → monstres/mephite-magmatique.md
+- Méphite poussiéreux → monstres/mephite-poussiereux.md
+- Méphite vaporeux → monstres/mephite-vaporeux.md
+- Merrow → monstres/merrow.md
+- Mille-pattes géant → monstres/mille-pattes-geant.md
+- Mimique → monstres/mimique.md
+- Minotaure de Baphomet → monstres/minotaure-de-baphomet.md
+- Minotaure squelette → monstres/minotaure-squelette.md
+- Molosse infernal → monstres/molosse-infernal.md
+- Molosse → monstres/molosse.md
+- Momie auguste → monstres/momie-auguste.md
+- Momie → monstres/momie.md
+- Mule → monstres/mule.md
+- Naga corrupteur → monstres/naga-corrupteur.md
+- Naga gardien → monstres/naga-gardien.md
+- Nalfeshnie → monstres/nalfeshnie.md
+- Nécronte → monstres/necronte.md
+- Noble → monstres/noble.md
+- Ogre zombi → monstres/ogre-zombi.md
+- Ogre → monstres/ogre.md
+- Ombre → monstres/ombre.md
+- Oni → monstres/oni.md
+- Otyugh → monstres/otyugh.md
+- Ours brun → monstres/ours-brun.md
+- Ours-garou → monstres/ours-garou.md
+- Ours noir → monstres/ours-noir.md
+- Ours polaire → monstres/ours-polaire.md
+- Oxydeur → monstres/oxydeur.md
+- Panthère → monstres/panthere.md
+- Pégase → monstres/pegase.md
+- Petit cervidé → monstres/petit-cervide.md
+- Pieuvre géante → monstres/pieuvre-geante.md
+- Pieuvre → monstres/pieuvre.md
+- Piranha → monstres/piranha.md
+- Pirate → monstres/pirate.md
+- Planétar → monstres/planetar.md
+- Plésiosaure → monstres/plesiosaure.md
+- Poney → monstres/poney.md
+- Prêtre → monstres/pretre.md
+- Pseudodragon → monstres/pseudodragon.md
+- Ptéranodon → monstres/pteranodon.md
+- Quasit → monstres/quasit.md
+- Rakshasa → monstres/rakshasa.md
+- Rat-garou → monstres/rat-garou.md
+- Rat géant → monstres/rat-geant.md
+- Rat → monstres/rat.md
+- Remorhaz → monstres/remorhaz.md
+- Requin-chasseur → monstres/requin-chasseur.md
+- Requin de récif → monstres/requin-de-recif.md
+- Requin géant → monstres/requin-geant.md
+- Rhinocéros → monstres/rhinoceros.md
+- Roturier → monstres/roturier.md
+- Salamandre → monstres/salamandre.md
+- Sanglier-garou → monstres/sanglier-garou.md
+- Sanglier géant → monstres/sanglier-geant.md
+- Sanglier → monstres/sanglier.md
+- Satyre → monstres/satyre.md
+- Sbire gobelin → monstres/sbire-gobelin.md
+- Scarabée de feu géant → monstres/scarabee-de-feu-geant.md
+- Scorpion géant → monstres/scorpion-geant.md
+- Scorpion → monstres/scorpion.md
+- Sectateur → monstres/sectateur.md
+- Sentinelle azer → monstres/sentinelle-azer.md
+- Serpent constricteur géant → monstres/serpent-constricteur-geant.md
+- Serpent constricteur → monstres/serpent-constricteur.md
+- Serpent venimeux géant → monstres/serpent-venimeux-geant.md
+- Serpent venimeux → monstres/serpent-venimeux.md
+- Serpent volant → monstres/serpent-volant.md
+- Singe géant → monstres/singe-geant.md
+- Solar → monstres/solar.md
+- Soldat centaure → monstres/soldat-centaure.md
+- Spectre → monstres/spectre.md
+- Sphinx érudit → monstres/sphinx-erudit.md
+- Sphinx merveilleux → monstres/sphinx-merveilleux.md
+- Sphinx valeureux → monstres/sphinx-valeureux.md
+- Squelette → monstres/squelette.md
+- Strige → monstres/strige.md
+- Succube → monstres/succube.md
+- Sylvanien → monstres/sylvanien.md
+- Tapis étrangleur → monstres/tapis-etrangleur.md
+- Tertre errant → monstres/tertre-errant.md
+- Thallophyte violette → monstres/thallophyte-violette.md
+- Tigre à dents de sabre → monstres/tigre-a-dents-de-sabre.md
+- Tigre-garou → monstres/tigre-garou.md
+- Tigre → monstres/tigre.md
+- Tirailleur thalasséen → monstres/tirailleur-thalasseen.md
+- Torve → monstres/torve.md
+- Traqueur gobelours → monstres/traqueur-gobelours.md
+- Traqueur invisible → monstres/traqueur-invisible.md
+- Tricératops → monstres/triceratops.md
+- Troll → monstres/troll.md
+- Tyrannosaure → monstres/tyrannosaure.md
+- Vampire → monstres/vampire.md
+- Vampirien → monstres/vampirien.md
+- Vautour géant → monstres/vautour-geant.md
+- Vautour → monstres/vautour.md
+- Vétéran → monstres/veteran.md
+- Vouivre → monstres/vouivre.md
+- Vrock → monstres/vrock.md
+- Worg → monstres/worg.md
+- Xorn → monstres/xorn.md
+- Zombi → monstres/zombi.md

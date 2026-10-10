@@ -1,0 +1,14 @@
+<<<FICHE>>>
+id: objets/encensoir-de-controle-des-elementaires-de-lair
+nom: Encensoir de contrôle des élémentaires de l’air
+type: objet
+edition: SRD 5.2.1
+mots_cles: objet, Objet merveilleux
+<<<CONTENU>>>
+
+## Encensoir de contrôle des élémentaires de l’air
+
+Objet merveilleux, rare
+
+Entreprendre l’action Magie tout en faisant osciller cet encensoir vous permet de convoquer un . L’élémentaire apparaît en un espace inoccupé élémentaire aussi près que possible de l’encensoir, comprend les de l’air mêmes langues que vous, obéit à vos ordres et joue son tour juste après vous à votre rang d’initiative. Il disparaît au bout de 1 heure ; plus tôt s’il meurt ou si vous le révoquez par une action Bonus. L’encensoir ne peut plus être utilisé de cette manière avant l’aube suivante. Épée acérée Arme (cimeterre, coutille, épée à deux mains ou épée Lorsque vous attaquez un objet avec cette arme longue), très rare (Harmonisation requise) magique et que l’attaque touche, vos dés de dégâts d’arme contre cette cible sont maximisés. Lorsque vous attaquez une créature avec cette arme et obtenez un 20 sur le d20 du jet d’attaque, cette cible subit 14 dégâts tranchants supplémentaires et reçoit 1 niveau d’Épuisement. Épée dansante Arme (cimeterre, épée à deux mains, épée courte, épée Par une action Bonus, vous lancez cette arme magique longue ou rapière), très rare (Harmonisation requise) en l’air. Ce faisant, l’arme prend son envol avec le vol stationnaire et s’élance sur une distance maximale de 9 m en attaquant la créature de votre choix dans un rayon de 1,50 m d’elle. L’arme utilise votre jet d’attaque et ajoute votre modificateur de caractéristique aux jets de dégâts. Tant que l’épée est en vol stationnaire, vous pouvez par une action Bonus la faire voler sur une distance maximale de 9 m vers un autre endroit situé dans un rayon de 9 m de vous. Dans le cadre de la même action Bonus, vous pouvez ordonner à l’arme d’attaquer une créature dans un rayon de 1,50 m d’elle. Après avoir attaqué ainsi une quatrième fois, l’arme file jusqu’à vous en tentant de revenir dans votre main. Si vous n’avez aucune main libre, l’arme tombe au sol dans votre espace. En l’absence de chemin dégagé jusqu’à vous, l’arme se rapproche au maximum puis tombe au sol. Elle cesse également son vol stationnaire si vous l’empoignez ou vous retrouvez à plus de 9 m d’elle. Épée mordante Arme (cimeterre, coutille, épée à deux mains, épée courte, épée longue ou rapière), rare (Harmonisation Lorsque vous touchez une créature avec une attaque requise) utilisant cette arme magique, la cible subit 2d6 dégâts nécrotiques supplémentaires et doit réussir un jet de sauvegarde de Constitution DD 15 sous peine de ne plus pouvoir récupérer de points de vie pendant 1 heure. La cible réitère le JS à la fin de chacun de ses tours et met un terme à l’effet sur elle-même en cas de réussite.
+<<<FIN>>>

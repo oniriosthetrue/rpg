@@ -1,0 +1,349 @@
+---
+id: index/sorts
+nom: Index des sorts
+type: index
+edition: SRD 5.2.1
+mots_cles: index, sorts
+---
+
+# Index des sorts
+
+- Agrandissement/rapetissement → sorts/agrandissement-rapetissement.md
+- Aide → sorts/aide.md
+- Alarme → sorts/alarme.md
+- Aliénation → sorts/alienation.md
+- Allié planaire → sorts/allie-planaire.md
+- Amitié avec les animaux → sorts/amitie-avec-les-animaux.md
+- Amélioration de caractéristique → sorts/amelioration-de-caracteristique.md
+- Animation des morts → sorts/animation-des-morts.md
+- Animation des objets → sorts/animation-des-objets.md
+- Antidétection → sorts/antidetection.md
+- Apaisement des émotions → sorts/apaisement-des-emotions.md
+- Apparence trompeuse → sorts/apparence-trompeuse.md
+- Appel de destrier → sorts/appel-de-destrier.md
+- Appel de familier → sorts/appel-de-familier.md
+- Appel de la foudre → sorts/appel-de-la-foudre.md
+- Arme magique → sorts/arme-magique.md
+- Arme spirituelle → sorts/arme-spirituelle.md
+- Armure du mage → sorts/armure-du-mage.md
+- Arrêt du temps → sorts/arret-du-temps.md
+- Aspersion acide → sorts/aspersion-acide.md
+- Assassin imaginaire → sorts/assassin-imaginaire.md
+- Assistance → sorts/assistance.md
+- Augure → sorts/augure.md
+- Aura de vie → sorts/aura-de-vie.md
+- Aura magique de l’arcaniste → sorts/aura-magique-de-larcaniste.md
+- Aura sacrée → sorts/aura-sacree.md
+- Aversion/attirance → sorts/aversion-attirance.md
+- Bagou → sorts/bagou.md
+- Baies nourricières → sorts/baies-nourricieres.md
+- Bannissement → sorts/bannissement.md
+- Barrière de lames → sorts/barriere-de-lames.md
+- Blessure → sorts/blessure.md
+- Bouche magique → sorts/bouche-magique.md
+- Bouclier → sorts/bouclier.md
+- Bouclier de feu → sorts/bouclier-de-feu.md
+- Bouclier de la foi → sorts/bouclier-de-la-foi.md
+- Bouffée de poison → sorts/bouffee-de-poison.md
+- Boule de feu → sorts/boule-de-feu.md
+- Boule de feu à retardement → sorts/boule-de-feu-a-retardement.md
+- Bourrasque → sorts/bourrasque.md
+- Brume mortelle → sorts/brume-mortelle.md
+- Bénédiction → sorts/benediction.md
+- Cage de force → sorts/cage-de-force.md
+- Caresse du vampire → sorts/caresse-du-vampire.md
+- Cercle de mort → sorts/cercle-de-mort.md
+- Cercle de téléportation → sorts/cercle-de-teleportation.md
+- Cercle magique → sorts/cercle-magique.md
+- Champ antimagie → sorts/champ-antimagie.md
+- Changement de forme → sorts/changement-de-forme.md
+- Changement de plan → sorts/changement-de-plan.md
+- Charme-monstre → sorts/charme-monstre.md
+- Charme-personne → sorts/charme-personne.md
+- Chaîne d’éclairs → sorts/chaine-declairs.md
+- Chien de garde → sorts/chien-de-garde.md
+- Châtiment de fournaise → sorts/chatiment-de-fournaise.md
+- Châtiment de révélation → sorts/chatiment-de-revelation.md
+- Châtiment divin → sorts/chatiment-divin.md
+- Clairvoyance → sorts/clairvoyance.md
+- Clignotement → sorts/clignotement.md
+- Clone → sorts/clone.md
+- Coffre secret → sorts/coffre-secret.md
+- Colonne de flamme → sorts/colonne-de-flamme.md
+- Communication avec les animaux → sorts/communication-avec-les-animaux.md
+- Communication avec les morts → sorts/communication-avec-les-morts.md
+- Communication avec les plantes → sorts/communication-avec-les-plantes.md
+- Communication à distance → sorts/communication-a-distance.md
+- Communion → sorts/communion.md
+- Communion avec la nature → sorts/communion-avec-la-nature.md
+- Compréhension des langues → sorts/comprehension-des-langues.md
+- Compulsion → sorts/compulsion.md
+- Confusion → sorts/confusion.md
+- Contact avec les plans → sorts/contact-avec-les-plans.md
+- Contact glacial → sorts/contact-glacial.md
+- Contagion → sorts/contagion.md
+- Contamination → sorts/contamination.md
+- Contresort → sorts/contresort.md
+- Contrôle de l’eau → sorts/controle-de-leau.md
+- Contrôle du climat → sorts/controle-du-climat.md
+- Convocation de dragon → sorts/convocation-de-dragon.md
+- Convocations instantanées → sorts/convocations-instantanees.md
+- Coquille antivie → sorts/coquille-antivie.md
+- Corde enchantée → sorts/corde-enchantee.md
+- Couleurs dansantes → sorts/couleurs-dansantes.md
+- Coup au but → sorts/coup-au-but.md
+- Couteau de glace → sorts/couteau-de-glace.md
+- Croissance d’épines → sorts/croissance-depines.md
+- Croissance végétale → sorts/croissance-vegetale.md
+- Crosse des druides → sorts/crosse-des-druides.md
+- Création → sorts/creation.md
+- Création de mort-vivant → sorts/creation-de-mort-vivant.md
+- Création de nourriture et d’eau → sorts/creation-de-nourriture-et-deau.md
+- Création ou destruction d’eau → sorts/creation-ou-destruction-deau.md
+- Cécité/surdité → sorts/cecite-surdite.md
+- Cône de froid → sorts/cone-de-froid.md
+- Danse irrésistible → sorts/danse-irresistible.md
+- Demi-plan → sorts/demi-plan.md
+- Discours captivant → sorts/discours-captivant.md
+- Disque flottant → sorts/disque-flottant.md
+- Dissimulation suprême → sorts/dissimulation-supreme.md
+- Dissipation de la magie → sorts/dissipation-de-la-magie.md
+- Dissipation du mal et du bien → sorts/dissipation-du-mal-et-du-bien.md
+- Divination → sorts/divination.md
+- Doigt de mort → sorts/doigt-de-mort.md
+- Domination de bête → sorts/domination-de-bete.md
+- Domination de monstre → sorts/domination-de-monstre.md
+- Domination de personne → sorts/domination-de-personne.md
+- Don des langues → sorts/don-des-langues.md
+- Double illusoire → sorts/double-illusoire.md
+- Doux repos → sorts/doux-repos.md
+- Druidisme → sorts/druidisme.md
+- Déblocage → sorts/deblocage.md
+- Décharge occulte → sorts/decharge-occulte.md
+- Dédale → sorts/dedale.md
+- Déguisement → sorts/deguisement.md
+- Délivrance des malédictions → sorts/delivrance-des-maledictions.md
+- Désintégration → sorts/desintegration.md
+- Détection de la magie → sorts/detection-de-la-magie.md
+- Détection de l’invisibilité → sorts/detection-de-linvisibilite.md
+- Détection des pensées → sorts/detection-des-pensees.md
+- Détection des pièges → sorts/detection-des-pieges.md
+- Détection du mal et du bien → sorts/detection-du-mal-et-du-bien.md
+- Détection du poison et des maladies → sorts/detection-du-poison-et-des-maladies.md
+- Embruns prismatiques → sorts/embruns-prismatiques.md
+- Emprisonnement → sorts/emprisonnement.md
+- Enchevêtrement → sorts/enchevetrement.md
+- Ennemi subconscient → sorts/ennemi-subconscient.md
+- Entrave planaire → sorts/entrave-planaire.md
+- Esprit impénétrable → sorts/esprit-impenetrable.md
+- Esprits gardiens → sorts/esprits-gardiens.md
+- Fabrication → sorts/fabrication.md
+- Faveur divine → sorts/faveur-divine.md
+- Façonnage de la pierre → sorts/faconnage-de-la-pierre.md
+- Festin des héros → sorts/festin-des-heros.md
+- Feuille morte → sorts/feuille-morte.md
+- Flamme sacrée → sorts/flamme-sacree.md
+- Flamme éternelle → sorts/flamme-eternelle.md
+- Flammes → sorts/flammes.md
+- Flou → sorts/flou.md
+- Flèche acide → sorts/fleche-acide.md
+- Fléau d’insectes → sorts/fleau-dinsectes.md
+- Flétrissement → sorts/fletrissement.md
+- Force fantasmagorique → sorts/force-fantasmagorique.md
+- Forme gazeuse → sorts/forme-gazeuse.md
+- Forme éthérée → sorts/forme-etheree.md
+- Fou rire → sorts/fou-rire.md
+- Foulée brumeuse → sorts/foulee-brumeuse.md
+- Fracassement → sorts/fracassement.md
+- Frappe piégeuse → sorts/frappe-piegeuse.md
+- Fusion dans la pierre → sorts/fusion-dans-la-pierre.md
+- Gardien de la foi → sorts/gardien-de-la-foi.md
+- Glissement de terrain → sorts/glissement-de-terrain.md
+- Globe d’invulnérabilité → sorts/globe-dinvulnerabilite.md
+- Glyphe de garde → sorts/glyphe-de-garde.md
+- Graisse → sorts/graisse.md
+- Grande foulée → sorts/grande-foulee.md
+- Guérison → sorts/guerison.md
+- Guérison de groupe → sorts/guerison-de-groupe.md
+- Hâte → sorts/hate.md
+- Héroïsme → sorts/heroisme.md
+- Identification → sorts/identification.md
+- Illusion mineure → sorts/illusion-mineure.md
+- Illusion programmée → sorts/illusion-programmee.md
+- Image majeure → sorts/image-majeure.md
+- Image miroir → sorts/image-miroir.md
+- Image projetée → sorts/image-projetee.md
+- Image silencieuse → sorts/image-silencieuse.md
+- Immobilisation de monstre → sorts/immobilisation-de-monstre.md
+- Immobilisation de personne → sorts/immobilisation-de-personne.md
+- Imprécation → sorts/imprecation.md
+- Injonction → sorts/injonction.md
+- Insecte géant → sorts/insecte-geant.md
+- Interdiction → sorts/interdiction.md
+- Inversion de la gravité → sorts/inversion-de-la-gravite.md
+- Invisibilité → sorts/invisibilite.md
+- Invisibilité suprême → sorts/invisibilite-supreme.md
+- Invocation de céleste → sorts/invocation-de-celeste.md
+- Invocation de fée → sorts/invocation-de-fee.md
+- Invocation d’animaux → sorts/invocation-danimaux.md
+- Invocation d’élémentaire → sorts/invocation-delementaire.md
+- Invocation d’élémentaires mineurs → sorts/invocation-delementaires-mineurs.md
+- Invocation d’êtres sylvestres → sorts/invocation-detres-sylvestres.md
+- Lame de feu → sorts/lame-de-feu.md
+- Lenteur → sorts/lenteur.md
+- Liberté de mouvement → sorts/liberte-de-mouvement.md
+- Lien de protection → sorts/lien-de-protection.md
+- Lien télépathique → sorts/lien-telepathique.md
+- Localisation de créature → sorts/localisation-de-creature.md
+- Localisation d’animaux ou de plantes → sorts/localisation-danimaux-ou-de-plantes.md
+- Localisation d’objet → sorts/localisation-dobjet.md
+- Lueur d’espoir → sorts/lueur-despoir.md
+- Lueurs féeriques → sorts/lueurs-feeriques.md
+- Lumière → sorts/lumiere.md
+- Lumière du jour → sorts/lumiere-du-jour.md
+- Lumières dansantes → sorts/lumieres-dansantes.md
+- Lévitation → sorts/levitation.md
+- Main arcanique → sorts/main-arcanique.md
+- Main du mage → sorts/main-du-mage.md
+- Mains brûlantes → sorts/mains-brulantes.md
+- Malédiction → sorts/malediction.md
+- Maléfice → sorts/malefice.md
+- Manoir somptueux → sorts/manoir-somptueux.md
+- Marche sur l’onde → sorts/marche-sur-londe.md
+- Marque du chasseur → sorts/marque-du-chasseur.md
+- Mauvais œil → sorts/mauvais-il.md
+- Message → sorts/message.md
+- Messager animal → sorts/messager-animal.md
+- Mirage → sorts/mirage.md
+- Modification de mémoire → sorts/modification-de-memoire.md
+- Modification d’apparence → sorts/modification-dapparence.md
+- Monture fantôme → sorts/monture-fantome.md
+- Moquerie cruelle → sorts/moquerie-cruelle.md
+- Mot de guérison → sorts/mot-de-guerison.md
+- Mot de guérison de groupe → sorts/mot-de-guerison-de-groupe.md
+- Mot de pouvoir guérisseur → sorts/mot-de-pouvoir-guerisseur.md
+- Mot de pouvoir mortel → sorts/mot-de-pouvoir-mortel.md
+- Mot de pouvoir étourdissant → sorts/mot-de-pouvoir-etourdissant.md
+- Mot de retour → sorts/mot-de-retour.md
+- Motif hypnotique → sorts/motif-hypnotique.md
+- Mur de feu → sorts/mur-de-feu.md
+- Mur de force → sorts/mur-de-force.md
+- Mur de glace → sorts/mur-de-glace.md
+- Mur de pierre → sorts/mur-de-pierre.md
+- Mur de vent → sorts/mur-de-vent.md
+- Mur d’épines → sorts/mur-depines.md
+- Mur prismatique → sorts/mur-prismatique.md
+- Murmures dissonants → sorts/murmures-dissonants.md
+- Mythes et légendes → sorts/mythes-et-legendes.md
+- Métal brûlant → sorts/metal-brulant.md
+- Métamorphose → sorts/metamorphose.md
+- Métamorphose animale → sorts/metamorphose-animale.md
+- Métamorphose suprême → sorts/metamorphose-supreme.md
+- Nappe de brouillard → sorts/nappe-de-brouillard.md
+- Nuage incendiaire → sorts/nuage-incendiaire.md
+- Nuage nauséabond → sorts/nuage-nauseabond.md
+- Nuée de météores → sorts/nuee-de-meteores.md
+- Orbe chromatique → sorts/orbe-chromatique.md
+- Orientation → sorts/orientation.md
+- Parole divine → sorts/parole-divine.md
+- Passage par les arbres → sorts/passage-par-les-arbres.md
+- Passage sans trace → sorts/passage-sans-trace.md
+- Passe-muraille → sorts/passe-muraille.md
+- Pattes d’araignée → sorts/pattes-daraignee.md
+- Peau de pierre → sorts/peau-de-pierre.md
+- Peau d’écorce → sorts/peau-decorce.md
+- Petite hutte → sorts/petite-hutte.md
+- Poigne électrique → sorts/poigne-electrique.md
+- Portail → sorts/portail.md
+- Porte dimensionnelle → sorts/porte-dimensionnelle.md
+- Possession → sorts/possession.md
+- Poussière d’étoile → sorts/poussiere-detoile.md
+- Prestidigitation → sorts/prestidigitation.md
+- Prière de guérison → sorts/priere-de-guerison.md
+- Projectile magique → sorts/projectile-magique.md
+- Projection astrale → sorts/projection-astrale.md
+- Protection contre la mort → sorts/protection-contre-la-mort.md
+- Protection contre le mal et le bien → sorts/protection-contre-le-mal-et-le-bien.md
+- Protection contre le poison → sorts/protection-contre-le-poison.md
+- Protection contre l’énergie → sorts/protection-contre-lenergie.md
+- Protections et sceaux → sorts/protections-et-sceaux.md
+- Prémonition → sorts/premonition.md
+- Préméditation → sorts/premeditation.md
+- Purification de la nourriture et de l’eau → sorts/purification-de-la-nourriture-et-de-leau.md
+- Pétrification → sorts/petrification.md
+- Quête → sorts/quete.md
+- Rappel à la vie → sorts/rappel-a-la-vie.md
+- Rayon affaiblissant → sorts/rayon-affaiblissant.md
+- Rayon ardent → sorts/rayon-ardent.md
+- Rayon de givre → sorts/rayon-de-givre.md
+- Rayon de lune → sorts/rayon-de-lune.md
+- Rayon de soleil → sorts/rayon-de-soleil.md
+- Rayon empoisonné → sorts/rayon-empoisonne.md
+- Rayon traçant → sorts/rayon-tracant.md
+- Repli expéditif → sorts/repli-expeditif.md
+- Représailles infernales → sorts/represailles-infernales.md
+- Respiration aquatique → sorts/respiration-aquatique.md
+- Restauration partielle → sorts/restauration-partielle.md
+- Restauration suprême → sorts/restauration-supreme.md
+- Retour à la vie → sorts/retour-a-la-vie.md
+- Régénération → sorts/regeneration.md
+- Réincarnation → sorts/reincarnation.md
+- Réparation → sorts/reparation.md
+- Résistance → sorts/resistance.md
+- Résurrection → sorts/resurrection.md
+- Résurrection suprême → sorts/resurrection-supreme.md
+- Sanctification → sorts/sanctification.md
+- Sanctuaire → sorts/sanctuaire.md
+- Sanctuaire privé → sorts/sanctuaire-prive.md
+- Saut → sorts/saut.md
+- Scrutation → sorts/scrutation.md
+- Serviteur invisible → sorts/serviteur-invisible.md
+- Silence → sorts/silence.md
+- Simulacre → sorts/simulacre.md
+- Simulacre de vie → sorts/simulacre-de-vie.md
+- Soins → sorts/soins.md
+- Soins de groupe → sorts/soins-de-groupe.md
+- Sommeil → sorts/sommeil.md
+- Songe → sorts/songe.md
+- Souffle du dragon → sorts/souffle-du-dragon.md
+- Souhait → sorts/souhait.md
+- Sphère de feu → sorts/sphere-de-feu.md
+- Sphère de vitriol → sorts/sphere-de-vitriol.md
+- Sphère glacée → sorts/sphere-glacee.md
+- Sphère résiliente → sorts/sphere-resiliente.md
+- Stabilisation → sorts/stabilisation.md
+- Suggestion → sorts/suggestion.md
+- Suggestion de groupe → sorts/suggestion-de-groupe.md
+- Symbole → sorts/symbole.md
+- Tempête de feu → sorts/tempete-de-feu.md
+- Tempête de grêle → sorts/tempete-de-grele.md
+- Tempête de neige → sorts/tempete-de-neige.md
+- Tempête vengeresse → sorts/tempete-vengeresse.md
+- Tentacules noirs → sorts/tentacules-noirs.md
+- Terrain hallucinatoire → sorts/terrain-hallucinatoire.md
+- Terreur → sorts/terreur.md
+- Texte illusoire → sorts/texte-illusoire.md
+- Thaumaturgie → sorts/thaumaturgie.md
+- Toile d’araignée → sorts/toile-daraignee.md
+- Trait de feu → sorts/trait-de-feu.md
+- Tremblement de terre → sorts/tremblement-de-terre.md
+- Tsunami → sorts/tsunami.md
+- Télékinésie → sorts/telekinesie.md
+- Téléportation → sorts/teleportation.md
+- Ténèbres → sorts/tenebres.md
+- Vague tonnante → sorts/vague-tonnante.md
+- Vent divin → sorts/vent-divin.md
+- Verrou magique → sorts/verrou-magique.md
+- Vision dans le noir → sorts/vision-dans-le-noir.md
+- Vision suprême → sorts/vision-supreme.md
+- Voie végétale → sorts/voie-vegetale.md
+- Vol → sorts/vol.md
+- Zone de vérité → sorts/zone-de-verite.md
+- Éclair → sorts/eclair.md
+- Éclat du soleil → sorts/eclat-du-soleil.md
+- Élémentalisme → sorts/elementalisme.md
+- Épine mentale → sorts/epine-mentale.md
+- Épée arcanique → sorts/epee-arcanique.md
+- Éruption ensorcelée → sorts/eruption-ensorcelee.md
+- Éveil → sorts/eveil.md
+- Œil du mage → sorts/il-du-mage.md
