@@ -308,6 +308,46 @@ def jet_joueur(
     return enveloppe(res)
 
 
+@router.post("/api/combat/{id}/degats-auto")
+def degats_auto(
+    id: str,
+    body: dict[str, Any] = Body(...),
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict[str, Any]:
+    """Le serveur lance les dés d'un effet qui **touche automatiquement** (pas de
+    jet d'attaque) : `projectile magique`, `coup au but`, dégâts de zone, etc.
+
+    Corps : `{cible, des, mod?, nb_fois?}`. `des` = expression des dés (ex.
+    « 1d4+1 ») ; `nb_fois` = nombre de lancers (ex. 3 projectiles) ; `mod` =
+    modificateur ajouté une fois au total. Le LLM ne calcule jamais les dégâts.
+    """
+    if (err := autorise(x_api_key)) is not None:
+        return err
+    if (err := _valider_id(id)) is not None:
+        return err
+    r, err = _charger(id)
+    if err:
+        return err
+    cible = r.combattant(str(body.get("cible", "")))  # type: ignore[union-attr]
+    if cible is None:
+        return enveloppe({"ok": False, "type": "erreur", "erreur": "Cible inconnue."})
+    des = str(body.get("des", "")).strip()
+    if not des:
+        return enveloppe({"ok": False, "type": "erreur", "erreur": "« des » (ex. « 1d4+1 ») requis."})
+    try:
+        mod = int(body.get("mod", 0) or 0)
+        nb_fois = int(body.get("nb_fois", 1) or 1)
+    except (TypeError, ValueError):
+        return enveloppe({"ok": False, "type": "erreur", "erreur": "« mod » / « nb_fois » invalides."})
+
+    res = combat.resoudre_degats_auto(cible, des, mod=mod, nb_fois=nb_fois, rng=random.Random())
+    if res.get("ok") and cible.camp == "pj" and res["degats"] > 0:
+        _repercuter_pj(cible.nom, "degats", res["degats"])
+    if res.get("ok"):
+        _sauvegarder(r)  # type: ignore[arg-type]
+    return enveloppe(res)
+
+
 @router.post("/api/combat/{id}/tour-suivant")
 def tour_suivant(
     id: str,

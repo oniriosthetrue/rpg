@@ -112,6 +112,48 @@ class TestAttaque(unittest.TestCase):
         self.assertTrue(res["hors_combat"])
 
 
+class TestDegatsAuto(unittest.TestCase):
+    """Effets qui touchent automatiquement (projectile magique, etc.) : le serveur
+    lance les dés, sans jet d'attaque ni CA."""
+
+    def test_projectile_magique_3x1d4_plus_1(self):
+        cible = _mon(pv=16, ca=30)  # CA ignorée : auto-touché
+        res = combat.resoudre_degats_auto(cible, "1d4", mod=1, nb_fois=3, rng=random.Random(3))
+        self.assertTrue(res["ok"])
+        self.assertEqual(res["type"], "degats_auto")
+        self.assertEqual(len(res["des_lances"]), 3)
+        # 3×[1,4] + 1 => [4, 13]
+        self.assertGreaterEqual(res["degats"], 3 * 1 + 1)
+        self.assertLessEqual(res["degats"], 3 * 4 + 1)
+        self.assertEqual(cible.pv, 16 - res["degats"])
+
+    def test_des_avec_modificateur_statique(self):
+        # « 1d4+1 » en un seul lancer = 1d4 + 1 (le +1 du dé s'ajoute une fois).
+        cible = _mon(pv=16)
+        res = combat.resoudre_degats_auto(cible, "1d4+1", rng=random.Random(5))
+        self.assertGreaterEqual(res["degats"], 2)
+        self.assertLessEqual(res["degats"], 5)
+
+    def test_pv_ne_descend_jamais_sous_zero(self):
+        cible = _mon(pv=2)
+        res = combat.resoudre_degats_auto(cible, "1d100", mod=50, rng=random.Random(1))
+        self.assertEqual(cible.pv, 0)
+        self.assertTrue(res["hors_combat"])
+
+    def test_expression_invalide(self):
+        cible = _mon(pv=10)
+        res = combat.resoudre_degats_auto(cible, "pas_des_des", rng=random.Random(1))
+        self.assertFalse(res["ok"])
+        self.assertEqual(cible.pv, 10)  # aucune modification
+
+    def test_reproductible_seed(self):
+        def tirage(seed):
+            return combat.resoudre_degats_auto(
+                _mon(pv=50), "1d4", mod=1, nb_fois=3, rng=random.Random(seed)
+            )["degats"]
+        self.assertEqual(tirage(11), tirage(11))
+
+
 class TestEtat(unittest.TestCase):
     def test_degats_et_soins_plafonds(self):
         c = _pj(pv=10)
