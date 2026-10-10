@@ -12,6 +12,7 @@ type Reponse = {
   etape?: string;
   question?: string;
   options?: string[];
+  limites?: Record<string, number> | null;
   progression?: string;
   avertissements?: string[];
   message?: string;
@@ -37,6 +38,24 @@ export default function CreationWizard({
   // voit qu'une, tire le reste au hasard et passe à l'étape suivante).
   const [selection, setSelection] = useState<string[]>([]);
   const multi = !!q && (q.etape === "competences" || q.etape === "sorts");
+
+  // Groupe d'une option pour les limites : « total » pour les compétences,
+  // « mineur » / « 1er niveau » pour les sorts (selon le préfixe de l'option).
+  const groupeDe = (o: string): string => {
+    if (q?.etape === "sorts") {
+      if (o.startsWith("[mineur]")) return "mineur";
+      if (o.startsWith("[1er niveau]")) return "1er niveau";
+    }
+    return "total";
+  };
+  const limiteDe = (groupe: string): number | undefined => q?.limites?.[groupe];
+  const compteGroupe = (groupe: string): number =>
+    selection.filter((o) => groupeDe(o) === groupe).length;
+  // Peut-on ajouter cette option sans dépasser la limite de son groupe ?
+  const peutAjouter = (o: string): boolean => {
+    const lim = limiteDe(groupeDe(o));
+    return lim === undefined || compteGroupe(groupeDe(o)) < lim;
+  };
 
   const demarrer = useCallback(async () => {
     setEnCours(true);
@@ -168,17 +187,19 @@ export default function CreationWizard({
         <div className="flex flex-wrap gap-1.5">
           {q.options.slice(0, 40).map((o) => {
             const active = selection.includes(o);
+            const bloque = multi && !active && !peutAjouter(o);
             return (
               <button
                 key={o}
                 onClick={() =>
                   multi
                     ? setSelection((s) =>
-                        s.includes(o) ? s.filter((x) => x !== o) : [...s, o],
+                        s.includes(o) ? s.filter((x) => x !== o) : peutAjouter(o) ? [...s, o] : s,
                       )
                     : repondre(o)
                 }
-                disabled={enCours}
+                disabled={enCours || bloque}
+                title={bloque ? "Limite atteinte pour ce groupe" : undefined}
                 className={`rounded px-2 py-1 text-xs disabled:opacity-40 ${
                   active
                     ? "bg-or text-encre font-semibold"
@@ -193,18 +214,45 @@ export default function CreationWizard({
       )}
 
       {multi && (
-        <div className="flex items-center gap-2 text-xs">
-          <button
-            onClick={() => selection.length && repondre(selection.join(", "))}
-            disabled={enCours || selection.length === 0}
-            className="rounded-lg bg-or/80 hover:bg-or text-encre font-semibold px-3 py-1 disabled:opacity-40"
-          >
-            Valider ({selection.length})
-          </button>
-          <span className="text-parchemin/50">
-            Sélectionne {q?.etape === "sorts" ? "tes sorts" : "tes compétences"},
-            puis Valider. Le reste sera tiré au hasard.
-          </span>
+        <div className="flex flex-col gap-1 text-xs">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {q?.etape === "sorts" ? (
+              <>
+                <span className="text-parchemin/70">
+                  Sorts mineurs :{" "}
+                  <span className="font-semibold text-or">
+                    {compteGroupe("mineur")}/{limiteDe("mineur") ?? "?"}
+                  </span>
+                </span>
+                <span className="text-parchemin/70">
+                  1er niveau :{" "}
+                  <span className="font-semibold text-or">
+                    {compteGroupe("1er niveau")}/{limiteDe("1er niveau") ?? "?"}
+                  </span>
+                </span>
+              </>
+            ) : (
+              <span className="text-parchemin/70">
+                Compétences :{" "}
+                <span className="font-semibold text-or">
+                  {selection.length}/{limiteDe("total") ?? "?"}
+                </span>
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => selection.length && repondre(selection.join(", "))}
+              disabled={enCours || selection.length === 0}
+              className="rounded-lg bg-or/80 hover:bg-or text-encre font-semibold px-3 py-1 disabled:opacity-40"
+            >
+              Valider ({selection.length})
+            </button>
+            <span className="text-parchemin/50">
+              Sélectionne {q?.etape === "sorts" ? "tes sorts" : "tes compétences"},
+              puis Valider. Le reste sera tiré au hasard.
+            </span>
+          </div>
         </div>
       )}
 

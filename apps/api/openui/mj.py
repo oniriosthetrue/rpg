@@ -757,6 +757,27 @@ def _options(etape: str, etat: dict[str, Any]) -> list[str]:
     return []
 
 
+def _limites(etape: str, etat: dict[str, Any]) -> dict[str, int] | None:
+    """Nombre max de choix autorisés pour une étape à sélection multiple.
+
+    - « competences » : ``{"total": nb_competences}``.
+    - « sorts » : ``{"mineur": nb_cantrips, "1er niveau": nb_sorts_1}`` (les
+      options sont préfixées ``[mineur]`` / ``[1er niveau]`` ; la limite
+      s'applique par groupe). ``None`` sinon (étape sans plafond).
+    """
+    donnees = _charger()
+    info = donnees["classes"].get(etat.get("classe", ""), {})
+    if etape == "competences":
+        nb = int(info.get("nb_competences") or 0)
+        return {"total": nb} if nb > 0 else None
+    if etape == "sorts":
+        return {
+            "mineur": int(info.get("nb_cantrips") or 0) or 2,
+            "1er niveau": int(info.get("nb_sorts_1") or 0) or 2,
+        }
+    return None
+
+
 def _premiere_non_remplie(etat: dict[str, Any]) -> str | None:
     for etape in ETAPES:
         # L'étape « sorts » ne concerne que les lanceurs d'sorts : on la saute
@@ -792,6 +813,7 @@ def _suivant(session: dict[str, Any], avertis: list[str] | None = None) -> dict[
         "etape": etape,
         "question": _QUESTIONS[etape],
         "options": _options(etape, etat),
+        "limites": _limites(etape, etat),
         "progression": f"{ETAPES.index(etape) + 1}/{len(ETAPES)}",
         "avertissements": avertis or [],
     }
