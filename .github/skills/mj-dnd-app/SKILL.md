@@ -31,6 +31,14 @@ description: >-
   Mais **jamais** la stack LLM.
 - **Le LLM ne calcule jamais rien** (règle d'or) : tout ce qui est chiffré passe par un outil
   qui renvoie du JSON ; tout ce qui est factuel vient du RAG avec citation.
+- **Le joueur (PJ) lance TOUS ses propres dés** (règle combat) : d20 d'attaque, sauvegardes,
+  ET dégâts — y compris les dégâts des sorts à coup automatique (projectile magique, etc.).
+  Le MJ ne lance jamais un dé pour le PJ, n'estime jamais un total, ne résout jamais une
+  action du PJ lui-même : il demande le jet, s'arrête, puis enregistre la valeur annoncée
+  (`enregistrer_le_jet_du_joueur`, ou `appliquer_au_combat(action="degats", valeur=<total>)`).
+  Le serveur ne lance que les dés des MONSTRES (`lancer_le_jet_d_un_monstre`).
+  Bonus d'attaque/DD de sort lus de la fiche (`## Attaque de sort`, pré-calculé dans
+  `models.table_des_jets()` via `extract.CARAC_INCANTATION`), jamais recalculés par le MJ.
 - **Ne pas `docker restart mj-api` pendant une ingestion** (la tue, exit 137).
 
 ## 1. Architecture (3 conteneurs)
