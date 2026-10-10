@@ -49,6 +49,9 @@ export default function Chat() {
   const [campagneId, setCampagneId] = useState("");
   const fondRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Message d'amorce passé par l'écran Campagne (/chat?…&message=…) : auto-envoyé
+  // une fois la conversation active prête (sinon il resterait en saisie sans effet).
+  const amorceRef = useRef<string>("");
 
   const actif = conversations.find((c) => c.id === actifId);
 
@@ -69,7 +72,7 @@ export default function Chat() {
       const camp = p.get("campagne");
       if (camp) setCampagneId(camp);
       const msg = p.get("message");
-      if (msg) setSaisie(msg);
+      if (msg) amorceRef.current = msg;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -124,8 +127,8 @@ export default function Chat() {
     [conversations, majConversation],
   );
 
-  const envoyer = useCallback(async () => {
-    const texte = saisie.trim();
+  const envoyer = useCallback(async (texteSuppleant?: string) => {
+    const texte = (texteSuppleant ?? saisie).trim();
     if (!texte || enCours || !actif) return;
 
     const historique = actif.messages;
@@ -215,6 +218,16 @@ export default function Chat() {
       abortRef.current = null;
     }
   }, [saisie, enCours, actif, nom, campagneId, majConversation, onChangementFiche]);
+
+  // Auto-envoi de l'amorce venue de l'écran Campagne, une seule fois, dès que la
+  // conversation active est prête (le message ne doit pas rester en saisie).
+  useEffect(() => {
+    if (!amorceRef.current || !actif || enCours) return;
+    const msg = amorceRef.current;
+    amorceRef.current = "";
+    envoyer(msg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actifId, enCours]);
 
   const stop = useCallback(() => {
     abortRef.current?.abort();
@@ -369,7 +382,7 @@ export default function Chat() {
             </button>
           ) : (
             <button
-              onClick={envoyer}
+              onClick={() => envoyer()}
               className="bg-or/80 hover:bg-or text-encre font-semibold rounded-lg px-4"
             >
               Envoyer
