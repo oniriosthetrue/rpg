@@ -32,6 +32,11 @@ export default function CreationWizard({
   const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState("");
+  // Sélection en cours pour les étapes à choix multiples (compétences, sorts) :
+  // le moteur attend TOUTES les options en une seule réponse (sinon il n'en
+  // voit qu'une, tire le reste au hasard et passe à l'étape suivante).
+  const [selection, setSelection] = useState<string[]>([]);
+  const multi = !!q && (q.etape === "competences" || q.etape === "sorts");
 
   const demarrer = useCallback(async () => {
     setEnCours(true);
@@ -59,6 +64,7 @@ export default function CreationWizard({
         );
         setQ(r);
         setSaisie("");
+        setSelection([]);
         if (r.type === "fiche") setEtat("fini");
         else if (r.type === "abandon") setEtat("abandon");
       } catch (e) {
@@ -160,16 +166,45 @@ export default function CreationWizard({
 
       {q?.options && q.options.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
-          {q.options.slice(0, 40).map((o) => (
-            <button
-              key={o}
-              onClick={() => repondre(o)}
-              disabled={enCours}
-              className="rounded bg-white/10 hover:bg-white/20 px-2 py-1 text-xs disabled:opacity-40"
-            >
-              {o}
-            </button>
-          ))}
+          {q.options.slice(0, 40).map((o) => {
+            const active = selection.includes(o);
+            return (
+              <button
+                key={o}
+                onClick={() =>
+                  multi
+                    ? setSelection((s) =>
+                        s.includes(o) ? s.filter((x) => x !== o) : [...s, o],
+                      )
+                    : repondre(o)
+                }
+                disabled={enCours}
+                className={`rounded px-2 py-1 text-xs disabled:opacity-40 ${
+                  active
+                    ? "bg-or text-encre font-semibold"
+                    : "bg-white/10 hover:bg-white/20"
+                }`}
+              >
+                {o}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {multi && (
+        <div className="flex items-center gap-2 text-xs">
+          <button
+            onClick={() => selection.length && repondre(selection.join(", "))}
+            disabled={enCours || selection.length === 0}
+            className="rounded-lg bg-or/80 hover:bg-or text-encre font-semibold px-3 py-1 disabled:opacity-40"
+          >
+            Valider ({selection.length})
+          </button>
+          <span className="text-parchemin/50">
+            Sélectionne {q?.etape === "sorts" ? "tes sorts" : "tes compétences"},
+            puis Valider. Le reste sera tiré au hasard.
+          </span>
         </div>
       )}
 
