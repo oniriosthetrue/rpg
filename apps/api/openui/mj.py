@@ -748,7 +748,7 @@ def lister_options(etape: str, chat_id: str = "") -> dict[str, Any]:
         "ok": True,
         "type": "options",
         "etape": etape,
-        "question": _QUESTIONS[etape],
+        "question": _question(etape, etat),
         "options": _options(etape, etat),
     }
 
@@ -825,8 +825,36 @@ def _options(etape: str, etat: dict[str, Any]) -> list[str]:
     if etape == "caracteristiques":
         return ["Valeurs standard (15 14 13 12 10 8)", "Achat de points (27 pts)"]
     if etape == "equipement":
-        return ["Kit A (recommandé)", "Kit B (pécule)"]
+        return _options_equipement(etat)
     return []
+
+
+def _options_equipement(etat: dict[str, Any]) -> list[str]:
+    """Options d'équipement détaillées (contenu des kits A et B de la classe)."""
+    info = _charger()["classes"].get(etat.get("classe", ""), {})
+    kit_a = list(info.get("equip_A") or [])
+    kit_b = list(info.get("equip_B") or [])
+    opts: list[str] = []
+    if kit_a:
+        opts.append("Kit A : " + ", ".join(kit_a))
+    if kit_b:
+        opts.append("Kit B : " + ", ".join(kit_b))
+    return opts or ["Kit A (recommandé)", "Kit B (pécule)"]
+
+
+def _question(etape: str, etat: dict[str, Any]) -> str:
+    """Question d'une étape, enrichie du détail des kits pour l'équipement."""
+    if etape == "equipement":
+        info = _charger()["classes"].get(etat.get("classe", ""), {})
+        kit_a = list(info.get("equip_A") or [])
+        kit_b = list(info.get("equip_B") or [])
+        lignes = ["Quel équipement de départ choisissez-vous ?"]
+        if kit_a:
+            lignes.append("— Kit A (matériel) : " + ", ".join(kit_a) + ".")
+        if kit_b:
+            lignes.append("— Kit B (pécule) : " + ", ".join(kit_b) + ".")
+        return "\n".join(lignes)
+    return _QUESTIONS[etape]
 
 
 def _limites(etape: str, etat: dict[str, Any]) -> dict[str, int] | None:
@@ -883,7 +911,7 @@ def _suivant(session: dict[str, Any], avertis: list[str] | None = None) -> dict[
         "ok": True,
         "type": "question",
         "etape": etape,
-        "question": _QUESTIONS[etape],
+        "question": _question(etape, etat),
         "options": _options(etape, etat),
         "limites": _limites(etape, etat),
         "progression": f"{ETAPES.index(etape) + 1}/{len(ETAPES)}",

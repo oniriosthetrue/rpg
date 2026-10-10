@@ -202,7 +202,7 @@ export default function CreationWizard({
       )}
 
       {q?.options && q.options.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className={multi ? "flex flex-wrap gap-1.5" : "flex flex-col gap-1.5"}>
           {q.options.slice(0, 40).map((o) => {
             const active = selection.includes(o);
             const bloque = multi && !active && !peutAjouter(o);
@@ -218,7 +218,9 @@ export default function CreationWizard({
                 }
                 disabled={enCours || bloque}
                 title={bloque ? "Limite atteinte pour ce groupe" : undefined}
-                className={`rounded px-2 py-1 text-xs disabled:opacity-40 ${
+                className={`rounded px-2 py-1 text-left text-xs disabled:opacity-40 ${
+                  multi ? "" : "w-full"
+                } ${
                   active
                     ? "bg-or text-encre font-semibold"
                     : "bg-white/10 hover:bg-white/20"
