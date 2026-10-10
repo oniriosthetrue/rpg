@@ -88,7 +88,7 @@ def ouvrir(
     if (err := autorise(x_api_key)) is not None:
         return err
 
-    id_ = str(body.get("id") or datetime.now().strftime("campagne-%Y-%m-%d-%H%M%S"))
+    id_ = str(body.get("id") or datetime.now().strftime("%Y-%m-%d-%H%M%S"))
     if (err := _valider_id(id_)) is not None:
         return err
     if _chemin(id_).exists():
@@ -121,7 +121,7 @@ def importer(
     id_ = str(body.get("id") or "").strip()
     c = cp.campagne_depuis_markdown(markdown, id_fallback=id_)
     if not c.id:
-        c.id = datetime.now().strftime("campagne-%Y-%m-%d-%H%M%S")
+        c.id = datetime.now().strftime("%Y-%m-%d-%H%M%S")
     if (err := _valider_id(c.id)) is not None:
         return err
     if _chemin(c.id).exists():
