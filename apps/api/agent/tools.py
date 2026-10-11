@@ -20,6 +20,7 @@ from jdr_api.routers import campagne as r_campagne
 from jdr_api.routers import combat as r_combat
 from jdr_api.routers import creation as r_creation
 from jdr_api.routers import personnages as r_perso
+from dnd_perso import variete
 from settings import settings
 
 
@@ -274,6 +275,24 @@ def clore_la_campagne(campagne_id: str) -> dict[str, Any]:
     return r_campagne.cloturer(campagne_id, _CLE)
 
 
+def tirer_sur_une_table(dimension: str = "", nb: int = 1) -> dict[str, Any]:
+    """Piocher des **graines d'inspiration** pour varier un scénario.
+
+    Utilise-le quand une idée te semble trop prévisible ou qu'un scénario
+    ressemblerait à un précédent. ``dimension`` ∈ ``crochets`` (accroche / point
+    de départ), ``pnj`` (antagoniste / allié marquant), ``conflits`` (twist,
+    complication, trahison), ``saveurs`` (détail de vie : rumeur, objet, coutume,
+    météo). Laisse ``dimension`` vide pour piocher une graine dans chaque
+    catégorie. ``nb`` = nombre de graines par catégorie (1 par défaut).
+
+    IMPORTANT : une graine est un **déclencheur d'idée à réécrire et à tisser**
+    avec le cadrage (ton, durée, piliers) et le background des PJ — jamais une
+    phrase à recopier mot à mot. Renvoie ``{dimension: [graine, …]}``.
+    """
+    dims = [dimension] if dimension else None
+    return {"ok": True, "inspirations": variete.tirer_inspirations(dims, nb)}
+
+
 # Outils prenant un RunContext (session de création) → agent.tool().
 OUTILS_CTX = [
     nouveau_personnage,
@@ -300,4 +319,5 @@ OUTILS_PLAIN = [
     faire_avancer_la_campagne,
     advisory_de_difficulte,
     clore_la_campagne,
+    tirer_sur_une_table,
 ]

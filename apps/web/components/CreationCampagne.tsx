@@ -10,7 +10,13 @@ import { jdr, ErreurJdr } from "@/lib/jdr";
 import { usePerso } from "./PersoContext";
 import { CheckboxLigne } from "./Checkbox";
 
-type Ouverture = { ok: boolean; type: string; id: string; erreur?: string };
+type Ouverture = {
+  ok: boolean;
+  type: string;
+  id: string;
+  erreur?: string;
+  inspirations?: Record<string, string[]>;
+};
 
 const MODES = [
   { v: "guide", t: "Guidé", d: "On construit la trame ensemble, une décision à la fois." },
@@ -100,11 +106,27 @@ export default function CreationCampagne({
             ", ",
           )}. Charge la fiche de chacun (charger_le_personnage) et adapte-lui le scénario : `
         : "";
+      // Graines d'inspiration tirées par le serveur à l'ouverture (variété).
+      const LIBELLES: Record<string, string> = {
+        crochets: "crochet",
+        pnj: "PNJ",
+        conflits: "conflit/twist",
+        saveurs: "saveur",
+      };
+      const graines = Object.entries(j.inspirations ?? {})
+        .flatMap(([dim, vals]) =>
+          (vals ?? []).map((v) => `${LIBELLES[dim] ?? dim} : ${v}`),
+        )
+        .join(" · ");
+      const aideVariete = graines
+        ? `GRAINES D'INSPIRATION (à réécrire et tisser avec le cadrage et les PJ, jamais à recopier mot à mot) — ${graines}. Tu peux en piocher d'autres avec tirer_sur_une_table. `
+        : "";
       const consigne =
         `Construis le scénario de la campagne « ${titreCamp} » en respectant le ` +
         `cadrage (relis etat_de_la_campagne pour le mode, l'âge, la durée, les piliers, ` +
         `le ton et le conseil_cadrage). ` +
         groupe +
+        aideVariete +
         `attache chaque crochet au background d'un PJ (lie_a_pj), équilibre les ` +
         `rencontres sur leurs niveaux, et varie les épreuves selon leurs aptitudes. ` +
         `IMPORTANT : après avoir conçu la trame, PERSISTE-LA avec l'outil ` +

@@ -25,6 +25,7 @@ from fastapi import APIRouter, Body, Header
 
 from dnd_perso import campagne as cp
 from dnd_perso import extract
+from dnd_perso import variete
 
 from jdr_api.commun import V, autorise, enveloppe
 
@@ -98,7 +99,11 @@ def ouvrir(
     corps["id"] = id_
     c = cp.Campagne.depuis_dict(corps)
     _sauvegarder(c)
-    return enveloppe(c.etat())
+    etat = c.etat()
+    # Graines d'inspiration (variété) : tirées à l'ouverture, renvoyées au client
+    # pour être injectées dans la consigne du MJ. Transitoires — NON persistées.
+    etat["inspirations"] = variete.tirer_inspirations()
+    return enveloppe(etat)
 
 
 @router.post("/api/campagne/importer")

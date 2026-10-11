@@ -208,5 +208,46 @@ class TestTableDesJets(unittest.TestCase):
         self.assertIn("Tromperie : d20 +5", md)
 
 
+class TestVariete(unittest.TestCase):
+    """Tableaux d'inspiration pour varier les scénarios (variété)."""
+
+    def test_tables_couvrent_1_a_100(self):
+        from dnd_perso import variete
+
+        for nom, table in variete.TABLES.items():
+            self.assertTrue(table, nom)
+            self.assertEqual(table[-1][0], 100, nom)
+            bornes = [b for b, _ in table]
+            self.assertEqual(bornes, sorted(set(bornes)), nom)
+
+    def test_tirer_reproductible_avec_rng(self):
+        from dnd_perso import variete
+
+        a = variete.tirer_inspirations(rng=random.Random(7))
+        b = variete.tirer_inspirations(rng=random.Random(7))
+        self.assertEqual(a, b)
+
+    def test_toutes_dimensions_par_defaut(self):
+        from dnd_perso import variete
+
+        res = variete.tirer_inspirations(rng=random.Random(1))
+        self.assertEqual(set(res), set(variete.DIMENSIONS))
+        for graines in res.values():
+            self.assertEqual(len(graines), 1)
+
+    def test_nb_et_dimension_unique(self):
+        from dnd_perso import variete
+
+        res = variete.tirer_inspirations(["pnj"], nb=3, rng=random.Random(3))
+        self.assertEqual(list(res), ["pnj"])
+        self.assertEqual(len(res["pnj"]), 3)
+
+    def test_dimension_inconnue_ignoree(self):
+        from dnd_perso import variete
+
+        res = variete.tirer_inspirations(["inconnue"], rng=random.Random(0))
+        self.assertEqual(res, {})
+
+
 if __name__ == "__main__":
     unittest.main()

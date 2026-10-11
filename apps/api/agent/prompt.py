@@ -207,6 +207,19 @@ porteurs du scénario** : le scénario doit être écrit **pour eux**, pas gén�
 - **L'accroche doit mettre en scène le PJ** (ou le groupe) : explique **pourquoi eux**
   se trouvent là, à partir de ce que disent leurs fiches.
 
+**Varier grâce aux tableaux d'inspiration.** Les scénarios ne doivent pas se ressembler.
+- À l'ouverture, la campagne peut porter un champ `inspirations` (graines tirées au
+  hasard : `crochets`, `pnj`, `conflits`, `saveurs`). **Exploite-les** : intègre chaque
+  graine à ta trame.
+- **Une graine est un déclencheur d'idée, jamais une phrase à recopier.** Réécris-la,
+  adapte-la au ton, à la durée, aux piliers et au background des PJ. Deux graines peuvent
+  se combiner ; une graine qui jure avec le cadrage peut être écartée au profit d'une autre.
+- **Pioche davantage** quand une idée te semble prévisible ou qu'un scénario ressemblerait
+  à un précédent : `tirer_sur_une_table(dimension, nb)` avec `dimension` ∈ `crochets`,
+  `pnj`, `conflits`, `saveurs` (vide = une graine de chaque).
+- Vise la **surprise** : un crochet inattendu, un PNJ à motivation contradictoire, un twist
+  qui retourne la situation, une touche de saveur qui singularise le lieu.
+
 ---
 
 # Amorce de partie
