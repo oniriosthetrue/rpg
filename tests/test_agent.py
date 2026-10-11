@@ -334,46 +334,70 @@ class TestContexteRag(unittest.TestCase):
         self.assertIn(f"\n\n### {cape['nom']}", premier_bloc)
 
 
-# ─── 4. Hook de capture : jets de dés lancés par le MJ ───────────────────────
+# ─── 4. Jet hors combat : résolu par le moteur, jamais par le LLM ────────────
 
-class TestCapture(unittest.TestCase):
+class TestJetHorsCombat(unittest.TestCase):
+    """L'outil `enregistrer_le_jet_hors_combat` relit le bonus dans la fiche,
+    calcule total = d20 + bonus et compare au DD. On monkeypatche la lecture de
+    fiche (aucun disque, aucun LLM) pour un test déterministe."""
+
     def setUp(self):
-        from postprocess import capture
+        from agent import tools
 
-        self.capture = capture
+        self.tools = tools
+        fiche = {
+            "ok": True,
+            "type": "personnage",
+            "personnage": {
+                "jets": {
+                    "competences": {"Investigation": 3, "Perception": 5},
+                    "sauvegardes": {"Sagesse": 2, "Dextérité": 4},
+                }
+            },
+        }
+        self._orig = tools.r_perso.charger_personnage
+        tools.r_perso.charger_personnage = lambda nom, cle=None: fiche
 
-    def test_detecte_total_resolu(self):
-        self.assertTrue(self.capture.detecter_jet_auto("## Jet d'Investigation (Intelligence) : **d20 + 4 = 17** ✓"))
+    def tearDown(self):
+        self.tools.r_perso.charger_personnage = self._orig
 
-    def test_detecte_resultat_coché(self):
-        self.assertTrue(self.capture.detecter_jet_auto("Le dé roule et fait = 19 ✓"))
+    def test_reussite_total_sup_dd(self):
+        r = self.tools.enregistrer_le_jet_hors_combat("Elminster", "Investigation", 15, 13)
+        self.assertTrue(r["ok"])
+        self.assertEqual(r["bonus"], 3)
+        self.assertEqual(r["total"], 16)
+        self.assertTrue(r["reussite"])
 
-    def test_detecte_anonce_de_jet(self):
-        self.assertTrue(self.capture.detecter_jet_auto("Je lance un d20 pour ton attaque."))
+    def test_echec_total_inf_dd(self):
+        r = self.tools.enregistrer_le_jet_hors_combat("Elminster", "Investigation", 17, 13)
+        self.assertEqual(r["total"], 16)
+        self.assertFalse(r["reussite"])
 
-    def test_detecte_resultat_joueur(self):
-        self.assertTrue(self.capture.detecter_jet_auto("Tu obtiens 23, c'est suffisant."))
+    def test_nat20_reussite_auto(self):
+        r = self.tools.enregistrer_le_jet_hors_combat("Elminster", "Investigation", 40, 20)
+        self.assertTrue(r["reussite"])  # total 23 < 40 mais nat 20 = réussite auto
 
-    def test_ne_detecte_pas_une_demande_de_lancer(self):
-        # Une simple invitation à lancer (aucun total) ne doit PAS déclencher.
-        texte = "Lance ton jet d'attaque : d20 + ton modificateur de Force, puis dis-moi le résultat."
-        self.assertFalse(self.capture.detecter_jet_auto(texte))
+    def test_nat1_echec_auto(self):
+        r = self.tools.enregistrer_le_jet_hors_combat("Elminster", "Perception", 5, 1)
+        self.assertFalse(r["reussite"])  # total 6 >= 5 mais nat 1 = échec auto
 
-    def test_ne_detecte_pas_la_narration(self):
-        # « tu fais 3 pas », « tu obtiens le silence » (sans nombre) : narration, pas un dé.
-        self.assertFalse(self.capture.detecter_jet_auto("Tu fais trois pas vers la porte."))
-        self.assertFalse(self.capture.detecter_jet_auto("Tu avances et observes la salle."))
+    def test_sauvegarde_resolue(self):
+        r = self.tools.enregistrer_le_jet_hors_combat("Elminster", "Sagesse", 12, 11)
+        self.assertEqual(r["categorie"], "sauvegarde")
+        self.assertEqual(r["total"], 13)
+        self.assertTrue(r["reussite"])
 
-    def test_joueur_a_donne_un_de(self):
-        self.assertTrue(self.capture.le_joueur_a_donne_un_de("Je fais 16"))
-        self.assertFalse(self.capture.le_joueur_a_donne_un_de("J'inspecte la pièce"))
+    def test_jet_inconnu_erreur(self):
+        r = self.tools.enregistrer_le_jet_hors_combat("Elminster", "Cuisine", 10, 10)
+        self.assertFalse(r["ok"])
+        self.assertIn("Jet inconnu", r["erreur"])
+        self.assertIn("Investigation", r["erreur"])
 
-    def test_repli_retire_les_lignes_de_jet(self):
-        texte = "La scène continue.\n## Jet : **d20 + 4 = 17** ✓\nTu avances prudemment."
-        out = self.capture.retirer_jet_resolu(texte)
-        self.assertNotIn("= 17", out)
-        self.assertIn("Tu avances prudemment.", out)
-        self.assertIn("La scène continue.", out)
+    def test_insensible_aux_accents(self):
+        # « Dextérité » saisi sans accent doit quand même résoudre.
+        r = self.tools.enregistrer_le_jet_hors_combat("Elminster", "dexterite", 10, 8)
+        self.assertTrue(r["ok"])
+        self.assertEqual(r["total"], 12)
 
 
 if __name__ == "__main__":

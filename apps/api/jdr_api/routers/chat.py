@@ -7,8 +7,6 @@ SSE. Le frontend n'a qu'à consommer les événements.
 Événements SSE émis (champ `event:`) :
   - `token`   : un segment de texte du MJ (déjà nettoyé anti-méta)
   - `outil`   : un appel d'outil en cours (nom) — pour afficher « … le MJ consulte »
-  - `reprise` : le MJ a lancé un dé lui-même ; le frontend doit effacer le texte
-                streamé, une réponse corrigée suit en `token` puis `fin`
   - `fin`     : la réponse est terminée (contient le texte complet)
   - `erreur`  : une erreur est survenue
 """
@@ -37,7 +35,7 @@ from pydantic_ai.messages import (
 from agent.agent import agent
 from agent.tools import Deps
 from jdr_api.commun import autorise
-from postprocess import anti_meta, capture
+from postprocess import anti_meta
 from rag import retriever
 
 router = APIRouter()
@@ -135,32 +133,16 @@ async def chat(
         if sources:
             yield _sse("citations", {"sources": sources})
         try:
-            # — Passe 1 : run normal, streaming en direct. —
+            # Run unique, streaming en direct. La mécanique des dés est désormais
+            # arbitrée par l'outil `enregistrer_le_jet_hors_combat` (et les outils de
+            # combat) : le LLM ne lance plus jamais un dé lui-même, il n'y a donc plus
+            # lieu de filtrer/relancer a posteriori une réponse qui en contiendrait un.
             texte_final: list[str] = []
             async for chunk in _run(prompt, texte_final):
                 yield chunk
             if await request.is_disconnected():
                 return
             complet = anti_meta.nettoyer("".join(texte_final))
-
-            # — Hook de capture : le MJ a lancé un dé lui-même ? —
-            # On ne corrige que si le joueur n'a fourni aucun nombre (sinon le MJ
-            # restitue légitimement le dé du joueur). On relance une fois avec une
-            # consigne corrective ; le frontend efface le texte streamé sur `reprise`.
-            if capture.detecter_jet_auto(complet) and not capture.le_joueur_a_donne_un_de(message):
-                yield _sse("reprise", {"motif": "jet_auto"})
-                texte_correctif: list[str] = []
-                prompt_corrige = f"{capture.CONSIGNE_CORRECTIVE}\n\n{prompt}"
-                async for chunk in _run(prompt_corrige, texte_correctif):
-                    yield chunk
-                if await request.is_disconnected():
-                    return
-                complet = anti_meta.nettoyer("".join(texte_correctif))
-                # Dernier recours : la relance contient encore un dé résolu →
-                # on retire les lignes de jet pour ne rien truquer à l'écran.
-                if capture.detecter_jet_auto(complet):
-                    complet = capture.retirer_jet_resolu(complet)
-
             yield _sse("fin", {"texte": complet})
         except Exception as exc:  # ne jamais casser le flux silencieusement
             yield _sse("erreur", {"message": f"Erreur agent : {exc}"})

@@ -11,6 +11,7 @@ passait par HTTP). Ici plus de HTTP interne : appel direct, mêmes fonctions.
 
 from __future__ import annotations
 
+import unicodedata
 from dataclasses import dataclass
 from typing import Any
 
@@ -171,6 +172,90 @@ def tour_suivant_du_combat(combat_id: str) -> dict[str, Any]:
     return r_combat.tour_suivant(combat_id, _CLE)
 
 
+def _normaliser(texte: str) -> str:
+    """Clé de comparaison : minuscule et sans accents."""
+    t = unicodedata.normalize("NFD", texte.lower().strip())
+    return "".join(c for c in t if unicodedata.category(c) != "Mn")
+
+
+def enregistrer_le_jet_hors_combat(
+    nom: str, jet: str, dd: int, de_naturel: int
+) -> dict[str, Any]:
+    """Enregistrer et résoudre un JET DE COMPÉTENCE / SAUVEGARDE HORS COMBAT.
+
+    Le SERVEUR calcule tout : il relit le **bonus déjà calculé** du personnage
+    (section `jets` de sa fiche), additionne le d20 **annoncé par le joueur**, et
+    compare au DD. **Tu ne lances jamais ce dé toi-même et tu n'écris jamais le
+    total ou le résultat.** Le joueur lance son d20 et te donne le dé NATUREL
+    (1-20) ; tu passes ce dé ici, puis tu racontes la conséquence à partir du
+    JSON renvoyé (`total`, `reussite`).
+
+    - `nom` : nom exact du personnage (fiche).
+    - `jet` : la compétence (« Investigation », « Perception », « Persuasion »…)
+      ou la sauvegarde (« Sagesse », « Dextérité »…). Le bonus correspondant est
+      lu dans la fiche — ne le calcule jamais.
+    - `dd` : la difficulté que TU fixes en secret (jamais révélée avant le jet).
+    - `de_naturel` : le d20 naturel annoncé par le joueur (1-20).
+
+    Nat 20 = réussite automatique, nat 1 = échec automatique (règle du d20).
+    Renvoie `{ok, jet, bonus, de_naturel, total, dd, reussite}`.
+    """
+    fiche = r_perso.charger_personnage(nom, _CLE)
+    if not fiche.get("ok"):
+        return fiche
+    jets = (fiche.get("personnage") or {}).get("jets") or {}
+    competences = jets.get("competences") or {}
+    sauvegardes = jets.get("sauvegardes") or {}
+
+    cle = _normaliser(jet)
+    bonus = type_jet = None
+    for source, etiquette in ((competences, "competence"), (sauvegardes, "sauvegarde")):
+        for nom_jet, val in source.items():
+            if _normaliser(nom_jet) == cle:
+                bonus, type_jet = val, etiquette
+                break
+        if bonus is not None:
+            break
+    # Repli tolérant : correspondance par sous-chaîne (ex. « sagesse » -> « Sagesse »).
+    if bonus is None:
+        for source, etiquette in ((competences, "competence"), (sauvegardes, "sauvegarde")):
+            for nom_jet, val in source.items():
+                if cle and (cle in _normaliser(nom_jet) or _normaliser(nom_jet) in cle):
+                    bonus, type_jet = val, etiquette
+                    break
+            if bonus is not None:
+                break
+    if bonus is None:
+        valides = sorted(list(competences) + list(sauvegardes))
+        return {
+            "ok": False,
+            "type": "erreur",
+            "erreur": f"Jet inconnu : « {jet} ». Choisis un nom parmi : {', '.join(valides)}.",
+        }
+
+    de = int(de_naturel)
+    total = de + int(bonus)
+    if de == 20:
+        reussite = True
+    elif de == 1:
+        reussite = False
+    else:
+        reussite = total >= int(dd)
+    return {
+        "ok": True,
+        "type": "jet_hors_combat",
+        "jet": jet,
+        "categorie": type_jet,
+        "bonus": int(bonus),
+        "de_naturel": de,
+        "total": total,
+        "dd": int(dd),
+        "reussite": reussite,
+        "message": f"{jet} : d20 {de} {'+' if bonus >= 0 else '−'} {abs(int(bonus))} "
+        f"= {total} vs DD {int(dd)} → {'réussite' if reussite else 'échec'}.",
+    }
+
+
 def appliquer_au_combat(
     combat_id: str, cle: str, action: str, valeur: int
 ) -> dict[str, Any]:
@@ -310,6 +395,7 @@ OUTILS_PLAIN = [
     etat_du_combat,
     lancer_le_jet_d_un_monstre,
     enregistrer_le_jet_du_joueur,
+    enregistrer_le_jet_hors_combat,
     tour_suivant_du_combat,
     appliquer_au_combat,
     clore_le_combat,
