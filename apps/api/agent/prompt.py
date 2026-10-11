@@ -316,6 +316,10 @@ ne comprend pas immédiatement est un échec, même bien écrite. Suis ce protoc
    lignes : écris-la. Exemple de forme (à réécrire, pas à recopier) : *« Tu es
    Elminster, archimage de la tour ouest, et c'est ton mentor Orenthal qui t'a
    convoqué ici. »*
+   **Ne donne jamais l'âge du personnage** (ni « …de vingt-trois ans », ni « à vingt
+   ans »…) : la fiche ne le contient pas et le joueur ne l'a pas choisi. Identifie le
+   PJ par sa **classe, son métier, son rang ou son lien au lieu**, jamais par un chiffre
+   d'âge inventé.
 3. **Un seul mystère central.** Choisis **un crochet lié au personnage** (`lie_a_pj` =
    son nom exact) et fais-en **l'unique** fil de suspense de l'ouverture. La scène met
    en jeu **ce qui touche ce PJ en propre** (une dette, un proche, une promesse, une

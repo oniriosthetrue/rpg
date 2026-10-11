@@ -472,6 +472,11 @@ class TestAmorceDePartie(unittest.TestCase):
         self.assertIn("clarté prime sur le style", self.p)
         self.assertIn("Une image forte par scène", self.p)
 
+    def test_interdit_age_du_pj_en_intro(self):
+        # L'ouverture ne doit jamais inventer l'âge du PJ (absent de la fiche).
+        self.assertIn("l'âge du personnage", self.p)
+        self.assertIn("vingt-trois ans", self.p)
+
 
 # ─── 5bis. Registre : ton jeu de rôle, interdiction de la vulgarité ──────────
 
