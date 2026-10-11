@@ -58,6 +58,9 @@ export default function Chat() {
     {},
   );
   const [idsCampagnes, setIdsCampagnes] = useState<Set<string>>(new Set());
+  // True une fois la liste des campagnes reçue : la purge des conversations
+  // orphelines ne s'exécute qu'après (sinon on tout effacerait avant de savoir).
+  const [campagnesChargees, setCampagnesChargees] = useState(false);
   const fondRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   // Message d'amorce passé par l'écran Campagne (/chat?…&message=…) : auto-envoyé
@@ -128,15 +131,44 @@ export default function Chat() {
         }
         setTitresCampagnes(t);
         setIdsCampagnes(ids);
+        setCampagnesChargees(true);
       })
       .catch(() => {
         /* liste indisponible : on garde les titres internes */
+        setCampagnesChargees(true);
       });
   }, []);
 
-  // Persistance à chaque changement.
+  // Règle : une conversation affichée doit être reliée à une campagne existante.
+  // On purge les orphelines (campagne supprimée) et les libres (sans campagne),
+  // puis on répare la conversation active (bascule sur une valide, ou recrée une
+  // conversation liée à la campagne ciblée si plus rien n'est jouable).
   useEffect(() => {
-    if (conversations.length && typeof localStorage !== "undefined")
+    if (!campagnesChargees) return;
+    const valides = conversations.filter(
+      (c) => c.campagneId && idsCampagnes.has(c.campagneId),
+    );
+    if (valides.length !== conversations.length) {
+      setConversations(valides);
+      return; // l'effet rerunera et réparera l'actif sur la liste propre
+    }
+    const courant = valides.find((c) => c.id === actifId);
+    if (!courant) {
+      if (valides.length) {
+        setActifId(valides[0].id);
+        setCampagneId(valides[0].campagneId ?? "");
+      } else if (campagneId && idsCampagnes.has(campagneId)) {
+        const c = nouveauChat(nom);
+        c.campagneId = campagneId;
+        setConversations([c]);
+        setActifId(c.id);
+      }
+    }
+  }, [conversations, actifId, campagnesChargees, idsCampagnes, campagneId, nom]);
+
+  // Persistance à chaque changement (même vide : la purge doit être mémorisée).
+  useEffect(() => {
+    if (typeof localStorage !== "undefined")
       localStorage.setItem(CLE, JSON.stringify(conversations));
   }, [conversations]);
 
@@ -152,10 +184,18 @@ export default function Chat() {
   );
 
   const nouveau = useCallback(() => {
+    // Une nouvelle conversation se rattache à la campagne active ; sans quête
+    // ciblée, on ne peut pas créer de conversation (règle : tout est lié à une
+    // campagne existante) — on renvoie vers l'écran Campagne.
+    if (!campagneId || !idsCampagnes.has(campagneId)) {
+      window.location.href = "/campagne";
+      return;
+    }
     const c = nouveauChat(nom);
+    c.campagneId = campagneId;
     setConversations((prev) => [c, ...prev]);
     setActifId(c.id);
-  }, [nom]);
+  }, [nom, campagneId, idsCampagnes]);
 
   const supprimer = useCallback(
     (id: string) => {
@@ -383,10 +423,16 @@ export default function Chat() {
         </div>
 
         <div ref={fondRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 && (
+          {!actif ? (
             <p className="text-parchemin/40 italic">
-              Décris la scène ou pose ta question au MJ…
+              Aucune quête active. Ouvre une campagne pour commencer l'aventure.
             </p>
+          ) : (
+            messages.length === 0 && (
+              <p className="text-parchemin/40 italic">
+                Décris la scène ou pose ta question au MJ…
+              </p>
+            )
           )}
           {messages.map((m, i) => (
             <div key={i} className={m.role === "user" ? "text-right" : ""}>
