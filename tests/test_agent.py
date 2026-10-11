@@ -461,6 +461,17 @@ class TestAmorceDePartie(unittest.TestCase):
         # La règle « l'accroche doit expliquer pourquoi eux » reste en place.
         self.assertIn("pourquoi eux", self.p)
 
+    def test_exige_clarte_ancrage_et_objectif(self):
+        # L'ouverture doit exiger la CLARTÉ : ancrage platement dit (qui est le PJ),
+        # un seul mystère central, et une phrase plaine énonçant l'objectif.
+        for expr in ("ancrage", "platement", "un seul mystère", "objectif", "plaine"):
+            self.assertIn(expr, self.p)
+
+    def test_regle_clarte_prime_sur_style(self):
+        # Règle de style : la lisibilité prime sur la beauté (une image par scène).
+        self.assertIn("clarté prime sur le style", self.p)
+        self.assertIn("Une image forte par scène", self.p)
+
 
 # ─── 6. Narration à la 2e personne : jamais le PJ à la 3e personne ───────────
 
