@@ -287,6 +287,11 @@ export default function Chat() {
             majDernier();
           } else if (evt === "outil") {
             setOutil(payload.etat === "appel" ? `⚙ ${payload.nom}…` : "");
+          } else if (evt === "reprise") {
+            // Le MJ a lancé un dé lui-même : on efface le texte streamé, une
+            // réponse corrigée arrive en `token` puis `fin`.
+            courant = "";
+            majDernier();
           } else if (evt === "fin") {
             courant = payload.texte ?? courant;
             majDernier();

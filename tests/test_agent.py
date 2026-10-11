@@ -334,5 +334,42 @@ class TestContexteRag(unittest.TestCase):
         self.assertIn(f"\n\n### {cape['nom']}", premier_bloc)
 
 
+# ─── 4. Hook de capture : jets de dés lancés par le MJ ───────────────────────
+
+class TestCapture(unittest.TestCase):
+    def setUp(self):
+        from postprocess import capture
+
+        self.capture = capture
+
+    def test_detecte_total_resolu(self):
+        self.assertTrue(self.capture.detecter_jet_auto("## Jet d'Investigation (Intelligence) : **d20 + 4 = 17** ✓"))
+
+    def test_detecte_resultat_coché(self):
+        self.assertTrue(self.capture.detecter_jet_auto("Le dé roule et fait = 19 ✓"))
+
+    def test_detecte_anonce_de_jet(self):
+        self.assertTrue(self.capture.detecter_jet_auto("Je lance un d20 pour ton attaque."))
+
+    def test_detecte_resultat_joueur(self):
+        self.assertTrue(self.capture.detecter_jet_auto("Tu obtiens 23, c'est suffisant."))
+
+    def test_ne_detecte_pas_une_demande_de_lancer(self):
+        # Une simple invitation à lancer (aucun total) ne doit PAS déclencher.
+        texte = "Lance ton jet d'attaque : d20 + ton modificateur de Force, puis dis-moi le résultat."
+        self.assertFalse(self.capture.detecter_jet_auto(texte))
+
+    def test_joueur_a_donne_un_de(self):
+        self.assertTrue(self.capture.le_joueur_a_donne_un_de("Je fais 16"))
+        self.assertFalse(self.capture.le_joueur_a_donne_un_de("J'inspecte la pièce"))
+
+    def test_repli_retire_les_lignes_de_jet(self):
+        texte = "La scène continue.\n## Jet : **d20 + 4 = 17** ✓\nTu avances prudemment."
+        out = self.capture.retirer_jet_resolu(texte)
+        self.assertNotIn("= 17", out)
+        self.assertIn("Tu avances prudemment.", out)
+        self.assertIn("La scène continue.", out)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
