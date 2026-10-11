@@ -497,6 +497,12 @@ class TestCompetencePasSort(unittest.TestCase):
     def test_regle_competence_pas_sort_presente(self):
         self.assertIn("Compétence ≠ sort", self.p)
 
+    def test_localiser_d_abord_dans_la_fiche(self):
+        # Le MJ doit d'abord faire le rapprochement action ↔ compétence de la fiche,
+        # avant de penser à un sort ou au RAG.
+        self.assertIn("Localise d'abord l'action du joueur dans la fiche", self.p)
+        self.assertIn("la fiche passe avant le RAG", self.p)
+
     def test_interdit_de_traduire_une_competence_en_sort(self):
         self.assertIn("Ne le traduis JAMAIS en sort", self.p)
 
