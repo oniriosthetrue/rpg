@@ -136,10 +136,15 @@ export default function PageCampagne() {
         await chargerEtat(cid);
         await chargerListe();
         // Ouvre une nouvelle conversation du MJ sur la campagne réinitialisée et
-        // lui demande de raconter l'accroche (sinon le chat reste vide).
+        // lui demande de raconter l'accroche (sinon le chat reste vide). L'ouverture
+        // doit expliquer POURQUOI le PJ est là et lui donner une raison personnelle
+        // d'avancer — pas un décor seul.
         const message =
           "Rejoue cette campagne depuis le début : relis son état " +
-          "(etat_de_la_campagne), raconte l'accroche et lance la partie.";
+          "(etat_de_la_campagne), raconte l'accroche en expliquant pourquoi le " +
+          "personnage est là et donne-lui une raison personnelle et concrète " +
+          "d'avancer dans la quête (objectif immédiat lié à son crochet), puis " +
+          "lance la partie.";
         window.location.href = `/chat?campagne=${encodeURIComponent(
           cid,
         )}&nouveau=1&message=${encodeURIComponent(message)}`;

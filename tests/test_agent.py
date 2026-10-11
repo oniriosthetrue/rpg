@@ -433,5 +433,34 @@ class TestJetHorsCombat(unittest.TestCase):
         self.assertEqual(r["total"], 12)
 
 
+# ─── 5. Amorce de partie : ouverture = décor + raison d'être là + raison d'avancer ──
+
+
+class TestAmorceDePartie(unittest.TestCase):
+    """Garde-fou non-régression : le prompt système doit exiger qu'à l'ouverture
+    d'une campagne le MJ explique POURQUOI le PJ est là et lui donne une RAISON
+    PERSONNELLE d'avancer (ancrée dans un crochet lie_a_pj) — et pas un décor seul."""
+
+    def setUp(self):
+        from agent.prompt import SYSTEM_PROMPT
+
+        self.p = SYSTEM_PROMPT
+
+    def test_section_amorce_presente(self):
+        self.assertIn("# Amorce de partie", self.p)
+
+    def test_exige_raison_d_avancer(self):
+        # Les notions clés de l'ouverture doivent apparaître dans le prompt.
+        for expr in ("raison", "avancer", "pourquoi", "crochet", "lie_a_pj"):
+            self.assertIn(expr, self.p)
+
+    def test_interdit_ouverture_purement_descriptive(self):
+        self.assertIn("descriptive", self.p)
+
+    def test_amorce_reliee_a_l_accroche_pj(self):
+        # La règle « l'accroche doit expliquer pourquoi eux » reste en place.
+        self.assertIn("pourquoi eux", self.p)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
