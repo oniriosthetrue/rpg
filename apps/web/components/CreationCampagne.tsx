@@ -128,10 +128,16 @@ export default function CreationCampagne({
       const aideVariete = graines
         ? `GRAINES D'INSPIRATION (à réécrire et tisser avec le cadrage et les PJ, jamais à recopier mot à mot) — ${graines}. Tu peux en piocher d'autres avec tirer_sur_une_table. `
         : "";
+      const consigneTitre = titre.trim()
+        ? ""
+        : `Donne-lui un TITRE unique et évocateur, dérivé de la trame réelle ou d'une ` +
+          `graine d'inspiration ci-dessous — jamais un nom générique déjà resservi ` +
+          `(interdiction de titrer « Les Larmes du Seuil » ou tout titre déjà utilisé). `;
       const consigne =
         `Construis le scénario de la campagne « ${titreCamp} » en respectant le ` +
         `cadrage (relis etat_de_la_campagne pour le mode, l'âge, la durée, les piliers, ` +
         `le ton et le conseil_cadrage). ` +
+        consigneTitre +
         groupe +
         aideVariete +
         `attache chaque crochet au background d'un PJ (lie_a_pj), équilibre les ` +

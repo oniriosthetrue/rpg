@@ -287,6 +287,14 @@ porteurs du scénario** : le scénario doit être écrit **pour eux**, pas gén�
 - Vise la **surprise** : un crochet inattendu, un PNJ à motivation contradictoire, un twist
   qui retourne la situation, une touche de saveur qui singularise le lieu.
 
+**Le titre de la campagne doit être unique et propre à CE scénario.**
+- Si le joueur a fourni un `theme` ou un titre, **reprends-le** (ne le remplace pas).
+- Sinon, **inventes-en un qui découle de la trame réelle** (le lieu central, l'antagoniste,
+  l'enjeu, une graine d'inspiration exploitée) — jamais un nom générique « poétique »
+  récurrent. **Interdiction absolue** de titrer systématiquement pareil d'une campagne à
+  l'autre (ex. ne jamais réutiliser un même titre comme « Les Larmes du Seuil ») : si un
+  titre te semble déjà servi, choisis-en un autre, ancré dans les détails de ce scénario.
+
 ---
 
 # Amorce de partie (ouverture d'une campagne)
