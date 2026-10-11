@@ -187,6 +187,12 @@ def ouvrir(
     if len(combattants) < 2:
         return enveloppe({"ok": False, "type": "erreur", "erreur": "Une rencontre exige au moins deux combattants."})
 
+    # Garde-fou : une rencontre doit obligatoirement impliquer au moins un PJ. Sans
+    # joueur, ouvrir un combat n'a aucun sens en jeu — cela empêche l'agent MJ de créer
+    # des rencontres fantômes (monstres contre monstres) qui polluent data-combat/.
+    if not any(c.camp == "pj" for c in combattants):
+        return enveloppe({"ok": False, "type": "erreur", "erreur": "Une rencontre exige au moins un personnage joueur (PJ)."})
+
     rng = random.Random(body.get("seed")) if body.get("seed") is not None else random.Random()
     r = combat.Rencontre.ouvrir(
         id_, combattants,
