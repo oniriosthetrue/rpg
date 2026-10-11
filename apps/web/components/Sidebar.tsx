@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 
 const LIENS = [
+  { href: "/", label: "Accueil", icone: "🏠" },
   { href: "/chat", label: "Chat", icone: "💬" },
   { href: "/persos", label: "Personnages", icone: "🧝" },
   { href: "/combat", label: "Combat", icone: "⚔️" },
@@ -42,7 +43,10 @@ export default function Sidebar() {
         </div>
         <nav className="flex md:flex-col gap-1 p-2">
           {LIENS.map((l) => {
-            const actif = pathname?.startsWith(l.href);
+            const actif =
+              l.href === "/"
+                ? pathname === "/"
+                : pathname?.startsWith(l.href);
             return (
               <Link
                 key={l.href}

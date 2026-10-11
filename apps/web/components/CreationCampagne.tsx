@@ -143,8 +143,33 @@ export default function CreationCampagne({
         (mode === "surprise"
           ? "Mode surprise : conçois tout en secret et ne révèle que l'accroche."
           : "Mode guidé : propose-moi la trame étape par étape.");
-      const url = `/chat?campagne=${encodeURIComponent(j.id)}&message=${encodeURIComponent(consigne)}`;
-      window.location.href = url;
+      // Message envoyé plus tard, au « Commencer l'aventure », pour lancer la
+      // partie dans une nouvelle conversation liée à la campagne.
+      const message =
+        mode === "surprise"
+          ? "Ouvre la campagne : raconte l'accroche et lance la partie."
+          : "Ouvre la campagne et lance la partie.";
+      // L'écran de création lit ce payload (sessionStorage) puis pilote la
+      // génération lui-même — on n'affiche pas le chat pendant la création.
+      try {
+        sessionStorage.setItem(
+          "mj-creation-en-cours",
+          JSON.stringify({
+            campagneId: j.id,
+            consigne,
+            message,
+            titre: titre.trim(),
+            mode,
+          }),
+        );
+      } catch {
+        /* stockage indisponible : on retombe sur le chat classique */
+        window.location.href = `/chat?campagne=${encodeURIComponent(
+          j.id,
+        )}&message=${encodeURIComponent(consigne)}`;
+        return;
+      }
+      window.location.href = "/campagne/creation";
     } catch (e) {
       setErreur(e instanceof ErreurJdr ? e.message : "Erreur à l'ouverture.");
     } finally {

@@ -66,13 +66,21 @@ export default function Chat() {
       setConversations([c]);
       setActifId(c.id);
     }
-    // Liaison depuis l'écran Campagne : /chat?campagne=<id>&message=<texte>.
+    // Liaison depuis l'écran Campagne / création :
+    // /chat?campagne=<id>&message=<texte>[&nouveau=1].
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search);
       const camp = p.get("campagne");
       if (camp) setCampagneId(camp);
       const msg = p.get("message");
       if (msg) amorceRef.current = msg;
+      // `nouveau=1` (retour de l'écran de création) : on repart d'une
+      // conversation vierge liée à la campagne, sans reprendre les anciennes.
+      if (p.get("nouveau") === "1") {
+        const c = nouveauChat(nom);
+        setConversations((prev) => [c, ...prev]);
+        setActifId(c.id);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
