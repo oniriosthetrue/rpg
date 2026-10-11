@@ -459,14 +459,14 @@ TABLE_SAVEURS: list[tuple[int, str]] = _cent(
     "Un personnage secondaire a une obsession comique qui finit par servir l'intrigue.",
     "Un plat, une boisson ou une denrée rare devient un levier social inattendu.",
     "Un animal ou une créature suit les PJ, semblant vouloir conduire quelque part.",
-    "Un enfant suit les PJ en imitant leurs gestes, sans un mot.",
-    "Un mendiant offre aux PJ une pièce qui porte une marque inconnue.",
-    "Un chien errant refuse de quitter les PJ et guide leurs pas.",
-    "Un corbeau rapporte aux PJ des objets brillants, un par un.",
-    "Un chat noir apparaît à chaque carrefour important, puis disparaît.",
-    "Un cheval sauvage suit le groupe sans jamais se laisser attraper.",
-    "Un oiseau blanc se pose toujours là où les PJ doivent s'arrêter.",
-    "Un tenancier offre aux PJ la meilleure chambre, à condition qu'ils chassent « la nuisance ».",
+    "Une guilde locale célèbre un saint patron par un silence rituel qui gêne les négociations.",
+    "Une denrée locale, âcre et très recherchée, sert de monnaie d'échange ailleurs qu'ici.",
+    "Un artisan laisse partout sa marque : une signature gravée qui orne aussi des lieux de crime.",
+    "Une langue morte ressurgit : pancartes et prières la réemploient sans que nul l'enseigne.",
+    "Une horloge publique retarde ou avance d'une heure pile chaque nuit à la même minute.",
+    "Un graffiti réapparaît toujours au même mur, effacé le matin, tracé le soir.",
+    "Une mode soudaine (une couleur, un insigne) signe l'appartenance à une faction invisible.",
+    "Un puits de la place rend un écho qui répond une seconde trop tard — ou avec d'autres mots.",
 
 )
 
