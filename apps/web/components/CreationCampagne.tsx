@@ -118,6 +118,17 @@ export default function CreationCampagne({
     }
   }, [enCours, mode, titre, age, duree, pjSel, personnages, piliers, ton, theme]);
 
+  // Entrée dans un champ texte = même effet que le bouton principal : « Suivant »
+  // sur toutes les étapes, sauf la dernière (« theme ») où elle déclenche
+  // « Ouvrir la campagne ». On respecte les mêmes conditions de validation que
+  // le bouton (ex. âge obligatoire).
+  const peutAvancer = !(etape === "age" && !age.trim());
+  const entree = () => {
+    if (enCours) return;
+    if (etape === "theme") ouvrir();
+    else if (peutAvancer) suivant();
+  };
+
   const titreEtape: Record<Etape, string> = {
     mode: "Quel mode de création ?",
     age: "Quel est l'âge du joueur ?",
@@ -163,6 +174,12 @@ export default function CreationCampagne({
             max={120}
             value={age}
             onChange={(e) => setAge(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                entree();
+              }
+            }}
             placeholder="Âge du joueur (obligatoire)"
             className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-or/50"
           />
@@ -258,6 +275,12 @@ export default function CreationCampagne({
         <input
           value={ton}
           onChange={(e) => setTon(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              entree();
+            }
+          }}
           placeholder="ex. sombre, épique, humoristique… (option)"
           className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-or/50"
         />
@@ -268,14 +291,27 @@ export default function CreationCampagne({
           <input
             value={titre}
             onChange={(e) => setTitre(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                entree();
+              }
+            }}
             placeholder="Titre du scénario (option)"
             className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-or/50"
           />
           <textarea
             value={theme}
             onChange={(e) => setTheme(e.target.value)}
+            onKeyDown={(e) => {
+              // Entrée simple = retour à la ligne ; Ctrl+Entrée = ouvrir la campagne.
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                entree();
+              }
+            }}
             rows={3}
-            placeholder="Une idée de départ, un lieu, une menace… (option)"
+            placeholder="Une idée de départ, un lieu, une menace… (option · Ctrl+Entrée pour ouvrir)"
             className="w-full bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-or/50"
           />
         </div>
