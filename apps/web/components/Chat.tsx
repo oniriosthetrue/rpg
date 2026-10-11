@@ -90,6 +90,18 @@ export default function Chat() {
         toutes = [c, ...toutes];
         idActif = c.id;
       }
+      // Une fois l'amorce lue, on retire `message` et `nouveau` de l'URL : sinon
+      // tout rechargement (ou suppression de toutes les conversations suivie d'un
+      // rafraîchissement) relirait le message et relancerait l'auto-envoi — le
+      // texte « supprimé » réapparaîtrait.
+      if (p.has("message") || p.has("nouveau")) {
+        p.delete("message");
+        p.delete("nouveau");
+        const q = p.toString();
+        const url =
+          window.location.pathname + (q ? `?${q}` : "") + window.location.hash;
+        window.history.replaceState({}, "", url);
+      }
     }
     // La conversation active porte la campagne ciblée : le lien est ainsi
     // conservé au rechargement et au changement de conversation.
