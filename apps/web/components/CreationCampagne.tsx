@@ -8,6 +8,7 @@
 import { useCallback, useState } from "react";
 import { jdr, ErreurJdr } from "@/lib/jdr";
 import { usePerso } from "./PersoContext";
+import { CheckboxLigne } from "./Checkbox";
 
 type Ouverture = { ok: boolean; type: string; id: string; erreur?: string };
 
@@ -225,25 +226,16 @@ export default function CreationCampagne({
                 {personnages.map((p) => {
                   const actif = pjSel.includes(p.nom);
                   return (
-                    <button
+                    <CheckboxLigne
                       key={p.nom}
-                      onClick={() => basculerPj(p.nom)}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm ${
-                        actif
-                          ? "bg-or/20 text-or ring-1 ring-or/50"
-                          : "bg-white/5 hover:bg-white/10"
-                      }`}
+                      checked={actif}
+                      onToggle={() => basculerPj(p.nom)}
                     >
-                      <span
-                        className={`inline-block h-4 w-4 shrink-0 rounded border ${
-                          actif ? "border-or bg-or/40" : "border-parchemin/30"
-                        }`}
-                      />
                       <span className="font-semibold">{p.nom}</span>
                       <span className="text-xs text-parchemin/50">
                         {p.espece} · {p.classe} niv.{p.niveau}
                       </span>
-                    </button>
+                    </CheckboxLigne>
                   );
                 })}
               </div>
