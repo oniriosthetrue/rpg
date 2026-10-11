@@ -135,10 +135,14 @@ export default function PageCampagne() {
         await jdr.post(`/campagne/${encodeURIComponent(cid)}/rejouer`);
         await chargerEtat(cid);
         await chargerListe();
-        // Ouvre une nouvelle conversation du MJ sur la campagne réinitialisée.
+        // Ouvre une nouvelle conversation du MJ sur la campagne réinitialisée et
+        // lui demande de raconter l'accroche (sinon le chat reste vide).
+        const message =
+          "Rejoue cette campagne depuis le début : relis son état " +
+          "(etat_de_la_campagne), raconte l'accroche et lance la partie.";
         window.location.href = `/chat?campagne=${encodeURIComponent(
           cid,
-        )}&nouveau=1`;
+        )}&nouveau=1&message=${encodeURIComponent(message)}`;
       } catch (e) {
         setErreur(
           e instanceof ErreurJdr ? e.message : "Erreur de réinitialisation.",
