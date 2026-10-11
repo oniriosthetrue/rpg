@@ -59,6 +59,34 @@ def _formater_source(payload: dict) -> str:
     return edition or "SRD"
 
 
+def _filtrer_semantiques(semantiques: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Écarte les fiches vectorielles hors-sujet (bruit lexical/phonétique).
+
+    On garde une fiche si son score cosine dépasse le plancher absolu ET reste à
+    portée du meilleur résultat (delta). Les scores cosine de ce modèle sont
+    serrés (0,62–0,78), d'où le seuil relatif en plus de l'absolu. Le BM25 (nom
+    exact / mots-clés) est traité à part et n'est jamais filtré ici.
+    """
+    if not semantiques:
+        return []
+    scores = [
+        f["_score"] for f in semantiques if isinstance(f.get("_score"), (int, float))
+    ]
+    if not scores:  # aucune fiche scorée (stub / source non vectorielle) : on garde tout
+        return semantiques
+    meilleur = max(scores)
+    plancher = max(
+        qdrant_store.settings.rag_min_score,
+        meilleur - qdrant_store.settings.rag_score_delta,
+    )
+    return [
+        f
+        for f in semantiques
+        if not isinstance(f.get("_score"), (int, float))
+        or f["_score"] >= plancher
+    ]
+
+
 def _rechercher_fiches(
     question: str, top_k: int | None
 ) -> list[dict[str, Any]]:
@@ -70,6 +98,7 @@ def _rechercher_fiches(
     try:
         vecteur = embeddings.embed_un(question)
         semantiques = qdrant_store.rechercher(vecteur, top_k=limite)
+        semantiques = _filtrer_semantiques(semantiques)
     except Exception:  # le RAG ne doit jamais bloquer une réponse du MJ
         _LOGGER.exception("Recherche vectorielle indisponible.")
 

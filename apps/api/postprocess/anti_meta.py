@@ -28,6 +28,53 @@ _BLOC_MJ = re.compile(
     re.IGNORECASE,
 )
 
+# ---------------------------------------------------------------------------
+# Anti-fuite « réflexion du MJ à voix haute ».
+#
+# On découpe la réponse en phrases et on retire celles où le MJ énonce ses
+# intentions, son plan ou ses vérifications d'outils au lieu de raconter la
+# scène. On ne cible que des tournures à la 1re personne clairement
+# métanarratives (verbes de planification / vérification / conception), pour ne
+# jamais supprimer de narration (« Je te regarde… », un PNJ qui « note » quelque
+# chose restent intacts).
+# ---------------------------------------------------------------------------
+_REFLEXION = re.compile(
+    r"""^\s*
+    (?:
+        Je\s+vais?\b                          # « je vais », « je vais d'abord relire »
+      | Je\s+(?:dois|peux|viens\s+de)\b
+      | Je\s+(?:vérifie|vérifiais|vérifierai|vérifirai|charge|chargeais|chargerai|
+             relis|relisais|relirai|consulte|consultais|consulterai|parcours|
+             examine|examinais|contrôle|controle|prépare|prepare|préparais|
+             note|remarque|constate|me\s+souviens)\b
+      | Il\s+me\s+faut\b
+      | Il\s+(?:faudra|faut)\b
+      | La\s+trame\s+est\b
+      | Le\s+cadrage\s+est\b
+      | Voici\s+ce\s+que\s+vous\b
+      | Voici\s+(?:vos|les|tes)\s+options\b
+      | Tout\s+d[ée]pend\s+de\b
+    )
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+# Découpage en phrases (garde la ponctuation finale).
+_PHRASE = re.compile(r"[^.!?]*[.!?]+|[^.!?]+$")
+
+# Amorce typique d'une « liste de menu » (catalogue d'options). Si une telle amorce
+# apparaît, on retire les lignes à puces/numérotées qui l'entourent.
+_MENU_AMORCE = re.compile(
+    r"(?:du\s+plus\s+(?:évident|evident)|chaque\s+action\s+a\s+un\s+c[oû]t|"
+    r"voici\s+ce\s+que\s+vous\s+pouvez|voici\s+(?:vos|tes)\s+options|"
+    r"vos\s+options\s+sont|tes\s+options\s+sont|que\s+souhaitez[-\s]vous\s+faire|"
+    r"options?\s+qui\s+s'?offrent)",
+    re.IGNORECASE,
+)
+# Ligne de liste : puce (-, *, •), numéro (1. / 1)) ou court préfixe emoji.
+# On exclut le bloc citation `>` (texte destiné aux joueurs) pour ne jamais le retirer.
+_LIGNE_LISTE = re.compile(r"^\s*(?!>)(?:[-*•]|\d+[.)]|\W{1,3}\s)\s*\S.*$")
+
 
 def corriger_emphase(texte: str) -> str:
     if not isinstance(texte, str) or "*" not in texte:
@@ -45,6 +92,39 @@ def masquer_stats_monstre(texte: str) -> str:
     return texte
 
 
+def retirer_reflexion(texte: str) -> str:
+    """Retire les phrases de réflexion/métajeu du MJ (1re personne, planification)."""
+    if not isinstance(texte, str) or not texte.strip():
+        return texte
+    morceaux = _PHRASE.findall(texte)
+    if not morceaux:
+        return texte
+    gardees = [p for p in morceaux if not _REFLEXION.match(p.strip())]
+    return "".join(gardees)
+
+
+def retirer_menu(texte: str) -> str:
+    """Retire les lignes à puces/numérotées formant un « menu » d'options.
+
+    On n'agit QUE si le texte contient une amorce de menu (ex. « du plus évident au
+    plus fin », « chaque action a un coût »), pour ne jamais casser une liste
+    légitime de la narration (inventaire, PNJ présents, etc.).
+    """
+    if not isinstance(texte, str) or not _MENU_AMORCE.search(texte):
+        return texte
+    gardees: list[str] = []
+    for ligne in texte.split("\n"):
+        if _MENU_AMORCE.search(ligne):
+            continue
+        if _LIGNE_LISTE.match(ligne) and len(ligne.strip()) <= 120:
+            continue
+        gardees.append(ligne)
+    return "\n".join(gardees)
+
+
 def nettoyer(texte: str) -> str:
-    """Chaîne complète appliquée à chaque segment de réponse du MJ."""
-    return masquer_stats_monstre(corriger_emphase(texte))
+    """Chaîne complète appliquée à la réponse du MJ."""
+    texte = masquer_stats_monstre(corriger_emphase(texte))
+    texte = retirer_reflexion(texte)
+    texte = retirer_menu(texte)
+    return texte.strip()

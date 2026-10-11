@@ -29,7 +29,12 @@ class Settings:
     # RAG / Qdrant.
     qdrant_url: str = _env("QDRANT_URL", "http://qdrant:6333")
     qdrant_collection: str = _env("QDRANT_COLLECTION", "srd_521")
-    rag_top_k: int = int(_env("RAG_TOP_K", "5") or "5")
+    rag_top_k: int = int(_env("RAG_TOP_K", "3") or "3")
+    # Plancher anti-bruit du retrieval : on écarte les fiches vectorielles dont le
+    # score cosine est bas (seuil absolu) ou nettement sous le meilleur résultat
+    # (seuil relatif). Les correspondances de nom exact (BM25) sont toujours gardées.
+    rag_min_score: float = float(_env("RAG_MIN_SCORE", "0.66") or "0.66")
+    rag_score_delta: float = float(_env("RAG_SCORE_DELTA", "0.05") or "0.05")
 
     # Clé interne (X-API-Key) — identique à celle que Traefik/Next injecte.
     dnd_api_key: str = _env("DND_API_KEY", "")
