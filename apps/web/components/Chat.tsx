@@ -73,11 +73,9 @@ export default function Chat() {
   useEffect(() => {
     let toutes = chargerToutes();
     let idActif = toutes[0]?.id ?? "";
-    if (!toutes.length) {
-      const c = nouveauChat(nom);
-      toutes = [c];
-      idActif = c.id;
-    }
+    // Pas de création automatique : si l'utilisateur a supprimé toutes les
+    // conversations, on reste sur l'état vide (règle : supprimer le chat lié à
+    // une quête est définitif). On ouvre une conversation via « + Nouveau ».
     // Liaison depuis l'écran Campagne / création :
     // /chat?campagne=<id>&message=<texte>[&nouveau=1].
     let campagneLue = "";
@@ -152,19 +150,18 @@ export default function Chat() {
       setConversations(valides);
       return; // l'effet rerunera et réparera l'actif sur la liste propre
     }
+    // Réparation de l'actif : bascule sur une conversation valide restante, sinon
+    // aucune (état vide). On ne recrée JAMAIS une conversation supprimée.
     const courant = valides.find((c) => c.id === actifId);
     if (!courant) {
       if (valides.length) {
         setActifId(valides[0].id);
         setCampagneId(valides[0].campagneId ?? "");
-      } else if (campagneId && idsCampagnes.has(campagneId)) {
-        const c = nouveauChat(nom);
-        c.campagneId = campagneId;
-        setConversations([c]);
-        setActifId(c.id);
+      } else {
+        setActifId("");
       }
     }
-  }, [conversations, actifId, campagnesChargees, idsCampagnes, campagneId, nom]);
+  }, [conversations, actifId, campagnesChargees, idsCampagnes]);
 
   // Persistance à chaque changement (même vide : la purge doit être mémorisée).
   useEffect(() => {
@@ -199,20 +196,16 @@ export default function Chat() {
 
   const supprimer = useCallback(
     (id: string) => {
+      // Suppression définitive : on ne recrée pas de conversation. Si l'on
+      // supprime la conversation active, on bascule sur la suivante, sinon on
+      // laisse l'état vide (« + Nouveau » pour en rouvrir une).
       setConversations((prev) => {
         const reste = prev.filter((c) => c.id !== id);
-        if (id === actifId) {
-          if (reste.length) setActifId(reste[0].id);
-          else {
-            const c = nouveauChat(nom);
-            setActifId(c.id);
-            return [c];
-          }
-        }
+        if (id === actifId) setActifId(reste[0]?.id ?? "");
         return reste;
       });
     },
-    [actifId, nom],
+    [actifId],
   );
 
   const renommer = useCallback(
@@ -425,7 +418,9 @@ export default function Chat() {
         <div ref={fondRef} className="flex-1 overflow-y-auto p-4 space-y-4">
           {!actif ? (
             <p className="text-parchemin/40 italic">
-              Aucune quête active. Ouvre une campagne pour commencer l'aventure.
+              {campagneId && idsCampagnes.has(campagneId)
+                ? "Cette quête n'a pas encore de conversation. « + Nouveau » pour en ouvrir une."
+                : "Aucune quête active. Ouvre une campagne pour commencer l'aventure."}
             </p>
           ) : (
             messages.length === 0 && (

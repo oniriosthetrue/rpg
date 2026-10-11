@@ -229,19 +229,6 @@ export default function PageCampagne() {
                 >
                   ↺ Rejouer
                 </button>
-                {etat.active && (
-                  <button
-                    onClick={() =>
-                      jdr.post(`/campagne/${encodeURIComponent(id)}/cloturer`).then(() => {
-                        chargerEtat(id);
-                        chargerListe();
-                      })
-                    }
-                    className="rounded bg-sang/70 hover:bg-sang px-3 py-1 text-xs"
-                  >
-                    Clôturer
-                  </button>
-                )}
               </div>
             </div>
 
