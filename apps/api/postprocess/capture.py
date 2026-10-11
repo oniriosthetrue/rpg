@@ -42,9 +42,10 @@ _MJ_ANONCE_JET = re.compile(
 )
 
 # Le MJ énonce le résultat obtenu pour le joueur : « tu obtiens 17 »,
-# « tu fais 19 », « tu obtiens un 23 ».
+# « tu réussis à 19 », « tu réalises un 23 ». On évite « tu fais N » (trop
+# présent en narration : « tu fais quelques pas »).
 _RESULTAT_JOUEUR = re.compile(
-    r"\btu\s+(?:obtiens|fais|obtenais|faisais|realises|réalises|obtiendras)\s+(?:un\s+)?\d{1,3}\b",
+    r"\btu\s+(?:obtiens|obtenais|obtiendras|realises|réalises|reussis|réussis)\s+(?:un\s+)?\d{1,3}\b",
     re.IGNORECASE,
 )
 

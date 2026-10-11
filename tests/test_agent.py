@@ -359,6 +359,11 @@ class TestCapture(unittest.TestCase):
         texte = "Lance ton jet d'attaque : d20 + ton modificateur de Force, puis dis-moi le résultat."
         self.assertFalse(self.capture.detecter_jet_auto(texte))
 
+    def test_ne_detecte_pas_la_narration(self):
+        # « tu fais 3 pas », « tu obtiens le silence » (sans nombre) : narration, pas un dé.
+        self.assertFalse(self.capture.detecter_jet_auto("Tu fais trois pas vers la porte."))
+        self.assertFalse(self.capture.detecter_jet_auto("Tu avances et observes la salle."))
+
     def test_joueur_a_donne_un_de(self):
         self.assertTrue(self.capture.le_joueur_a_donne_un_de("Je fais 16"))
         self.assertFalse(self.capture.le_joueur_a_donne_un_de("J'inspecte la pièce"))
