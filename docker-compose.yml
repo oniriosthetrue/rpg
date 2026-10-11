@@ -61,6 +61,9 @@ services:
       - LITELLM_BASE_URL=${LITELLM_BASE_URL}
       - LITELLM_API_KEY=${LITELLM_API_KEY}
       - MJ_MODEL=${MJ_MODEL}
+      # Garde-fous du run agent (modèle à raisonnement : coupe les boucles).
+      - MJ_RUN_TIMEOUT_S=${MJ_RUN_TIMEOUT_S:-75}
+      - MJ_RUN_REQUEST_LIMIT=${MJ_RUN_REQUEST_LIMIT:-12}
       # Embeddings (service embedding de la stack existante).
       - EMBED_BASE_URL=${EMBED_BASE_URL}
       - EMBED_MODEL_NAME=${EMBED_MODEL_NAME}
