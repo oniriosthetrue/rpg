@@ -100,9 +100,9 @@ def ouvrir(
     c = cp.Campagne.depuis_dict(corps)
     _sauvegarder(c)
     etat = c.etat()
-    # Graines d'inspiration (variété) : tirées à l'ouverture, renvoyées au client
-    # pour être injectées dans la consigne du MJ. Transitoires — NON persistées.
-    etat["inspirations"] = variete.tirer_inspirations()
+    # Graines d'inspiration (variété) : 2 par dimension à l'ouverture, renvoyées au
+    # client pour être injectées dans la consigne du MJ. Transitoires — NON persistées.
+    etat["inspirations"] = variete.tirer_inspirations(nb=2)
     return enveloppe(etat)
 
 
