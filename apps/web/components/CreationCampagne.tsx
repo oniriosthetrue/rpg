@@ -62,9 +62,16 @@ export default function CreationCampagne({
   const basculerPj = (nom: string) =>
     setPjSel((p) => (p.includes(nom) ? p.filter((x) => x !== nom) : [...p, nom]));
 
-  const idx = ETAPES.indexOf(etape);
-  const precedent = () => idx > 0 && setEtape(ETAPES[idx - 1]);
-  const suivant = () => idx < ETAPES.length - 1 && setEtape(ETAPES[idx + 1]);
+  // En mode surprise, le MJ invente tout en secret : on ne demande ni titre ni
+  // idée de départ (l'étape « theme »), qui trahiraient la surprise.
+  const etapes: Etape[] =
+    mode === "surprise"
+      ? ETAPES.filter((e) => e !== "theme")
+      : [...ETAPES];
+  const idx = etapes.indexOf(etape);
+  const estDerniere = etape === etapes[etapes.length - 1];
+  const precedent = () => idx > 0 && setEtape(etapes[idx - 1]);
+  const suivant = () => idx < etapes.length - 1 && setEtape(etapes[idx + 1]);
 
   const basculerPilier = (v: string) =>
     setPiliers((p) => (p.includes(v) ? p.filter((x) => x !== v) : [...p, v]));
@@ -152,7 +159,7 @@ export default function CreationCampagne({
   const peutAvancer = !(etape === "age" && !age.trim());
   const entree = () => {
     if (enCours) return;
-    if (etape === "theme") ouvrir();
+    if (estDerniere) ouvrir();
     else if (peutAvancer) suivant();
   };
 
@@ -169,7 +176,7 @@ export default function CreationCampagne({
   return (
     <div className="p-4 space-y-3">
       <div className="text-xs text-parchemin/50">
-        Nouvelle campagne · étape {idx + 1}/{ETAPES.length}
+        Nouvelle campagne · étape {idx + 1}/{etapes.length}
       </div>
       <p className="font-semibold text-or">{titreEtape[etape]}</p>
 
@@ -347,7 +354,7 @@ export default function CreationCampagne({
             ⬅ Retour
           </button>
         )}
-        {etape !== "theme" ? (
+        {!estDerniere ? (
           <button
             onClick={suivant}
             disabled={
