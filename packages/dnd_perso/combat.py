@@ -273,6 +273,9 @@ class Rencontre:
     tour: int = 1
     ordre: list[Combattant] = field(default_factory=list)
     index_actif: int = 0
+    # Campagne/scénario auquel cette rencontre est rattachée ("" = hors campagne).
+    # Permet la cascade : supprimer la campagne supprime aussi ses combats.
+    campagne_id: str = ""
 
     # -- accès ---------------------------------------------------------------
 
@@ -305,11 +308,15 @@ class Rencontre:
         combattants: list[Combattant],
         titre: str = "",
         rng: random.Random | None = None,
+        campagne_id: str = "",
     ) -> "Rencontre":
         """Ouvre une rencontre : lance les initiatives et place le 1er tour."""
         rng = rng or random.Random()
         ordre = roller_initiative(list(combattants), rng)
-        rencontre = cls(id=id, titre=titre, ordre=ordre, index_actif=0, tour=1)
+        rencontre = cls(
+            id=id, titre=titre, ordre=ordre, index_actif=0, tour=1,
+            campagne_id=campagne_id,
+        )
         rencontre._aligner_sur_vivant()
         return rencontre
 
@@ -372,6 +379,7 @@ class Rencontre:
             "active": self.active,
             "tour": self.tour,
             "index_actif": self.index_actif,
+            "campagne_id": self.campagne_id,
             "ordre": [c.vers_dict() for c in self.ordre],
         }
 
@@ -383,6 +391,7 @@ class Rencontre:
             active=bool(d.get("active", True)),
             tour=int(d.get("tour", 1)),
             index_actif=int(d.get("index_actif", 0)),
+            campagne_id=str(d.get("campagne_id", "")),
             ordre=[Combattant.depuis_dict(c) for c in d.get("ordre", [])],
         )
 
@@ -397,6 +406,7 @@ class Rencontre:
             "titre": self.titre,
             "active": self.active,
             "tour": self.tour,
+            "campagne_id": self.campagne_id,
             "finie": self.finie,
             "actif": self.actif.cle if self.actif else None,
             "ordre": [

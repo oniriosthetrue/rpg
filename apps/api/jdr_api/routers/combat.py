@@ -188,7 +188,12 @@ def ouvrir(
         return enveloppe({"ok": False, "type": "erreur", "erreur": "Une rencontre exige au moins deux combattants."})
 
     rng = random.Random(body.get("seed")) if body.get("seed") is not None else random.Random()
-    r = combat.Rencontre.ouvrir(id_, combattants, titre=str(body.get("titre", "")), rng=rng)
+    r = combat.Rencontre.ouvrir(
+        id_, combattants,
+        titre=str(body.get("titre", "")),
+        rng=rng,
+        campagne_id=str(body.get("campagne_id", "")).strip(),
+    )
     _sauvegarder(r)
     return enveloppe(r.etat())
 

@@ -103,7 +103,10 @@ def supprimer_le_personnage(nom: str) -> dict[str, Any]:
 # ─── Combat ─────────────────────────────────────────────────────────────────
 
 def ouvrir_un_combat(
-    combattants: list[dict], titre: str = "", combat_id: str = ""
+    ctx: RunContext[Deps],
+    combattants: list[dict],
+    titre: str = "",
+    combat_id: str = "",
 ) -> dict[str, Any]:
     """Ouvrir une rencontre : le serveur lance TOUTES les initiatives (d20 + bonus)
     et renvoie l'ordre de jeu.
@@ -112,12 +115,18 @@ def ouvrir_un_combat(
     `{"type":"monstre","nom":...,"pv":7,"ca":15,"attaque":4,"degats":"1d6+2",
     "mod_degats":0,"init_bonus":2,"nb":2}`. Les stats du monstre viennent de sa
     fiche SRD (jamais inventées). `nb` crée plusieurs exemplaires. ≥ 2 combattants.
+
+    La rencontre est automatiquement rattachée à la campagne active : supprimer
+    cette campagne supprimera aussi ce combat.
     """
     corps: dict[str, Any] = {"combattants": combattants}
     if titre:
         corps["titre"] = titre
     if combat_id:
         corps["id"] = combat_id
+    campagne_id = ctx.deps.campagne_id if ctx and ctx.deps else ""
+    if campagne_id:
+        corps["campagne_id"] = campagne_id
     return r_combat.ouvrir(corps, _CLE)
 
 
@@ -270,6 +279,7 @@ OUTILS_CTX = [
     nouveau_personnage,
     lister_les_options,
     abandonner_la_creation,
+    ouvrir_un_combat,
 ]
 
 # Outils sans contexte → agent.tool_plain().
@@ -278,7 +288,6 @@ OUTILS_PLAIN = [
     charger_le_personnage,
     modifier_le_personnage,
     supprimer_le_personnage,
-    ouvrir_un_combat,
     etat_du_combat,
     lancer_le_jet_d_un_monstre,
     enregistrer_le_jet_du_joueur,

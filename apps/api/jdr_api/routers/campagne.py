@@ -284,7 +284,28 @@ def supprimer(
     if not chemin.exists():
         return {"ok": False, "v": V, "type": "erreur", "erreur": f"Campagne introuvable : {id}"}
     chemin.unlink(missing_ok=True)
-    return {"ok": True, "v": V, "type": "supprime", "id": id}
+    # Cascade : supprime aussi les rencontres de combat rattachées à cette campagne
+    # (liaison via le champ `campagne_id` persisté à l'ouverture du combat).
+    supprimes = _supprimer_combats_de_la_campagne(id)
+    return {"ok": True, "v": V, "type": "supprime", "id": id, "combats_supprimes": supprimes}
+
+
+def _supprimer_combats_de_la_campagne(id_: str) -> list[str]:
+    """Supprime les fichiers de rencontre dont `campagne_id == id_`. Renvoie la
+    liste des identifiants de combat supprimés (best-effort, ignore les illisibles)."""
+    supprimes: list[str] = []
+    dossier = extract.COMBAT_DIR
+    if not dossier.exists():
+        return supprimes
+    for fichier in dossier.glob("rencontre-*.json"):
+        try:
+            donnees = json.loads(fichier.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if str(donnees.get("campagne_id", "")) == id_:
+            fichier.unlink(missing_ok=True)
+            supprimes.append(str(donnees.get("id", fichier.stem)))
+    return supprimes
 
 
 @router.post("/api/campagne/{id}/cloturer")

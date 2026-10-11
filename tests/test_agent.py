@@ -133,7 +133,7 @@ class TestDlegationOutils(unittest.TestCase):
             return ModelResponse(parts=[TextPart("Combat ouvert.")])
 
         agent = Agent(FunctionModel(fake), deps_type=Deps)
-        agent.tool_plain(ouvrir_un_combat)
+        agent.tool(ouvrir_un_combat)
         res = agent.run_sync("que le combat commence", deps=Deps())
         blob = res.all_messages_json().decode()
         # Le serveur a calculé l'initiative : ordre + identifiant de rencontre présents.

@@ -188,5 +188,85 @@ class TestEcrireCampagne(unittest.TestCase):
         self.assertFalse(r.json()["ok"])
 
 
+class TestCascadeSuppressionCampagne(unittest.TestCase):
+    """Supprimer une campagne supprime aussi les combats rattachés (via
+    `campagne_id`), et uniquement ceux-là."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp(prefix="cascade-")
+        cls.dossier_campagne = Path(cls.tmp) / "campagne"
+        cls.dossier_combat = Path(cls.tmp) / "combat"
+        cls.dossier_campagne.mkdir(parents=True, exist_ok=True)
+        cls.dossier_combat.mkdir(parents=True, exist_ok=True)
+        os.environ["DND_API_KEY"] = "test-key"
+        from fastapi.testclient import TestClient
+        from jdr_api.main import app
+        from dnd_perso import extract
+
+        cls._campagne_dir_origine = extract.CAMPAGNE_DIR
+        cls._combat_dir_origine = extract.COMBAT_DIR
+        extract.CAMPAGNE_DIR = cls.dossier_campagne
+        extract.COMBAT_DIR = cls.dossier_combat
+        cls.client = TestClient(app)
+        cls.H = {"X-API-Key": "test-key"}
+
+    @classmethod
+    def tearDownClass(cls):
+        from dnd_perso import extract
+
+        extract.CAMPAGNE_DIR = cls._campagne_dir_origine
+        extract.COMBAT_DIR = cls._combat_dir_origine
+
+    def _ouvrir_combat(self, campagne_id: str, cid: str) -> str:
+        r = self.client.post(
+            "/api/combat/ouvrir",
+            json={
+                "id": cid,
+                "campagne_id": campagne_id,
+                "titre": "Escarmouche",
+                "combattants": [
+                    {"type": "monstre", "nom": "Gobelin", "pv": 7, "ca": 15,
+                     "attaque": 4, "degats": "1d6+2", "mod_degats": 2, "init_bonus": 2},
+                    {"type": "monstre", "nom": "Orc", "pv": 11, "ca": 13,
+                     "attaque": 5, "degats": "1d12", "mod_degats": 3, "init_bonus": 1},
+                ],
+            },
+            headers=self.H,
+        )
+        self.assertTrue(r.json()["ok"], r.json())
+        return r.json()["id"]
+
+    def test_supprimer_campagne_supprime_ses_combats(self):
+        # Campagne A + deux combats rattachés ; campagne B + un combat rattaché.
+        ra = self.client.post("/api/campagne/ouvrir", json={"id": "casc-a", "titre": "A"}, headers=self.H)
+        cid_a = ra.json()["id"]
+        ra = self.client.post("/api/campagne/ouvrir", json={"id": "casc-b", "titre": "B"}, headers=self.H)
+        cid_b = ra.json()["id"]
+
+        combat_a1 = self._ouvrir_combat(cid_a, "ca1")
+        combat_a2 = self._ouvrir_combat(cid_a, "ca2")
+        combat_b1 = self._ouvrir_combat(cid_b, "cb1")
+        combat_orphelin = self._ouvrir_combat("", "co1")  # hors campagne
+
+        # Le champ campagne_id est bien persisté.
+        etat = self.client.get(f"/api/combat/{combat_a1}", headers=self.H).json()
+        self.assertEqual(etat["campagne_id"], cid_a)
+
+        # Suppression de la campagne A → ses 2 combats disparaissent, pas ceux de B ni l'orphelin.
+        r = self.client.delete(f"/api/campagne/{cid_a}", headers=self.H)
+        self.assertTrue(r.json()["ok"])
+        self.assertEqual(sorted(r.json()["combats_supprimes"]), sorted([combat_a1, combat_a2]))
+
+        self.assertFalse((self.dossier_combat / f"rencontre-{combat_a1}.json").exists())
+        self.assertFalse((self.dossier_combat / f"rencontre-{combat_a2}.json").exists())
+        self.assertTrue((self.dossier_combat / f"rencontre-{combat_b1}.json").exists())
+        self.assertTrue((self.dossier_combat / f"rencontre-{combat_orphelin}.json").exists())
+
+    def test_supprimer_sans_cle_refuse(self):
+        r = self.client.delete("/api/campagne/abc")
+        self.assertFalse(r.json()["ok"])
+
+
 if __name__ == "__main__":
     unittest.main()
