@@ -6,6 +6,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Markdown from "./Markdown";
 import { usePerso } from "./PersoContext";
+import { jdr } from "@/lib/jdr";
 
 type Source = { nom: string; source: string; edition?: string };
 type Message = { role: "user" | "assistant"; content: string; citations?: Source[] };
@@ -15,6 +16,10 @@ type Conversation = {
   messages: Message[];
   personnage: string;
   date: number;
+  // Campagne ciblée par cette conversation (liée depuis l'écran Campagne /
+  // création). Permet de conserver le lien au rechargement et d'afficher le
+  // titre de la campagne plutôt que la consigne brute.
+  campagneId?: string;
 };
 
 const CLE = "mj-conversations";
@@ -47,6 +52,12 @@ export default function Chat() {
   const [enCours, setEnCours] = useState(false);
   const [outil, setOutil] = useState("");
   const [campagneId, setCampagneId] = useState("");
+  // Titres et identifiants des campagnes existantes : sert à titrer les
+  // conversations liées et à masquer celles d'une campagne supprimée.
+  const [titresCampagnes, setTitresCampagnes] = useState<Record<string, string>>(
+    {},
+  );
+  const [idsCampagnes, setIdsCampagnes] = useState<Set<string>>(new Set());
   const fondRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   // Message d'amorce passé par l'écran Campagne (/chat?…&message=…) : auto-envoyé
@@ -57,32 +68,58 @@ export default function Chat() {
 
   // Chargement initial : restaure ou crée la première conversation.
   useEffect(() => {
-    const toutes = chargerToutes();
-    if (toutes.length) {
-      setConversations(toutes);
-      setActifId(toutes[0].id);
-    } else {
+    let toutes = chargerToutes();
+    let idActif = toutes[0]?.id ?? "";
+    if (!toutes.length) {
       const c = nouveauChat(nom);
-      setConversations([c]);
-      setActifId(c.id);
+      toutes = [c];
+      idActif = c.id;
     }
     // Liaison depuis l'écran Campagne / création :
     // /chat?campagne=<id>&message=<texte>[&nouveau=1].
+    let campagneLue = "";
     if (typeof window !== "undefined") {
       const p = new URLSearchParams(window.location.search);
-      const camp = p.get("campagne");
-      if (camp) setCampagneId(camp);
+      campagneLue = p.get("campagne") ?? "";
       const msg = p.get("message");
       if (msg) amorceRef.current = msg;
       // `nouveau=1` (retour de l'écran de création) : on repart d'une
       // conversation vierge liée à la campagne, sans reprendre les anciennes.
       if (p.get("nouveau") === "1") {
         const c = nouveauChat(nom);
-        setConversations((prev) => [c, ...prev]);
-        setActifId(c.id);
+        toutes = [c, ...toutes];
+        idActif = c.id;
       }
     }
+    // La conversation active porte la campagne ciblée : le lien est ainsi
+    // conservé au rechargement et au changement de conversation.
+    if (campagneLue) {
+      setCampagneId(campagneLue);
+      toutes = toutes.map((c) =>
+        c.id === idActif ? { ...c, campagneId: campagneLue } : c,
+      );
+    }
+    setConversations(toutes);
+    setActifId(idActif);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Récupère les campagnes existantes (titres + ids) pour l'affichage de la liste.
+  useEffect(() => {
+    jdr.get<{ campagnes: { id: string; titre: string }[] }>("/campagne")
+      .then((j) => {
+        const t: Record<string, string> = {};
+        const ids = new Set<string>();
+        for (const c of j.campagnes) {
+          t[c.id] = c.titre || c.id;
+          ids.add(c.id);
+        }
+        setTitresCampagnes(t);
+        setIdsCampagnes(ids);
+      })
+      .catch(() => {
+        /* liste indisponible : on garde les titres internes */
+      });
   }, []);
 
   // Persistance à chaque changement.
@@ -254,11 +291,20 @@ export default function Chat() {
           + Nouveau
         </button>
         <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
-          {conversations.map((c) => (
+          {conversations.map((c) => {
+            // Une conversation liée à une campagne supprimée disparaît de la liste.
+            if (c.campagneId && !idsCampagnes.has(c.campagneId)) return null;
+            const titre =
+              c.campagneId && titresCampagnes[c.campagneId]
+                ? `📜 ${titresCampagnes[c.campagneId]}`
+                : c.titre;
+            return (
             <div
               key={c.id}
               onClick={() => {
                 setActifId(c.id);
+                // Bascule la campagne ciblée sur celle de la conversation.
+                setCampagneId(c.campagneId ?? "");
                 // Restaure le PJ de cette conversation (évite qu'une vieille
                 // conversation parle du PJ actif global changé entre-temps).
                 if (c.personnage) setNom(c.personnage);
@@ -267,7 +313,7 @@ export default function Chat() {
                 c.id === actifId ? "bg-or/20 text-or" : "hover:bg-white/5"
               }`}
             >
-              <div className="truncate">{c.titre}</div>
+              <div className="truncate">{titre}</div>
               <div className="flex gap-2 opacity-0 group-hover:opacity-100 text-parchemin/50">
                 <button
                   onClick={(e) => {
@@ -289,7 +335,8 @@ export default function Chat() {
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
