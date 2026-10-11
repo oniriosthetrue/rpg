@@ -22,15 +22,6 @@ class Settings:
     litellm_api_key: str = _env("LITELLM_API_KEY", "")
     mj_model: str = _env("MJ_MODEL", "VnimanieAI/Qwen3.8-Flash-Next-W4A16")
 
-    # Garde-fous du run agent. Le modèle est un modèle à RAISONNEMENT : il peut
-    # partir dans une longue chaîne de « thinking » sans émettre de texte, ou
-    # boucler sur les outils. Sans borne, le flux SSE reste ouvert indéfiniment
-    # (« le MJ réfléchit sans répondre »). On coupe au-delà de ces seuils.
-    # Délai global maximal d'un run (s) — au-delà, on renvoie le partiel ou une erreur.
-    run_timeout_s: float = float(_env("MJ_RUN_TIMEOUT_S", "75") or "75")
-    # Nombre max d'appels modèle (requêtes) par run — coupe les boucles d'outils.
-    run_request_limit: int = int(_env("MJ_RUN_REQUEST_LIMIT", "12") or "12")
-
     # Embeddings (service embedding de la stack existante).
     embed_base_url: str = _env("EMBED_BASE_URL", "http://embedding:8080/v1")
     embed_model_name: str = _env("EMBED_MODEL_NAME", "Qwen/Qwen3-Embedding-0.6B")

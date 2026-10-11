@@ -13,15 +13,12 @@ SSE. Le frontend n'a qu'à consommer les événements.
 
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import Any, AsyncIterator
 
 from fastapi import APIRouter, Body, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
-from pydantic_ai.exceptions import UsageLimitExceeded
-from pydantic_ai.usage import UsageLimits
 from pydantic_ai.messages import (
     FunctionToolCallEvent,
     FunctionToolResultEvent,
@@ -40,7 +37,6 @@ from agent.tools import Deps
 from jdr_api.commun import autorise
 from postprocess import anti_meta
 from rag import retriever
-from settings import settings
 
 router = APIRouter()
 
@@ -93,7 +89,6 @@ async def chat(
             prompt_texte,
             deps=Deps(chat_id=chat_id, campagne_id=campagne_id),
             message_history=_historique(historique),
-            usage_limits=UsageLimits(request_limit=settings.run_request_limit),
         ) as run:
             async for node in run:
                 # Stop serveur : si le client a fermé le flux (bouton Stop),
@@ -137,38 +132,18 @@ async def chat(
         # Citations émises dès le début (le frontend peut les afficher sous le message).
         if sources:
             yield _sse("citations", {"sources": sources})
-        texte_final: list[str] = []
         try:
-            # Run unique, streaming en direct, sous DELAI GLOBAL. Le modèle est à
-            # raisonnement : il peut boucler (thinking sans texte, ou aller-retours
-            # d'outils) et laisser le flux ouvert sans jamais repondre. `asyncio.
-            # timeout` borne le run entier ; `request_limit` (voir _run) borne les
-            # boucles d'outils. Sur depassement, on renvoie le texte deja emis s'il
-            # y en a, sinon une erreur propre — le flux se termine toujours.
-            async with asyncio.timeout(settings.run_timeout_s):
-                async for chunk in _run(prompt, texte_final):
-                    yield chunk
+            # Run unique, streaming en direct. La mécanique des dés est désormais
+            # arbitrée par l'outil `enregistrer_le_jet_hors_combat` (et les outils de
+            # combat) : le LLM ne lance plus jamais un dé lui-même, il n'y a donc plus
+            # lieu de filtrer/relancer a posteriori une réponse qui en contiendrait un.
+            texte_final: list[str] = []
+            async for chunk in _run(prompt, texte_final):
+                yield chunk
             if await request.is_disconnected():
                 return
             complet = anti_meta.nettoyer("".join(texte_final))
             yield _sse("fin", {"texte": complet})
-        except (TimeoutError, UsageLimitExceeded) as exc:
-            # Le run a depasse son budget (temps ou requetes). On solde le flux :
-            # texte partiel si le MJ avait commence a repondre, sinon message clair.
-            if await request.is_disconnected():
-                return
-            partiel = anti_meta.nettoyer("".join(texte_final))
-            if partiel:
-                yield _sse("fin", {"texte": partiel})
-            else:
-                yield _sse(
-                    "erreur",
-                    {
-                        "message": "Le MJ a mis trop de temps a repondre (boucle de "
-                        "raisonnement). Reformule ta demande ou relance la partie."
-                    },
-                )
-            del exc
         except Exception as exc:  # ne jamais casser le flux silencieusement
             yield _sse("erreur", {"message": f"Erreur agent : {exc}"})
 
