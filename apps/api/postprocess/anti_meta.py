@@ -94,6 +94,26 @@ _ENTETE_MENU = re.compile(
     re.IGNORECASE,
 )
 
+# ---------------------------------------------------------------------------
+# Anti-« synthèse ». Le MJ conclut parfois son tour par un bloc récapitulatif
+# (« Résumé », « Ce que tu retiens », « En résumé », « Bilan »…) qui redit les
+# indices déjà donnés et casse l'immersion. On ne cible qu'une amorce isolée
+# (titre Markdown ou ligne entièrement en gras) portant un marqueur de synthèse,
+# puis on retire le bloc qui la suit jusqu'au prochain séparateur `---`, titre
+# ou question de clôture — jamais une narration contenant le mot « résumé ».
+# ---------------------------------------------------------------------------
+_MARQUEUR_SYNTHESE = re.compile(
+    r"\b(r[ée]sum[ée]|r[ée]capitulatif|en\s+r[ée]sum[ée]|bilan|l'essentiel|"
+    r"points?\s+cl[ée]s|ce\s+que\s+tu\s+(?:retiens|retires|as\s+retenu)|"
+    r"ce\s+qu'il\s+faut\s+retenir|[àa]\s+retenir)\b",
+    re.IGNORECASE,
+)
+# Amorce = titre (`#…`) OU ligne entièrement en gras (`**…**`), portant le marqueur.
+_TITRE = re.compile(r"^\s*#{1,6}\s")
+_GRAS_SEUL = re.compile(r"^\s*\*\*[^*]+\*\*\s*[:：]?\s*$")
+# Titre Markdown (nouvelle section légitime) : fin d'un bloc de synthèse, conservé.
+_HEADING = re.compile(r"^\s*#{1,6}\s")
+
 
 def corriger_emphase(texte: str) -> str:
     if not isinstance(texte, str) or "*" not in texte:
@@ -193,12 +213,51 @@ def retirer_menu(texte: str) -> str:
     return "\n".join(gardees)
 
 
+def retirer_synthese(texte: str) -> str:
+    """Retire les blocs de « synthèse » du MJ (Résumé / Ce que tu retiens / Bilan…).
+
+    Un bloc commence sur une ligne d'amorce isolée (titre Markdown ou ligne
+    entièrement en gras) portant un marqueur de synthèse. On retire cette amorce
+    et les lignes qui la suivent jusqu'au prochain séparateur `---`, titre
+    Markdown ou question de clôture (conservés). Une simple narration contenant le
+    mot « résumé » n'est jamais touchée (l'amorce doit être un titre/ligne en gras).
+    """
+    if not isinstance(texte, str) or not texte.strip():
+        return texte
+
+    lignes = texte.split("\n")
+    gardees: list[str] = []
+    dans_synthese = False
+    for ligne in lignes:
+        if dans_synthese:
+            # Fin du bloc : séparateur (retiré), nouveau titre ou question de
+            # clôture (conservés).
+            if _SEP_HR.match(ligne):
+                dans_synthese = False
+                continue  # on retire aussi le séparateur qui fermait la synthèse
+            if _HEADING.match(ligne) or _QUESTION_CLOTURE.match(ligne):
+                dans_synthese = False
+                gardees.append(ligne)
+                continue
+            continue  # ligne de la synthèse : on la retire
+        est_amorce = (
+            (_TITRE.match(ligne) or _GRAS_SEUL.match(ligne))
+            and _MARQUEUR_SYNTHESE.search(ligne)
+        )
+        if est_amorce:
+            dans_synthese = True
+            continue
+        gardees.append(ligne)
+    return "\n".join(gardees)
+
+
 def nettoyer(texte: str) -> str:
     """Chaîne complète appliquée à la réponse du MJ."""
     texte = masquer_stats_monstre(corriger_emphase(texte))
-    # Retirer les menus AVANT la réflexion : `retirer_reflexion` découpe en phrases
-    # et recolle sans égard aux sauts de ligne, ce qui détruirait la structure en
-    # lignes dont `retirer_menu` a besoin pour repérer les blocs d'options.
+    # Retirer les menus/synthèses AVANT la réflexion : `retirer_reflexion` découpe
+    # en phrases et recolle sans égard aux sauts de ligne, ce qui détruirait la
+    # structure en lignes dont `retirer_menu`/`retirer_synthese` ont besoin.
     texte = retirer_menu(texte)
+    texte = retirer_synthese(texte)
     texte = retirer_reflexion(texte)
     return texte.strip()

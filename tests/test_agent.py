@@ -199,6 +199,43 @@ class TestAntiMeta(unittest.TestCase):
         out = anti_meta.nettoyer(texte)
         self.assertIn("Dague", out)
 
+    def test_retire_synthese_gras(self):
+        # Un bloc « Ce que tu retiens » (amorce en gras) doit être retiré, la
+        # narration qui précède et la question de clôture conservées.
+        texte = (
+            "Tu observes la brûlure sur le granite.\n\n"
+            "**Ce que tu retiens :**\n"
+            "Le voleur a utilisé un sort d'Évocation majeur.\n"
+            "C'est la signature d'un praticien particulier.\n\n"
+            "Que fais-tu ?"
+        )
+        out = anti_meta.nettoyer(texte)
+        self.assertIn("Tu observes la brûlure", out)
+        self.assertNotIn("Ce que tu retiens", out)
+        self.assertNotIn("Évocation majeur", out)
+        self.assertIn("Que fais-tu ?", out)
+
+    def test_retire_synthese_titre(self):
+        # Un titre « ## Résumé » retire le bloc jusqu'au titre suivant (conservé).
+        texte = (
+            "La salle est saccagée.\n\n"
+            "## Résumé\n"
+            "Le Codex a disparu.\n\n"
+            "## La suite\n"
+            "Un couloir descend vers le nord.\n"
+        )
+        out = anti_meta.nettoyer(texte)
+        self.assertIn("La salle est saccagée", out)
+        self.assertNotIn("Le Codex a disparu", out)
+        self.assertIn("## La suite", out)
+        self.assertIn("Un couloir descend", out)
+
+    def test_garde_resume_dans_narration(self):
+        # Le mot « résumé » en pleine phrase (pas une amorce) ne doit rien retirer.
+        texte = "Le scribe a laissé un résumé des comptes sur la table. Que fais-tu ?"
+        out = anti_meta.nettoyer(texte)
+        self.assertIn("résumé des comptes", out)
+
 
 # ─── 3. RAG : contexte borné + citation ──────────────────────────────────────
 
