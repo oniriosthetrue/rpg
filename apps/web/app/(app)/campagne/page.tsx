@@ -122,6 +122,32 @@ export default function PageCampagne() {
     [id, chargerListe],
   );
 
+  const rejouer = useCallback(
+    async (cid: string, titre: string) => {
+      if (
+        !window.confirm(
+          `Rejouer « ${titre || cid} » depuis le début ? La trame et le personnage sont conservés, la progression (phase, indices, crochets, lieux) est remise à zéro.`,
+        )
+      )
+        return;
+      setErreur("");
+      try {
+        await jdr.post(`/campagne/${encodeURIComponent(cid)}/rejouer`);
+        await chargerEtat(cid);
+        await chargerListe();
+        // Ouvre une nouvelle conversation du MJ sur la campagne réinitialisée.
+        window.location.href = `/chat?campagne=${encodeURIComponent(
+          cid,
+        )}&nouveau=1`;
+      } catch (e) {
+        setErreur(
+          e instanceof ErreurJdr ? e.message : "Erreur de réinitialisation.",
+        );
+      }
+    },
+    [chargerEtat, chargerListe],
+  );
+
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
       <section className="w-full md:w-80 shrink-0 overflow-y-auto border-b md:border-b-0 md:border-r border-white/10 bg-black/10">
@@ -191,19 +217,28 @@ export default function PageCampagne() {
               <span className="text-sm text-parchemin/60">
                 phase : <b className="text-or">{etat.phase}</b> · danger {etat.danger}
               </span>
-              {etat.active && (
+              <div className="ml-auto flex items-center gap-2">
                 <button
-                  onClick={() =>
-                    jdr.post(`/campagne/${encodeURIComponent(id)}/cloturer`).then(() => {
-                      chargerEtat(id);
-                      chargerListe();
-                    })
-                  }
-                  className="ml-auto rounded bg-sang/70 hover:bg-sang px-3 py-1 text-xs"
+                  onClick={() => rejouer(id, etat.titre)}
+                  title="Rejouer la même aventure depuis le début (trame et PJ conservés)"
+                  className="rounded bg-or/80 hover:bg-or text-encre px-3 py-1 text-xs font-semibold"
                 >
-                  Clôturer
+                  ↺ Rejouer
                 </button>
-              )}
+                {etat.active && (
+                  <button
+                    onClick={() =>
+                      jdr.post(`/campagne/${encodeURIComponent(id)}/cloturer`).then(() => {
+                        chargerEtat(id);
+                        chargerListe();
+                      })
+                    }
+                    className="rounded bg-sang/70 hover:bg-sang px-3 py-1 text-xs"
+                  >
+                    Clôturer
+                  </button>
+                )}
+              </div>
             </div>
 
             <Cadrage etat={etat} />

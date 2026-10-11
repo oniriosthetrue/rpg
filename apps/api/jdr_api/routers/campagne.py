@@ -331,6 +331,31 @@ def cloturer(
     return enveloppe(res)
 
 
+@router.post("/api/campagne/{id}/rejouer")
+def rejouer(
+    id: str,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict[str, Any]:
+    """Réinitialise la **partie** d'une campagne pour la rejouer depuis le début.
+
+    La **trame** (synopsis, accroche, PNJ, défis, crochets, lieux, blocs) et le
+    **personnage** sont conservés : seule l'état de jeu repart de zéro (phase
+    `accroche`, campagne réactivée, indices/récompenses/chronologie vidés, crochets
+    rouverts, lieux/PNJ non rencontrés, blocs repositionnés). Renvoie l'`etat()`
+    réinitialisé, prêt à ouvrir une nouvelle conversation sur la même campagne.
+    """
+    if (err := autorise(x_api_key)) is not None:
+        return err
+    if (err := _valider_id(id)) is not None:
+        return err
+    c, err = _charger(id)
+    if err:
+        return err
+    c.rejouer()  # type: ignore[union-attr]
+    _sauvegarder(c)  # type: ignore[arg-type]
+    return enveloppe(c.etat())  # type: ignore[union-attr]
+
+
 def _niveaux_des_pj(noms_pj: list[str]) -> list[int]:
     """Déduit le niveau de chaque PJ depuis sa fiche (`extract.PERSO_DIR`). Silence
     sur les fiches absentes/illisible (l'advisory reste calculable sur le reste)."""

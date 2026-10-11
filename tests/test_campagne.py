@@ -121,6 +121,41 @@ class TestTransitions(unittest.TestCase):
         c.cloturer()
         self.assertFalse(c.active)
 
+    def test_rejouer_reinitialise_sans_toucher_la_trame(self):
+        c = _campagne_valide()
+        c.lieux = [cp.Lieu("Moulin", description="Une roue bloquée.")]
+        # On joue la campagne : phase avancée, crochet résolu, lieu découvert,
+        # PNJ rencontré, bloc déplacé, indice + chronologie accumulés, clôturée.
+        c.avancer_phase()
+        c.avancer_phase()
+        c.modifier("resoudre_crochet", id="c1")
+        c.modifier("decouvrir_lieu", nom="Moulin")
+        c.modifier("rencontrer_pnj", nom="Mireille")
+        c.modifier("deplacer_bloc", id="b1", position="reserve")
+        c.modifier("ajouter_indice", indice="Une empreinte")
+        c.cloturer()
+        # On rejoue : la trame survit, l'état de partie repart de zéro.
+        titre, accroche = c.titre, c.accroche
+        synopsis = c.synopsis
+        r = c.rejouer()
+        self.assertTrue(r["ok"])
+        self.assertEqual(c.phase, "accroche")
+        self.assertTrue(c.active)
+        self.assertEqual(c.indices, [])
+        self.assertEqual(c.recompenses, [])
+        self.assertEqual(c.crochet_par_id("c1").statut, "ouverte")
+        self.assertFalse(c.lieu_par_nom("Moulin").decouvert)
+        self.assertFalse(c.pnj_par_nom("Mireille").rencontre)
+        self.assertFalse(c.bloc_par_id("b1").deplace)
+        self.assertEqual(c.bloc_par_id("b1").position, "actif")
+        # Trame + PJ conservés intacts.
+        self.assertEqual(c.titre, titre)
+        self.assertEqual(c.accroche, accroche)
+        self.assertEqual(c.synopsis, synopsis)
+        self.assertEqual(c.pj, ["Aldric", "Brune"])
+        self.assertEqual(len(c.crochets), 2)
+        self.assertEqual(c.lieux[0].description, "Une roue bloquée.")
+
 
 class TestEcrireStructure(unittest.TestCase):
     """`ecrire_structure` persiste la trame conçue par le MJ sans écraser le cadrage

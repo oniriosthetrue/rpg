@@ -610,6 +610,32 @@ class Campagne:
         self._journal("Campagne clôturée.")
         return {"ok": True, "type": "cloture", "id": self.id}
 
+    def rejouer(self) -> dict[str, Any]:
+        """Remet la **partie** à zéro sans toucher à la **trame** ni au PJ.
+
+        Le scénario (titre, synopsis, accroche, enjeux, PNJ, défis, crochets,
+        lieux, blocs) et le cadrage sont **conservés** : on peut rejouer la même
+        aventure avec le même personnage. Seule l'état de jeu est réinitialisé :
+        phase → `accroche`, campagne réactivée, indices/récompenses/chronologie
+        vidés, crochets rouverts, lieux/PNJ non rencontrés, blocs repositionnés.
+        """
+        self.phase = "accroche"
+        self.active = True
+        self.indices = []
+        self.recompenses = []
+        self.chronologie = []
+        for c in self.crochets:
+            c.statut = "ouverte"
+        for l in self.lieux:
+            l.decouvert = False
+        for p in self.pnj:
+            p.rencontre = False
+        for b in self.blocs:
+            b.position = "actif"
+            b.deplace = False
+        self._journal("Campagne réinitialisée (rejouée depuis l'accroche).")
+        return {"ok": True, "type": "rejouee", "id": self.id, "phase": self.phase}
+
     def _journal(self, entree: str) -> None:
         self.chronologie.append(entree)
 
