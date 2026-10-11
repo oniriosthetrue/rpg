@@ -84,10 +84,27 @@ export default function Chat() {
       campagneLue = p.get("campagne") ?? "";
       const msg = p.get("message");
       if (msg) amorceRef.current = msg;
-      // `nouveau=1` (retour de l'écran de création) : on repart d'une
-      // conversation vierge liée à la campagne, sans reprendre les anciennes.
+      // `nouveau=1` (retour de l'écran de création, ou « Rejouer » une campagne) :
+      // on repart d'une conversation vierge liée à la campagne. Quand une campagne
+      // est visée, on efface d'abord TOUTES les anciennes conversations de CE
+      // personnage pour CETTE campagne (rejouer = repartir de zéro, sans traîner
+      // les échanges d'une partie déjà jouée). Pour une campagne toute neuve,
+      // aucune conversation ne correspond : purge sans effet.
       if (p.get("nouveau") === "1") {
-        const c = nouveauChat(nom);
+        // `nom` vient du contexte et peut être vide au montage (liste de persos
+        // chargée en asynchrone) : on relit le personnage actif persisté pour
+        // filtrer/créer de façon fiable.
+        const persoNom =
+          (typeof localStorage !== "undefined" &&
+            localStorage.getItem("mj-perso-actif")) ||
+          nom;
+        if (campagneLue) {
+          toutes = toutes.filter(
+            (c) => !(c.campagneId === campagneLue && c.personnage === persoNom),
+          );
+        }
+        const c = nouveauChat(persoNom);
+        c.campagneId = campagneLue || undefined;
         toutes = [c, ...toutes];
         idActif = c.id;
       }
