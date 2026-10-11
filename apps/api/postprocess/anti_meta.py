@@ -104,8 +104,10 @@ _ENTETE_MENU = re.compile(
 # ---------------------------------------------------------------------------
 _MARQUEUR_SYNTHESE = re.compile(
     r"\b(r[ée]sum[ée]|r[ée]capitulatif|en\s+r[ée]sum[ée]|bilan|l'essentiel|"
-    r"points?\s+cl[ée]s|ce\s+que\s+tu\s+(?:retiens|retires|as\s+retenu)|"
-    r"ce\s+qu'il\s+faut\s+retenir|[àa]\s+retenir)\b",
+    r"points?\s+cl[ée]s|d[ée]sormais|"
+    r"ce\s+que\s+tu\s+(?:retiens|retires|sais|savez|as\s+retenu)|"
+    r"ce\s+que\s+vous\s+(?:retenez|retiens|savez|sais|avez\s+retenu)|"
+    r"ce\s+qu'[io]n\s+sait|ce\s+qu'il\s+faut\s+retenir|[àa]\s+retenir)\b",
     re.IGNORECASE,
 )
 # Amorce = titre (`#…`) OU ligne entièrement en gras (`**…**`), portant le marqueur.

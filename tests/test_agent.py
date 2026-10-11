@@ -236,6 +236,25 @@ class TestAntiMeta(unittest.TestCase):
         out = anti_meta.nettoyer(texte)
         self.assertIn("résumé des comptes", out)
 
+    def test_retire_synthese_vous_savez(self):
+        # Amorce en gras au vousvoiement (« Ce que vous savez maintenant : ») + liste
+        # à puces, encadrée de `---`. Le bloc doit disparaître, la suite rester.
+        texte = (
+            "La brûlure vous donne une certitude.\n\n"
+            "---\n\n"
+            "**Ce que vous savez maintenant :**\n\n"
+            "- Cael a fui avec le Codex.\n"
+            "- L'encre est encore humide.\n"
+            "---\n\n"
+            "Vous êtes au bord du gouffre.\n\nQue faites-vous ?"
+        )
+        out = anti_meta.nettoyer(texte)
+        self.assertIn("La brûlure vous donne", out)
+        self.assertNotIn("Ce que vous savez", out)
+        self.assertNotIn("Cael a fui", out)
+        self.assertIn("Vous êtes au bord", out)
+        self.assertIn("Que faites-vous ?", out)
+
 
 # ─── 3. RAG : contexte borné + citation ──────────────────────────────────────
 
