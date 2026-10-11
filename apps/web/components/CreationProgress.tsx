@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePerso } from "./PersoContext";
+import { jdr } from "@/lib/jdr";
 
 type Etape = { nom: string; phrase: string; etat: "cours" | "fait" };
 
@@ -44,13 +45,15 @@ export default function CreationProgress({
   const { nom } = usePerso();
   const [etapes, setEtapes] = useState<Etape[]>([]);
   const [enCours, setEnCours] = useState(true);
-  const [resultat, setResultat] = useState("");
+  // Contenu révélé à la fin : l'accroche canonique persistée par le moteur
+  // (via ecrire_le_scenario), JAMAIS le texte brut du MJ (qui contient sa
+  // réflexion de conception). Repli sur le synopsis si l'accroche manque.
+  const [accroche, setAccroche] = useState("");
   const [erreur, setErreur] = useState("");
   const lanceRef = useRef(false);
 
   const lancer = useCallback(async () => {
     setEnCours(true);
-    let courant = "";
     const ctrl = new AbortController();
     try {
       const r = await fetch("/api/chat", {
@@ -100,14 +103,22 @@ export default function CreationProgress({
                 ),
               );
             }
-          } else if (evt === "fin") {
-            courant = payload.texte ?? courant;
           } else if (evt === "erreur") {
             setErreur(payload.message ?? "Erreur pendant la création.");
           }
         }
       }
-      setResultat(courant);
+      // Le scénario est persisté par le moteur : on relit l'état canonique pour
+      // n'afficher que l'accroche (et non le monologue de conception du MJ).
+      try {
+        const etat = await jdr.get<{
+          accroche?: string;
+          synopsis?: string;
+        }>(`/campagne/${encodeURIComponent(campagneId)}`);
+        setAccroche(etat.accroche?.trim() || etat.synopsis?.trim() || "");
+      } catch {
+        /* état illisible : on affichera le message de repli */
+      }
     } catch (e) {
       if ((e as Error).name !== "AbortError")
         setErreur("Connexion au serveur perdue.");
@@ -180,7 +191,7 @@ export default function CreationProgress({
                 {mode === "surprise" ? "L'accroche" : "La trame"}
               </p>
               <p className="text-sm text-parchemin/80 whitespace-pre-wrap">
-                {resultat ||
+                {accroche ||
                   "Le scénario est en place. Ouvre la campagne pour la découvrir."}
               </p>
             </div>
