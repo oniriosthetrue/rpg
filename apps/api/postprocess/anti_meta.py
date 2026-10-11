@@ -63,17 +63,24 @@ _REFLEXION = re.compile(
 _PHRASE = re.compile(r"[^.!?]*[.!?]+|[^.!?]+$")
 
 # Amorce typique d'une « liste de menu » (catalogue d'options). Si une telle amorce
-# apparaît, on retire les lignes à puces/numérotées qui l'entourent.
+# apparaît, on retire le bloc d'options qui la suit (puces, sections emoji, lignes
+# longues) jusqu'au prochain séparateur `---` ou question de clôture.
 _MENU_AMORCE = re.compile(
     r"(?:du\s+plus\s+(?:évident|evident)|chaque\s+action\s+a\s+un\s+c[oû]t|"
     r"voici\s+ce\s+que\s+vous\s+pouvez|voici\s+(?:vos|tes)\s+options|"
     r"vos\s+options\s+sont|tes\s+options\s+sont|que\s+souhaitez[-\s]vous\s+faire|"
-    r"options?\s+qui\s+s'?offrent)",
-    re.IGNORECASE,
+    r"options?\s+qui\s+s'?offrent|ce\s+que\s+tu\s+peux\s+faire|"
+    r"ce\s+que\s+vous\s+pouvez\s+faire|\btu\s+pourrais\b|\bvous\s+pourriez\b|"
+    r"(?:tu\s+peux|vous\s+pouvez)\s*:\s*$)",
+    re.IGNORECASE | re.MULTILINE,
 )
 # Ligne de liste : puce (-, *, •), numéro (1. / 1)) ou court préfixe emoji.
 # On exclut le bloc citation `>` (texte destiné aux joueurs) pour ne jamais le retirer.
 _LIGNE_LISTE = re.compile(r"^\s*(?!>)(?:[-*•]|\d+[.)]|\W{1,3}\s)\s*\S.*$")
+# Séparateur horizontal Markdown (fin d'un bloc de menu).
+_SEP_HR = re.compile(r"^\s*-{3,}\s*$")
+# Question courte de clôture (« Que fais-tu ? », « Tu fais quoi ? ») : on la garde.
+_QUESTION_CLOTURE = re.compile(r"^\s*\S.{0,58}\?\s*$")
 
 # Filet de sécurité contre les « menus » servis sous forme de TABLEAU Markdown
 # (ex. « | Option | Type de jet | »). Un tableau n'est retiré que si son en-tête
@@ -149,23 +156,38 @@ def _retirer_tableaux_menu(texte: str) -> str:
 
 
 def retirer_menu(texte: str) -> str:
-    """Retire les lignes à puces/numérotées formant un « menu » d'options.
+    """Retire les « menus » d'options servis par le MJ.
 
-    On n'agit QUE si le texte contient une amorce de menu (ex. « du plus évident au
-    plus fin », « chaque action a un coût »), pour ne jamais casser une liste
-    légitime de la narration (inventaire, PNJ présents, etc.). Les tableaux Markdown
-    de type menu sont retirés indépendamment (détection par en-tête).
+    Deux formes sont traitées :
+    - les tableaux Markdown de type menu (détection par en-tête, voir
+      `_retirer_tableaux_menu`) ;
+    - les blocs d'options (puces, sections emoji, lignes longues) introduits par
+      une amorce de menu (« Tu peux : », « voici vos options », « du plus évident
+      au plus fin »…). On retire tout le bloc jusqu'au prochain séparateur `---`
+      ou question de clôture (« Que fais-tu ? »), qu'on conserve.
     """
     if not isinstance(texte, str) or not texte.strip():
         return texte
     texte = _retirer_tableaux_menu(texte)
     if not _MENU_AMORCE.search(texte):
         return texte
+
+    lignes = texte.split("\n")
     gardees: list[str] = []
-    for ligne in texte.split("\n"):
+    dans_menu = False
+    for ligne in lignes:
+        if dans_menu:
+            # Fin du bloc : séparateur horizontal ou question de clôture.
+            if _SEP_HR.match(ligne):
+                dans_menu = False
+                continue  # on retire aussi le séparateur qui fermait le menu
+            if _QUESTION_CLOTURE.match(ligne):
+                dans_menu = False
+                gardees.append(ligne)
+                continue
+            continue  # ligne du menu : on la retire
         if _MENU_AMORCE.search(ligne):
-            continue
-        if _LIGNE_LISTE.match(ligne) and len(ligne.strip()) <= 120:
+            dans_menu = True
             continue
         gardees.append(ligne)
     return "\n".join(gardees)
@@ -174,6 +196,9 @@ def retirer_menu(texte: str) -> str:
 def nettoyer(texte: str) -> str:
     """Chaîne complète appliquée à la réponse du MJ."""
     texte = masquer_stats_monstre(corriger_emphase(texte))
-    texte = retirer_reflexion(texte)
+    # Retirer les menus AVANT la réflexion : `retirer_reflexion` découpe en phrases
+    # et recolle sans égard aux sauts de ligne, ce qui détruirait la structure en
+    # lignes dont `retirer_menu` a besoin pour repérer les blocs d'options.
     texte = retirer_menu(texte)
+    texte = retirer_reflexion(texte)
     return texte.strip()

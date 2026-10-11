@@ -168,6 +168,37 @@ class TestAntiMeta(unittest.TestCase):
         self.assertNotIn("MÉCANIQUE", out)
         self.assertNotIn("NARRATION", out)
 
+    def test_retire_menu_bloc_sections(self):
+        # Un « menu » d'options (amorce « Tu peux : » + sections emoji) doit être
+        # retiré, la question de clôture (« Tu fais quoi ? ») conservée.
+        texte = (
+            "Tu es dans l'archive. Tu peux :\n\n"
+            "🔍 Explorer la salle :\n\nExaminer la marque au sol.\n"
+            "Fouiller les décombres.\n\n⚡ Autres :\n\nLancer un sort.\n\n"
+            "---\n\nTu fais quoi ?"
+        )
+        out = anti_meta.nettoyer(texte)
+        self.assertNotIn("Explorer la salle", out)
+        self.assertNotIn("Lancer un sort", out)
+        self.assertIn("Tu fais quoi ?", out)
+
+    def test_retire_tableau_menu(self):
+        texte = (
+            "Voici tes options :\n\n"
+            "| Option | Type de jet |\n|---|---|\n"
+            "| Examiner la marque | Arcanes +3 |\n| Chercher | Perception +0 |\n\n"
+            "Tu es seul."
+        )
+        out = anti_meta.nettoyer(texte)
+        self.assertNotIn("Type de jet", out)
+        self.assertNotIn("Arcanes +3", out)
+
+    def test_garde_tableau_inventaire(self):
+        # Un tableau légitime (inventaire) ne doit PAS être retiré.
+        texte = "Ton inventaire :\n\n| Objet | Qté |\n|---|---|\n| Dague | 2 |\n"
+        out = anti_meta.nettoyer(texte)
+        self.assertIn("Dague", out)
+
 
 # ─── 3. RAG : contexte borné + citation ──────────────────────────────────────
 
