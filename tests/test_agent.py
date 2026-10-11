@@ -462,5 +462,25 @@ class TestAmorceDePartie(unittest.TestCase):
         self.assertIn("pourquoi eux", self.p)
 
 
+# ─── 6. Narration à la 2e personne : jamais le PJ à la 3e personne ───────────
+
+
+class TestDeuxiemePersonne(unittest.TestCase):
+    """Garde-fou : le prompt doit interdire de raconter le personnage à la 3e
+    personne (« Elminster l'a su », « il connaît ») et exiger le « tu »."""
+
+    def setUp(self):
+        from agent.prompt import SYSTEM_PROMPT
+
+        self.p = SYSTEM_PROMPT
+
+    def test_section_deuxieme_personne_presente(self):
+        self.assertIn("deuxième personne", self.p)
+
+    def test_interdit_troisieme_personne(self):
+        self.assertIn("troisième personne", self.p)
+        self.assertIn("Ne raconte JAMAIS le personnage à la troisième personne", self.p)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
