@@ -251,8 +251,11 @@ def enregistrer_le_jet_hors_combat(
         "total": total,
         "dd": int(dd),
         "reussite": reussite,
+        # La difficulté n'est PAS énoncée dans le message : le MJ doit raconter la
+        # conséquence sans révéler le DD (la clé `dd` reste dans le JSON pour un
+        # usage interne, mais la ligne lisible par le MJ s'arrête au total).
         "message": f"{jet} : d20 {de} {'+' if bonus >= 0 else '−'} {abs(int(bonus))} "
-        f"= {total} vs DD {int(dd)} → {'réussite' if reussite else 'échec'}.",
+        f"= {total} → {'réussite' if reussite else 'échec'}.",
     }
 
 

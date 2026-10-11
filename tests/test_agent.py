@@ -236,6 +236,21 @@ class TestAntiMeta(unittest.TestCase):
         out = anti_meta.nettoyer(texte)
         self.assertIn("résumé des comptes", out)
 
+    def test_retire_synthese_conclus(self):
+        # Amorce « Ce que tu conclus : » (forme vue en UI) doit être retirée avec son bloc.
+        texte = (
+            "Tu traces du doigt les lignes de fracture.\n\n"
+            "**Ce que tu conclus :**\n"
+            "- Le coup n'était pas une attaque.\n"
+            "- Le pupitre était la cible.\n\n"
+            "Que fais-tu ?"
+        )
+        out = anti_meta.nettoyer(texte)
+        self.assertIn("Tu traces du doigt", out)
+        self.assertNotIn("Ce que tu conclus", out)
+        self.assertNotIn("pupitre était la cible", out)
+        self.assertIn("Que fais-tu ?", out)
+
     def test_retire_synthese_vous_savez(self):
         # Amorce en gras au vousvoiement (« Ce que vous savez maintenant : ») + liste
         # à puces, encadrée de `---`. Le bloc doit disparaître, la suite rester.
