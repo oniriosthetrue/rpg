@@ -473,6 +473,30 @@ class TestAmorceDePartie(unittest.TestCase):
         self.assertIn("Une image forte par scène", self.p)
 
 
+# ─── 5bis. Registre : ton jeu de rôle, interdiction de la vulgarité ──────────
+
+
+class TestRegistre(unittest.TestCase):
+    """Garde-fou : le prompt doit imposer un ton de jeu de rôle et interdire les
+    mots vulgaires / grossièretés dans la narration et les dialogues."""
+
+    def setUp(self):
+        from agent.prompt import SYSTEM_PROMPT
+
+        self.p = SYSTEM_PROMPT
+
+    def test_section_registre_presente(self):
+        self.assertIn("Registre", self.p)
+
+    def test_interdit_vulgarite(self):
+        for expr in ("vulgaire", "grossièret", "juron"):
+            self.assertIn(expr, self.p)
+
+    def test_propose_alternative_non_triviale(self):
+        # Doit donner une formulation de rechange (ex. « maudit ») plutôt qu'un gros mot.
+        self.assertIn("maudit", self.p)
+
+
 # ─── 6. Narration à la 2e personne : jamais le PJ à la 3e personne ───────────
 
 
