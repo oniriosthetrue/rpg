@@ -22,6 +22,15 @@ _ESPACE_EMPHASE = re.compile(r"(\w)(\*+)(?=\w)")
 _LEAK_CA = re.compile(r"(\bCA\b(?:\s+d'armure)?\s*[:=]?\s*)(\d+)", re.IGNORECASE)
 _LEAK_PV = re.compile(r"((?:points de vie|PV)\s*[:=]\s*)(\d+)", re.IGNORECASE)
 
+# Anti-fuite « difficulté ». Le MJ connaît le DD (c'est lui qui l'a fixé) et le
+# recopie dans son en-tête de résolution (« 16 vs DD 15 — Réussite »), même quand
+# l'outil ne le renvoie plus. On retire la mention de la difficulté derrière des
+# tournures explicites (« vs DD 15 », « contre un DD de 12 ») — jamais un « DD »
+# isolé qui pourrait servir d'abréviation légitime ailleurs dans la narration.
+_LEAK_DD = re.compile(
+    r"\s*(?:vs|contre(?:\s+un)?|face\s+\u00e0)\s+DD\s*(?:de\s+)?\d+", re.IGNORECASE
+)
+
 # Filet de sécurité : retirer les anciennes balises de bloc si le modèle en émet.
 _BLOC_MJ = re.compile(
     r"(?:^|\n)\s*\*{0,2}\[?\s*(MÉCANIQUE|MECANIQUE|NARRATION)\s*\]?\s*\*{0,2}\s*:?\s*",
@@ -113,6 +122,13 @@ _MARQUEUR_SYNTHESE = re.compile(
 # Amorce = titre (`#…`) OU ligne entièrement en gras (`**…**`), portant le marqueur.
 _TITRE = re.compile(r"^\s*#{1,6}\s")
 _GRAS_SEUL = re.compile(r"^\s*\*\*[^*]+\*\*\s*[:：]?\s*$")
+# Amorce générique « Ce que … » : le MJ invente sans cesse de nouvelles formulations
+# de synthèse (« Ce que tu conclus », « Ce que ton échec te dit quand même »…).
+# Toute ligne en gras (préfixée d'un emoji éventuel) qui commence par « Ce que » et
+# se termine par `:` est traitée comme une amorce de synthèse, sans liste fermée.
+_AMORCE_CE_QUE = re.compile(
+    r"^\s*(?:\W+\s*)?\*\*\s*Ce\s+que\b.*?\*\*\s*[:：]?\s*$", re.IGNORECASE
+)
 # Titre Markdown (nouvelle section légitime) : fin d'un bloc de synthèse, conservé.
 _HEADING = re.compile(r"^\s*#{1,6}\s")
 
@@ -129,6 +145,7 @@ def masquer_stats_monstre(texte: str) -> str:
         return texte
     texte = _LEAK_CA.sub(r"\1•", texte)
     texte = _LEAK_PV.sub(r"\1•", texte)
+    texte = _LEAK_DD.sub("", texte)
     texte = _BLOC_MJ.sub("\n", texte)
     return texte
 
@@ -242,7 +259,7 @@ def retirer_synthese(texte: str) -> str:
                 gardees.append(ligne)
                 continue
             continue  # ligne de la synthèse : on la retire
-        est_amorce = (
+        est_amorce = _AMORCE_CE_QUE.match(ligne) or (
             (_TITRE.match(ligne) or _GRAS_SEUL.match(ligne))
             and _MARQUEUR_SYNTHESE.search(ligne)
         )

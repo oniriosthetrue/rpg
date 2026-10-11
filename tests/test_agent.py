@@ -159,6 +159,24 @@ class TestAntiMeta(unittest.TestCase):
         out = anti_meta.nettoyer("Tu perds 5 PV.")
         self.assertIn("5", out)
 
+    def test_retire_mention_d_d(self):
+        # L'en-tête de résolution ne doit jamais révéler la difficulté.
+        out = anti_meta.nettoyer("**16 vs DD 15 — Réussite.**")
+        self.assertNotIn("DD", out)
+        self.assertNotIn("15", out)
+        self.assertIn("16", out)
+        self.assertIn("Réussite", out)
+
+    def test_retire_contre_un_dd(self):
+        out = anti_meta.nettoyer("Le jet échoue contre un DD de 12.")
+        self.assertNotIn("DD", out)
+        self.assertNotIn("12", out)
+
+    def test_garde_dd_hors_tournure_comparaison(self):
+        # Un « DD » isolé (abréviation, nom) sans « vs/contre » n'est pas touché.
+        out = anti_meta.nettoyer("Le sorcier prépare son DD.")
+        self.assertIn("DD", out)
+
     def test_corrige_emphase_collee(self):
         out = anti_meta.nettoyer("le du**Royaume** de l'ombre")
         self.assertIn("du **Royaume**", out)

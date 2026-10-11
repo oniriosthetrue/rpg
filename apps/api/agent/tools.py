@@ -249,11 +249,11 @@ def enregistrer_le_jet_hors_combat(
         "bonus": int(bonus),
         "de_naturel": de,
         "total": total,
-        "dd": int(dd),
         "reussite": reussite,
-        # La difficulté n'est PAS énoncée dans le message : le MJ doit raconter la
-        # conséquence sans révéler le DD (la clé `dd` reste dans le JSON pour un
-        # usage interne, mais la ligne lisible par le MJ s'arrête au total).
+        # La difficulté (`dd`) n'est PAS renvoyée : le MJ la connaît déjà (c'est
+        # lui qui l'a fixée) et la recopier l'incitait à l'énoncer (« vs DD 15 »),
+        # ce qui la révèle au joueur. On ne lui rend que le strict nécessaire pour
+        # raconter : le total et la réussite.
         "message": f"{jet} : d20 {de} {'+' if bonus >= 0 else '−'} {abs(int(bonus))} "
         f"= {total} → {'réussite' if reussite else 'échec'}.",
     }
