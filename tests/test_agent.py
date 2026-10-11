@@ -482,5 +482,28 @@ class TestDeuxiemePersonne(unittest.TestCase):
         self.assertIn("Ne raconte JAMAIS le personnage à la troisième personne", self.p)
 
 
+# ─── 7. Compétence ≠ sort : une compétence n'est jamais lancée comme un sort ──
+
+
+class TestCompetencePasSort(unittest.TestCase):
+    """Garde-fou : le prompt doit distinguer compétence et sort — « je fais une
+    connaissance des arcanes » est un jet de compétence (Arcanes), jamais un sort."""
+
+    def setUp(self):
+        from agent.prompt import SYSTEM_PROMPT
+
+        self.p = SYSTEM_PROMPT
+
+    def test_regle_competence_pas_sort_presente(self):
+        self.assertIn("Compétence ≠ sort", self.p)
+
+    def test_interdit_de_traduire_une_competence_en_sort(self):
+        self.assertIn("Ne le traduis JAMAIS en sort", self.p)
+
+    def test_cite_les_deux_listes(self):
+        self.assertIn("## Compétences", self.p)
+        self.assertIn("## Sorts connus", self.p)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
