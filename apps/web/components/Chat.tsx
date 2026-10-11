@@ -20,6 +20,9 @@ type Conversation = {
   // création). Permet de conserver le lien au rechargement et d'afficher le
   // titre de la campagne plutôt que la consigne brute.
   campagneId?: string;
+  // Mode débutant : quand vrai, le MJ glisse une piste en prose à la fin de
+  // chaque tour. Faux/absent = aucun indice (mode expert). Par conversation.
+  hintMode?: boolean;
 };
 
 const CLE = "mj-conversations";
@@ -234,8 +237,11 @@ export default function Chat() {
     [conversations, majConversation],
   );
 
-  const envoyer = useCallback(async (texteSuppleant?: string) => {
-    const texte = (texteSuppleant ?? saisie).trim();
+  const envoyer = useCallback(
+    async (texteSuppleant?: string, opts?: { piste?: boolean }) => {
+    let texte = (texteSuppleant ?? saisie).trim();
+    // Demande d'indice ponctuelle sans texte : on envoie une consigne discrète.
+    if (!texte && opts?.piste) texte = "(je demande une piste au MJ)";
     if (!texte || enCours || !actif) return;
 
     const historique = actif.messages;
@@ -275,6 +281,9 @@ export default function Chat() {
           historique,
           personnage: nom,
           campagne_id: campagneId,
+          // Mode débutant persistant (par conversation) + demande ponctuelle.
+          hint_mode: !!actif.hintMode,
+          demande_indice: !!opts?.piste,
         }),
       });
       const lecteur = r.body!.getReader();
@@ -430,6 +439,26 @@ export default function Chat() {
           >
             + Nouveau
           </button>
+          {/* Mode débutant : le MJ glisse une piste en prose à chaque tour. */}
+          <button
+            onClick={() =>
+              actif &&
+              majConversation(actif.id, { hintMode: !actif.hintMode })
+            }
+            disabled={!actif}
+            className={`ml-auto text-xs rounded px-2 py-1 border transition ${
+              actif?.hintMode
+                ? "bg-or/20 text-or border-or/40"
+                : "text-parchemin/50 border-white/10 hover:text-parchemin"
+            }`}
+            title={
+              actif?.hintMode
+                ? "Mode débutant : le MJ propose une piste à chaque tour"
+                : "Mode expert : aucun indice (cliquer pour activer les pistes)"
+            }
+          >
+            💡 Indices : {actif?.hintMode ? "ON" : "OFF"}
+          </button>
         </div>
 
         <div ref={fondRef} className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -506,12 +535,23 @@ export default function Chat() {
               ⏹ Stop
             </button>
           ) : (
-            <button
-              onClick={() => envoyer()}
-              className="bg-or/80 hover:bg-or text-encre font-semibold rounded-lg px-4"
-            >
-              Envoyer
-            </button>
+            <>
+              {/* Coup de pouce ponctuel : une piste ce tour, même en mode expert. */}
+              <button
+                onClick={() => envoyer(undefined, { piste: true })}
+                disabled={!actif}
+                className="rounded-lg px-3 border border-or/40 text-or/80 hover:bg-or/10 text-sm"
+                title="Demander une piste au MJ pour ce tour uniquement"
+              >
+                💡 Une piste
+              </button>
+              <button
+                onClick={() => envoyer()}
+                className="bg-or/80 hover:bg-or text-encre font-semibold rounded-lg px-4"
+              >
+                Envoyer
+              </button>
+            </>
           )}
         </div>
       </div>

@@ -58,6 +58,10 @@ async def chat(
     chat_id = str(body.get("chat_id") or "defaut")
     campagne_id = str(body.get("campagne_id") or "").strip()
     historique = body.get("historique") or []
+    # Mode débutant (persistant, par conversation) et demande d'indice ponctuelle.
+    # Les deux déclenchent une piste en prose ; aucun des deux = aucun indice.
+    hint_mode = bool(body.get("hint_mode"))
+    demande_indice = bool(body.get("demande_indice"))
     if not message:
         raise HTTPException(status_code=400, detail="« message » requis.")
 
@@ -78,6 +82,23 @@ async def chat(
             f"au joueur.]\n\n{prompt}"
         )
 
+    # 2ter) Mode débutant / demande d'indice : le joueur réclame un coup de pouce.
+    # On LÈVE explicitement l'interdiction du menu de choix pour CE tour, mais on
+    # exige une unique piste en PROSE (jamais de liste, de tableau ni de jets
+    # proposés). Sans cette consigne, aucune aide n'est donnée (comportement expert).
+    if hint_mode or demande_indice:
+        prompt = (
+            "[Mode débutant actif pour ce tour : le joueur te demande un coup de "
+            "pouce. À la toute fin de ta réponse, après la narration, ajoute "
+            "**une seule et unique piste en prose** — une phrase (deux maximum) qui "
+            "lui chuchote une direction ou la compétence la plus pertinente pour la "
+            "situation présente. Cette piste reste dans la voix du MJ, sans révéler "
+            "les mécaniques cachées. INTERDIT : liste à puces, tableau, menu "
+            "d'options numéroté, bloc « Tu peux : », énumération de jets. Une seule "
+            "phrase de conseil, en prose, puis tu t'arrêtes.]\n\n"
+            f"{prompt}"
+        )
+
     async def _run(
         prompt_texte: str, texte_final: list[str]
     ) -> AsyncIterator[str]:
@@ -87,7 +108,12 @@ async def chat(
         # chaque noeud (requête modèle = texte ; appel d'outils = tool events).
         async with agent.iter(
             prompt_texte,
-            deps=Deps(chat_id=chat_id, campagne_id=campagne_id),
+            deps=Deps(
+                chat_id=chat_id,
+                campagne_id=campagne_id,
+                hint_mode=hint_mode,
+                demande_indice=demande_indice,
+            ),
             message_history=_historique(historique),
         ) as run:
             async for node in run:
