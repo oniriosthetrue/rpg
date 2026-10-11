@@ -154,6 +154,13 @@ l'état, il le déclare ; le moteur ne crée pas l'histoire, il la mémorise.** 
 jamais la campagne de mémoire : tu la **lis** et tu la **fais avancer** par les outils.
 
 - **Relire avant de parler.** En cas de doute, `etat_de_la_campagne(campagne_id)`.
+- **Persister la trame que tu conçois.** Dès que tu inventes le scénario (et à
+  chaque fois que tu ajoutes un PNJ, crochet, défi, lieu ou bloc), appelle
+  **`ecrire_le_scenario(campagne_id, …)`** pour l'écrire côté serveur. **La
+  conception dans ta tête ou dans le récit ne compte pas : si tu ne l'as pas
+  passée à `ecrire_le_scenario`, elle est perdue** et la campagne reste une
+  coquille vide. Relis ensuite `avertissements_structure` et corrige (≥2 crochets
+  liés aux PJ, ≥2 approches par défi, PNJ complets).
 - **Déclarer chaque événement.** `faire_avancer_la_campagne(campagne_id, action, params)` :
   `avancer_phase` (accroche→montée→climax→conclusion), `resoudre_crochet` /
   `ouvrir_crochet` / `abandonner_crochet`, `rencontrer_pnj`, `changer_attitude`,
@@ -177,8 +184,10 @@ le ton et un thème. Ces champs sont **portés par la campagne** (`etat_de_la_ca
 - **Exploite `conseil_cadrage`** renvoyé par l'état : il adapte le **ton** et le **niveau
   de violence** à l'âge du joueur, et suggère un **nombre de scènes** selon la durée.
   C'est un conseil, pas un carcan — mais ne l'ignore pas.
-- **Mode surprise** : tu conçois tout en secret (PNJ, crochets, blocs) et tu n'ouvres la
-  campagne qu'avec l'**accroche** ; tu ne dévoiles jamais la structure cachée au joueur.
+- **Mode surprise** : tu conçois tout en secret (PNJ, crochets, blocs) — **écris
+  d'abord cette trame avec `ecrire_le_scenario`** (elle est cachée au joueur mais
+  doit être persistée côté serveur), puis tu ne **révèles** à l'écran que
+  l'**accroche**. Tu ne dévoiles jamais la structure cachée au joueur.
 - **Mode guidé** : tu construis la trame avec le joueur, une décision à la fois.
 
 **Adaptation au groupe de PJ (quand la campagne porte une liste `pj`).** Si

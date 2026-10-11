@@ -122,6 +122,81 @@ class TestTransitions(unittest.TestCase):
         self.assertFalse(c.active)
 
 
+class TestEcrireStructure(unittest.TestCase):
+    """`ecrire_structure` persiste la trame conçue par le MJ sans écraser le cadrage
+    ni l'état de partie (l'outil qui manquait : sinon la campagne reste vide)."""
+
+    def _coquille(self) -> cp.Campagne:
+        # Campagne ouverte par le wizard : cadrage seul, trame vide.
+        return cp.Campagne(
+            id="scen-vide", titre="", pj=["Elminster"], mode="surprise",
+            age_joueur=45, duree="one-shot", piliers=["combat", "exploration"],
+            ton="sombre", niveaux=[1],
+        )
+
+    def test_ecrit_la_trame_et_valide(self):
+        c = self._coquille()
+        self.assertTrue(c.valider_structure())  # vide -> avertissements
+        etat = c.ecrire_structure({
+            "titre": "Les Marges du Grimoire",
+            "synopsis": "Un grimoire dévore les scribes.",
+            "accroche": "La lettre d'Aldren est griffée d'un suc.",
+            "enjeux": "Retrouver Aldren.",
+            "pnj": [{"nom": "Aldren", "objectif": "Survivre", "faille": "Lié au grimoire", "attitude": "allié"}],
+            "crochets": [
+                {"id": "c1", "titre": "La dette envers Aldren", "lie_a_pj": "Elminster"},
+                {"id": "c2", "titre": "Le savoir dangereux", "lie_a_pj": "Elminster"},
+            ],
+            "defis": [{"nom": "Entrer", "approches": ["Forcer", "Discrétion"]}],
+        })
+        self.assertEqual(c.titre, "Les Marges du Grimoire")
+        self.assertEqual(len(c.pnj), 1)
+        self.assertTrue(c.pnj[0].complet())
+        self.assertEqual(len([x for x in c.crochets if x.lie_a_pj]), 2)
+        self.assertTrue(etat["structure_valide"])
+        self.assertEqual(etat["avertissements_structure"], [])
+
+    def test_preserve_le_cadrage(self):
+        c = self._coquille()
+        c.ecrire_structure({"titre": "X", "accroche": "Y"})
+        # Cadrage intact.
+        self.assertEqual(c.mode, "surprise")
+        self.assertEqual(c.age_joueur, 45)
+        self.assertEqual(c.duree, "one-shot")
+        self.assertEqual(c.piliers, ["combat", "exploration"])
+        self.assertEqual(c.ton, "sombre")
+        self.assertEqual(c.pj, ["Elminster"])
+        self.assertEqual(c.niveaux, [1])
+
+    def test_preserve_l_etat_de_partie(self):
+        c = self._coquille()
+        c.ecrire_structure({
+            "crochets": [{"id": "c1", "titre": "A", "lie_a_pj": "Elminster"}],
+            "pnj": [{"nom": "P", "objectif": "o", "faille": "f", "attitude": "a"}],
+        })
+        c.modifier("resoudre_crochet", id="c1")
+        c.modifier("ajouter_indice", indice="poussière")
+        c.avancer_phase()
+        # Réécriture partielle de la trame : ne doit PAS effacer phase/indices/statut.
+        c.ecrire_structure({"synopsis": "nouveau"})
+        self.assertEqual(c.phase, "montee")
+        self.assertEqual(c.indices, ["poussière"])
+        self.assertEqual(c.crochet_par_id("c1").statut, "resolvee")
+        self.assertEqual(c.synopsis, "nouveau")
+
+    def test_ne_ecrase_que_les_champs_fournis(self):
+        c = self._coquille()
+        c.ecrire_structure({"titre": "Premier", "synopsis": "S1"})
+        c.ecrire_structure({"titre": "Second"})
+        self.assertEqual(c.titre, "Second")
+        self.assertEqual(c.synopsis, "S1")  # non fourni -> préservé
+
+    def test_danger_invalide_ignore(self):
+        c = self._coquille()
+        c.ecrire_structure({"danger": "apocalyptique"})
+        self.assertEqual(c.danger, "normale")  # inchangé
+
+
 class TestSerialisation(unittest.TestCase):
     def test_roundtrip(self):
         c = _campagne_valide()

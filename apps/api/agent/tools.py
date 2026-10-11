@@ -189,6 +189,55 @@ def etat_de_la_campagne(campagne_id: str) -> dict[str, Any]:
     return r_campagne.etat(campagne_id, _CLE)
 
 
+def ecrire_le_scenario(
+    campagne_id: str,
+    titre: str = "",
+    synopsis: str = "",
+    accroche: str = "",
+    enjeux: str = "",
+    motivations: str = "",
+    danger: str = "",
+    pnj: list[dict] | None = None,
+    defis: list[dict] | None = None,
+    crochets: list[dict] | None = None,
+    lieux: list[dict] | None = None,
+    blocs: list[dict] | None = None,
+) -> dict[str, Any]:
+    """Écrire / mettre à jour la **trame** d'une campagne déjà ouverte. C'est l'outil
+    qui **persiste le scénario** que tu conçois (sinon il reste dans la conversation
+    et se perd au reset — la campagne demeure une coquille vide de cadrage).
+
+    Appelle-le **juste après avoir conçu le scénario** (mode surprise : en secret,
+    avant de révéler l'accroche), puis de nouveau à chaque fois que tu ajoutes un
+    PNJ, un crochet, un défi, un lieu ou un bloc. Ne passe que les champs concernés
+    (les autres sont préservés) ; le cadrage et l'état de phase/indices/statuts ne
+    sont jamais écrasés ici.
+
+    Format des sous-objets :
+    - `pnj` : `[{"nom","objectif","faille","attitude"}]` (les 3 derniers obligatoires).
+    - `crochets` : `[{"id","titre","lie_a_pj"}]` — `lie_a_pj` = nom exact d'un PJ
+      (≥2 crochets liés aux PJ, un par PJ au minimum).
+    - `defis` : `[{"nom","approches":[...]}]` — ≥2 approches par défi.
+    - `lieux` : `[{"nom","description","obstacles","piliers":["exploration","social",
+      "combat"],"rencontre":{"titre","terrain","monstres":[{"nom","nb","cr",
+      "comportement","pouvoirs_a_utiliser":[...]}]}}]` (CR lus dans la fiche SRD).
+    - `blocs` : `[{"id","titre","contenu","position":"actif|reserve"}]`.
+    Renvoie l'état + `avertissements_structure` (à corriger si non vide).
+    """
+    corps: dict[str, Any] = {}
+    for cle, val in (
+        ("titre", titre), ("synopsis", synopsis), ("accroche", accroche),
+        ("enjeux", enjeux), ("motivations", motivations), ("danger", danger),
+    ):
+        if val:
+            corps[cle] = val
+    for cle, val in (("pnj", pnj), ("defis", defis), ("crochets", crochets),
+                     ("lieux", lieux), ("blocs", blocs)):
+        if val:
+            corps[cle] = val
+    return r_campagne.ecrire(campagne_id, corps, _CLE)
+
+
 def faire_avancer_la_campagne(
     campagne_id: str, action: str, params: dict | None = None
 ) -> dict[str, Any]:
@@ -238,6 +287,7 @@ OUTILS_PLAIN = [
     clore_le_combat,
     lister_les_campagnes,
     etat_de_la_campagne,
+    ecrire_le_scenario,
     faire_avancer_la_campagne,
     advisory_de_difficulte,
     clore_la_campagne,

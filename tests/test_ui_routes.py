@@ -115,5 +115,78 @@ class TestSourcesRetriever(unittest.TestCase):
         self.assertEqual(self._sources([]), [])
 
 
+class TestEcrireCampagne(unittest.TestCase):
+    """`POST /api/campagne/{id}/ecrire` persiste la trame d'une campagne ouverte
+    (l'outil qui manquait) sans écraser le cadrage."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp(prefix="campagne-ecrire-")
+        cls.dossier = Path(cls.tmp) / "campagne"
+        cls.dossier.mkdir(parents=True, exist_ok=True)
+        os.environ["DND_API_KEY"] = "test-key"
+        from fastapi.testclient import TestClient
+        from jdr_api.main import app
+        from dnd_perso import extract
+
+        cls._campagne_dir_origine = extract.CAMPAGNE_DIR
+        extract.CAMPAGNE_DIR = cls.dossier
+        cls.client = TestClient(app)
+        cls.H = {"X-API-Key": "test-key"}
+
+    @classmethod
+    def tearDownClass(cls):
+        from dnd_perso import extract
+
+        extract.CAMPAGNE_DIR = cls._campagne_dir_origine
+
+    def test_ouvrir_puis_ecrire(self):
+        # Ouverture = cadrage seul (coquille vide).
+        r = self.client.post(
+            "/api/campagne/ouvrir",
+            json={"titre": "", "pj": ["Elminster"], "mode": "surprise",
+                  "age_joueur": 45, "duree": "one-shot", "ton": "sombre"},
+            headers=self.H,
+        )
+        self.assertTrue(r.json()["ok"])
+        cid = r.json()["id"]
+        self.assertFalse(r.json()["structure_valide"])  # trame absente
+
+        # Écriture de la trame.
+        r = self.client.post(
+            f"/api/campagne/{cid}/ecrire",
+            json={
+                "titre": "Les Marges",
+                "accroche": "La lettre d'Aldren.",
+                "pnj": [{"nom": "Aldren", "objectif": "Survivre", "faille": "Lié", "attitude": "allié"}],
+                "crochets": [
+                    {"id": "c1", "titre": "Dette", "lie_a_pj": "Elminster"},
+                    {"id": "c2", "titre": "Savoir", "lie_a_pj": "Elminster"},
+                ],
+                "defis": [{"nom": "Entrer", "approches": ["Forcer", "Ruse"]}],
+            },
+            headers=self.H,
+        )
+        corps = r.json()
+        self.assertTrue(corps["ok"])
+        self.assertEqual(corps["titre"], "Les Marges")
+        self.assertTrue(corps["structure_valide"])
+        # Cadrage préservé.
+        self.assertEqual(corps["mode"], "surprise")
+        self.assertEqual(corps["ton"], "sombre")
+        # Persisté sur disque (relecture).
+        r2 = self.client.get(f"/api/campagne/{cid}", headers=self.H)
+        self.assertEqual(r2.json()["titre"], "Les Marges")
+        self.assertEqual(len(r2.json()["crochets"]), 2)
+
+    def test_ecrire_sans_cle_refuse(self):
+        r = self.client.post("/api/campagne/abc/ecrire", json={"titre": "X"})
+        self.assertFalse(r.json()["ok"])
+
+    def test_ecrire_campagne_introuvable(self):
+        r = self.client.post("/api/campagne/nexiste-pas/ecrire", json={"titre": "X"}, headers=self.H)
+        self.assertFalse(r.json()["ok"])
+
+
 if __name__ == "__main__":
     unittest.main()

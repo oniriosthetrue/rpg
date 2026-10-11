@@ -568,6 +568,43 @@ class Campagne:
             return self.decouvrir_lieu(str(kwargs.get("nom", "")))
         return {"ok": False, "type": "erreur", "erreur": f"Action inconnue : {action!r}"}
 
+    # -- écriture de la trame (le MJ conçoit, le moteur mémorise + valide) ----
+
+    def ecrire_structure(self, champs: dict[str, Any]) -> dict[str, Any]:
+        """Écrit la **trame** du scénario dans la campagne existante.
+
+        Le MJ (LLM) conçoit le scénario en secret ou avec le joueur, puis le
+        **déclare** ici : le moteur le mémorise et le valide. Sans cet outil, la
+        trame conçue par le LLM reste dans le contexte de conversation et se perd
+        au premier reset — la campagne reste une coquille vide de cadrage.
+
+        N'écrase **que les champs fournis et reconnus** (titre, synopsis, accroche,
+        enjeux, motivations, danger, pnj, defis, crochets, lieux, blocs) :
+        le cadrage (`mode`, `age_joueur`, `duree`, `piliers`, `ton`, `theme`, …)
+        et l'état de partie (`phase`, `indices`, `recompenses`, `chronologie`,
+        statuts des crochets/PNJ/lieux déjà joués) sont **préservés**. Retourne
+        l'état + les avertissements de structure (signalés, jamais bloquants).
+        """
+        for cle in ("titre", "synopsis", "accroche", "enjeux", "motivations"):
+            if cle in champs:
+                setattr(self, cle, str(champs[cle]))
+        if str(champs.get("danger", "")) in DANGERS:
+            self.danger = str(champs["danger"])
+        if isinstance(champs.get("pnj"), list):
+            self.pnj = [PNJ.depuis_dict(p) for p in champs["pnj"] if isinstance(p, dict)]
+        if isinstance(champs.get("defis"), list):
+            self.defis = [Defi.depuis_dict(d) for d in champs["defis"] if isinstance(d, dict)]
+        if isinstance(champs.get("crochets"), list):
+            self.crochets = [
+                Crochet.depuis_dict(c) for c in champs["crochets"] if isinstance(c, dict)
+            ]
+        if isinstance(champs.get("lieux"), list):
+            self.lieux = [Lieu.depuis_dict(l) for l in champs["lieux"] if isinstance(l, dict)]
+        if isinstance(champs.get("blocs"), list):
+            self.blocs = [Bloc.depuis_dict(b) for b in champs["blocs"] if isinstance(b, dict)]
+        self._journal("Trame du scénario écrite / mise à jour.")
+        return self.etat()
+
     def cloturer(self) -> dict[str, Any]:
         self.active = False
         self._journal("Campagne clôturée.")

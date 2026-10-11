@@ -171,6 +171,35 @@ def etat(
     return enveloppe(c.etat())  # type: ignore[union-attr]
 
 
+@router.post("/api/campagne/{id}/ecrire")
+def ecrire(
+    id: str,
+    body: dict[str, Any] = Body(...),
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict[str, Any]:
+    """Écrit / met à jour la **trame** d'une campagne déjà ouverte (le MJ conçoit,
+    le moteur mémorise + valide).
+
+    Corps : les champs de trame à poser (`titre`, `synopsis`, `accroche`, `enjeux`,
+    `motivations`, `danger`, `pnj`, `defis`, `crochets`, `lieux`, `blocs`). Seuls
+    les champs fournis sont écrits ; le cadrage et l'état de partie (`phase`,
+    `indices`, chronologie, statuts déjà joués) sont **préservés**. Renvoie
+    `etat()` avec `structure_valide` et `avertissements_structure` (signalés,
+    jamais bloquants). C'est l'outil qui manquait pour persister le scénario que
+    le MJ invente (sinon la campagne reste une coquille vide de cadrage).
+    """
+    if (err := autorise(x_api_key)) is not None:
+        return err
+    if (err := _valider_id(id)) is not None:
+        return err
+    c, err = _charger(id)
+    if err:
+        return err
+    res = c.ecrire_structure(body)  # type: ignore[union-attr]
+    _sauvegarder(c)  # type: ignore[arg-type]
+    return enveloppe(res)
+
+
 @router.patch("/api/campagne/{id}")
 def modifier(
     id: str,

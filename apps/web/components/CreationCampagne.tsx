@@ -107,6 +107,10 @@ export default function CreationCampagne({
         groupe +
         `attache chaque crochet au background d'un PJ (lie_a_pj), équilibre les ` +
         `rencontres sur leurs niveaux, et varie les épreuves selon leurs aptitudes. ` +
+        `IMPORTANT : après avoir conçu la trame, PERSISTE-LA avec l'outil ` +
+        `ecrire_le_scenario(campagne_id, …) (titre, synopsis, accroche, enjeux, pnj, ` +
+        `crochets, defis, lieux, blocs) — sinon elle reste dans la conversation et la ` +
+        `campagne demeure vide. Relis avertissements_structure et corrige. ` +
         (mode === "surprise"
           ? "Mode surprise : conçois tout en secret et ne révèle que l'accroche."
           : "Mode guidé : propose-moi la trame étape par étape.");
