@@ -75,6 +75,18 @@ _MENU_AMORCE = re.compile(
 # On exclut le bloc citation `>` (texte destiné aux joueurs) pour ne jamais le retirer.
 _LIGNE_LISTE = re.compile(r"^\s*(?!>)(?:[-*•]|\d+[.)]|\W{1,3}\s)\s*\S.*$")
 
+# Filet de sécurité contre les « menus » servis sous forme de TABLEAU Markdown
+# (ex. « | Option | Type de jet | »). Un tableau n'est retiré que si son en-tête
+# contient un vocabulaire de menu (option / action / jet / compétence / type /
+# difficulté) — jamais un tableau légitime de la narration (inventaire, PNJ…).
+_LIGNE_TABLEAU = re.compile(r"^\s*\|.*\|\s*$")
+_SEP_TABLEAU = re.compile(r"^\s*\|?\s*:?-{2,}.*\|")
+_ENTETE_MENU = re.compile(
+    r"\b(option|action|jet|comp[eé]tence|type\s+de|difficult[eé]|ce\s+que\s+vous|"
+    r"ce\s+que\s+tu|ce\s+qu[ie]\s+vous|peu[tz]\s+(?:faire|faire))\b",
+    re.IGNORECASE,
+)
+
 
 def corriger_emphase(texte: str) -> str:
     if not isinstance(texte, str) or "*" not in texte:
@@ -103,14 +115,51 @@ def retirer_reflexion(texte: str) -> str:
     return "".join(gardees)
 
 
+def _retirer_tableaux_menu(texte: str) -> str:
+    """Retire les blocs de tableau Markdown servant de « menu » d'options.
+
+    Un tableau n'est retiré que si son en-tête contient un vocabulaire de menu
+    (option / action / jet / compétence…). Les tableaux légitimes de la narration
+    (inventaire, PNJ présents, butin) sont conservés.
+    """
+    lignes = texte.split("\n")
+    gardees: list[str] = []
+    i = 0
+    n = len(lignes)
+    while i < n:
+        # Début d'un tableau : une ligne en-tête, puis une ligne de séparation.
+        if (
+            _LIGNE_TABLEAU.match(lignes[i])
+            and i + 1 < n
+            and _SEP_TABLEAU.match(lignes[i + 1])
+        ):
+            j = i + 2
+            while j < n and _LIGNE_TABLEAU.match(lignes[j]):
+                j += 1
+            bloc = lignes[i:j]
+            if _ENTETE_MENU.search(bloc[0]):
+                i = j  # menu : on saute tout le bloc
+                continue
+            gardees.extend(bloc)
+            i = j
+            continue
+        gardees.append(lignes[i])
+        i += 1
+    return "\n".join(gardees)
+
+
 def retirer_menu(texte: str) -> str:
     """Retire les lignes à puces/numérotées formant un « menu » d'options.
 
     On n'agit QUE si le texte contient une amorce de menu (ex. « du plus évident au
     plus fin », « chaque action a un coût »), pour ne jamais casser une liste
-    légitime de la narration (inventaire, PNJ présents, etc.).
+    légitime de la narration (inventaire, PNJ présents, etc.). Les tableaux Markdown
+    de type menu sont retirés indépendamment (détection par en-tête).
     """
-    if not isinstance(texte, str) or not _MENU_AMORCE.search(texte):
+    if not isinstance(texte, str) or not texte.strip():
+        return texte
+    texte = _retirer_tableaux_menu(texte)
+    if not _MENU_AMORCE.search(texte):
         return texte
     gardees: list[str] = []
     for ligne in texte.split("\n"):

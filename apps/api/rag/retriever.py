@@ -59,26 +59,29 @@ def _formater_source(payload: dict) -> str:
     return edition or "SRD"
 
 
-def _filtrer_semantiques(semantiques: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Écarte les fiches vectorielles hors-sujet (bruit lexical/phonétique).
-
-    On garde une fiche si son score cosine dépasse le plancher absolu ET reste à
-    portée du meilleur résultat (delta). Les scores cosine de ce modèle sont
-    serrés (0,62–0,78), d'où le seuil relatif en plus de l'absolu. Le BM25 (nom
-    exact / mots-clés) est traité à part et n'est jamais filtré ici.
-    """
-    if not semantiques:
-        return []
+def _meilleur_score(semantiques: list[dict[str, Any]]) -> float | None:
+    """Plus haut score cosine parmi les fiches scorées, ou None si aucune."""
     scores = [
         f["_score"] for f in semantiques if isinstance(f.get("_score"), (int, float))
     ]
-    if not scores:  # aucune fiche scorée (stub / source non vectorielle) : on garde tout
+    return max(scores) if scores else None
+
+
+def _filtrer_semantiques(semantiques: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Écarte les fiches vectorielles hors-sujet (bruit lexical/phonétique).
+
+    On garde une fiche si son score cosine reste à portée du meilleur résultat
+    (delta). Les scores cosine de ce modèle sont serrés (0,62–0,78), d'où le seuil
+    relatif. Le BM25 (nom exact / mots-clés) est traité à part et n'est pas filtré
+    ici — la pertinence globale de la requête est tranchée par la « porte » dans
+    `_rechercher_fiches`.
+    """
+    if not semantiques:
+        return []
+    meilleur = _meilleur_score(semantiques)
+    if meilleur is None:  # aucune fiche scorée (stub / source non vectorielle)
         return semantiques
-    meilleur = max(scores)
-    plancher = max(
-        qdrant_store.settings.rag_min_score,
-        meilleur - qdrant_store.settings.rag_score_delta,
-    )
+    plancher = meilleur - qdrant_store.settings.rag_score_delta
     return [
         f
         for f in semantiques
@@ -101,6 +104,14 @@ def _rechercher_fiches(
         semantiques = _filtrer_semantiques(semantiques)
     except Exception:  # le RAG ne doit jamais bloquer une réponse du MJ
         _LOGGER.exception("Recherche vectorielle indisponible.")
+
+    # « Porte » de pertinence : si rien dans le corpus ne ressemble vraiment à la
+    # requête (meilleur score cosine sous le plancher), la question est hors-sujet
+    # (méta-commande, narration, « que puis-je faire ? »…). On ne cite alors RIEN —
+    # BM25 compris — plutôt que d'aligner des fiches SRD sans rapport.
+    meilleur = _meilleur_score(semantiques)
+    if meilleur is not None and meilleur < qdrant_store.settings.rag_min_score:
+        return []
 
     try:
         lexicales = keyword_search.rechercher(question, limite)
