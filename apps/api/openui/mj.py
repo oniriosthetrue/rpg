@@ -1113,10 +1113,12 @@ def charger_personnage(nom: str) -> dict[str, Any]:
     }
 
 
-def _retirer_objet(p: models.Personnage, objet: str) -> str | None:
+def _retirer_objet(
+    p: models.Personnage, objet: str, quantite: int | None = None
+) -> str | None:
     """Retire de l'inventaire l'objet désigné par `objet` (tolérant aux accents,
-    à la casse et aux formulations partielles). Renvoie le libellé exact retiré,
-    ou None si aucun objet ne correspond.
+    à la casse et aux formulations partielles). Renvoie une phrase décrivant le
+    changement, ou None si aucun objet ne correspond (ou ambiguïté).
 
     Le joueur nomme souvent un objet par un surnom ou un fragment (« le bocal »,
     « la graisse de griffon ») alors que l'inventaire porte un libellé long
@@ -1124,19 +1126,38 @@ def _retirer_objet(p: models.Personnage, objet: str) -> str | None:
     griffon » »). On apparie donc par : égalité exacte, puis mot-à-mot, puis
     sous-chaîne (dans un sens ou l'autre). Si plusieurs objets se disputent la
     même correspondance, on ne devine pas : on renvoie None (le MJ précise).
+
+    `quantite` (optionnel) : pour une **pile comptée** (« 20 flèches »), on
+    décrémente le compteur au lieu de supprimer l'entrée (« 20 flèches » →
+    « 15 flèches » pour 5 retirés) ; si la quantité atteint le total, l'entrée
+    disparaît. Sans `quantite`, on retire l'entrée entière. Le nom peut être
+    préfixé d'un nombre (« 5 flèches ») : il est alors lu comme la quantité.
     """
     objets = p.equipement.objets
-    demande = _norme(objet)
+    # Le MJ/joueur peut préfixer le nom d'une quantité (« 5 flèches ») : on la
+    # sépare pour apparier sur le seul nom, et on l'emploie comme quantité si
+    # `quantite` n'est pas fourni séparément.
+    demande = objet
+    m = re.match(r"^\s*(\d+)\s+(.*)$", objet)
+    if m:
+        demande = m.group(2)
+        if quantite is None:
+            quantite = int(m.group(1))
+    demande = _norme(demande)
     if not demande:
         return None
 
     def score(entree: str) -> int:
         e = _norme(entree)
-        if e == demande:
+        # On apparie aussi sur le nom sans son compteur (« 20 flèches » -> « fleches »).
+        e_nom = re.sub(r"^\s*\d+\s+", "", e)
+        if e == demande or e_nom == demande:
             return 3
-        if re.search(r"\b" + re.escape(demande) + r"\b", e):
+        if re.search(r"\b" + re.escape(demande) + r"\b", e) or re.search(
+            r"\b" + re.escape(demande) + r"\b", e_nom
+        ):
             return 2
-        if demande in e or e in demande:
+        if demande in e or e in demande or demande in e_nom or e_nom in demande:
             return 1
         return 0
 
@@ -1150,7 +1171,22 @@ def _retirer_objet(p: models.Personnage, objet: str) -> str | None:
         # Plusieurs objets correspondent aussi bien : on refuse de trancher.
         return None
     idx = candidats[0]
-    return objets.pop(idx)
+    entree = objets[idx]
+
+    if quantite is not None:
+        em = re.match(r"^\s*(\d+)\s+(.*)$", entree)
+        if em:  # pile comptée (« 20 flèches ») : on décrémente le compteur.
+            total = int(em.group(1))
+            libelle = em.group(2)
+            if quantite >= total:
+                objets.pop(idx)
+                return f"{entree} retiré en totalité (0 restant)"
+            reste = total - quantite
+            objets[idx] = f"{reste} {libelle}"
+            return f"{quantite} {libelle} retirés → {reste} restants"
+        # Objet non compté : impossible d'en retirer une partie → on retire tout.
+    objets.pop(idx)
+    return f"objet retiré : {entree}"
 
 
 def modifier_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
@@ -1228,7 +1264,15 @@ def modifier_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
             objet = str(valeur or "").strip()
             if not objet:
                 return {"ok": False, "type": "erreur", "erreur": "Valeur invalide : objet manquant."}
-            retire = _retirer_objet(p, objet)
+            quantite = action.get("quantite")
+            if quantite is not None:
+                try:
+                    quantite = int(quantite)
+                except (TypeError, ValueError):
+                    return {"ok": False, "type": "erreur", "erreur": f"Quantité invalide : {quantite}"}
+                if quantite <= 0:
+                    return {"ok": False, "type": "erreur", "erreur": f"Quantité invalide : {quantite}"}
+            retire = _retirer_objet(p, objet, quantite)
             if retire is None:
                 inventaire = ", ".join(p.equipement.objets) or "(inventaire vide)"
                 return {
@@ -1237,7 +1281,7 @@ def modifier_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
                     "erreur": f"Objet introuvable dans l'inventaire : « {objet} ». "
                     f"Inventaire actuel : {inventaire}.",
                 }
-            modifications.append(f"objet retiré : {retire}")
+            modifications.append(retire)
         elif nom_action == "apprendre_sort":
             sort = str(valeur or "").strip()
             if not sort:

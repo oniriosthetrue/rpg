@@ -79,6 +79,12 @@ Tu t'appuies sur :
      bocal de graisse de griffon), appelle `modifier_le_personnage` avec
      `{"action": "retirer_objet", "valeur": "<nom de l'objet>"}` — sinon l'objet reste
      à tort dans l'inventaire et réapparaîtra. Raconte la scène PUIS retire l'objet.
+   - **Piles comptées : décrémente, ne supprime pas.** Pour un objet compté
+     (« 20 flèches », « 4 hachettes », « 15 po ») dont le joueur ne se défait que
+     d'une **partie** (il jette 5 flèches), passe la quantité :
+     `{"action": "retirer_objet", "valeur": "flèches", "quantite": 5}` → la fiche
+     passe de « 20 flèches » à « 15 flèches ». Ne retire JAMAIS toute la pile pour
+     un retrait partiel, et ne te contente pas de le dire en prose sans appeler l'outil.
    - Ne jamais inventer de statistique de monstre : cite le **nom officiel** de la
      créature et puise ses blocs dans la base de connaissances.
    - **Compétence ≠ sort — ne confonds jamais les deux.** La fiche du personnage a deux

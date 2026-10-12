@@ -101,8 +101,13 @@ def modifier_le_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
     `retirer_objet` enlève un objet de l'inventaire (joueur qui jette, perd,
     casse, donne ou consomme un objet) — passe le nom tel que le joueur le nomme
     (« graisse de griffon », « le bocal ») : la correspondance est tolérante.
-    IMPORTANT : dès qu'un objet quitte la fiche du personnage en fiction, appelle
-    cette action pour le retirer de l'inventaire, sinon il y reste à tort.
+    Pour une **pile comptée** (« 20 flèches », « 4 hachettes »), passe
+    `"quantite": N` pour n'en retirer que N (« 20 flèches » → « 15 flèches »
+    pour `quantite: 5`) ; sans `quantite`, tout l'objet est retiré. Tu peux aussi
+    préfixer le nom (« valeur": "5 flèches" »).
+    IMPORTANT : dès qu'un objet (ou une partie d'une pile) quitte la fiche du
+    personnage en fiction, appelle cette action pour mettre l'inventaire à jour,
+    sinon il reste à tort au même montant et réapparaîtra.
     """
     return r_perso.modifier_personnage(nom, {"actions": actions}, _CLE)
 

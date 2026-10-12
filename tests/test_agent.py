@@ -646,5 +646,102 @@ class TestRetirerObjet(unittest.TestCase):
         self.assertEqual(len(self._objets("Ambroise")), 3)
 
 
+# ─── 9. Retirer une QUANTITÉ d'une pile comptée (jeter 5 flèches sur 20) ──────
+
+
+class TestRetirerQuantite(unittest.TestCase):
+    """Pour une pile comptée (« 20 flèches »), `retirer_objet` avec `quantite` doit
+    DÉCRÉMENTER le compteur (« 15 flèches ») et non supprimer toute l'entrée.
+    Dossier temporaire (aucune écriture sur les vraies fiches)."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+
+        from dnd_perso import export, extract, models
+        from openui import mj
+
+        self.mj = mj
+        self._tmp = tempfile.TemporaryDirectory()
+        self._orig_dir = extract.PERSO_DIR
+        extract.PERSO_DIR = Path(self._tmp.name)
+        p = models.Personnage(
+            nom="Conan",
+            equipement=models.Equipement(
+                objets=["arc court", "20 flèches", "4 hachettes", "trousse de soins"]
+            ),
+        )
+        export.sauvegarder(p)
+
+    def tearDown(self):
+        from dnd_perso import extract
+
+        extract.PERSO_DIR = self._orig_dir
+        self._tmp.cleanup()
+
+    def _objets(self):
+        return self.mj.charger_personnage("Conan")["personnage"]["equipement"]
+
+    def test_decrement_pile(self):
+        # Jeter 5 flèches sur 20 → « 15 flèches », l'entrée reste présente.
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "flèches", "quantite": 5}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertIn("15 flèches", self._objets())
+        self.assertNotIn("20 flèches", self._objets())
+        # Les autres objets sont intacts.
+        self.assertIn("arc court", self._objets())
+
+    def test_quantite_prefixee_dans_le_nom(self):
+        # Le MJ peut préfixer le nom : « 5 flèches » → décrémente de 5.
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "5 flèches"}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertIn("15 flèches", self._objets())
+
+    def test_quantite_egale_total_supprime_entree(self):
+        # Retirer toute la pile (20 sur 20) → l'entrée disparaît.
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "flèches", "quantite": 20}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertNotIn("20 flèches", self._objets())
+        self.assertFalse(any("flèche" in o for o in self._objets()))
+
+    def test_quantite_superieure_total_supprime_entree(self):
+        # Retirer plus que le stock (25 sur 20) → entrée retirée, pas de négatif.
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "flèches", "quantite": 25}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertFalse(any("flèche" in o for o in self._objets()))
+
+    def test_sans_quantite_retire_toute_la_pile(self):
+        # Rétrocompat : sans `quantite`, toute l'entrée est retirée.
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "flèches"}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertFalse(any("flèche" in o for o in self._objets()))
+
+    def test_quantite_sur_objet_non_compte_retire_tout(self):
+        # « trousse de soins » n'est pas comptée → une quantité la retire en entier.
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "trousse de soins", "quantite": 1}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertNotIn("trousse de soins", self._objets())
+
+    def test_quantite_invalide_erreur(self):
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "flèches", "quantite": 0}]
+        )
+        self.assertFalse(r["ok"])
+        self.assertIn("Quantité invalide", r["erreur"])
+        self.assertIn("20 flèches", self._objets())  # rien retiré sur erreur
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
