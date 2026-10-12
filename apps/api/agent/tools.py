@@ -94,8 +94,15 @@ def modifier_le_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
     sorts, XP, alignement) et renvoyer la fiche mise à jour.
 
     Actions acceptées : `soigner`, `degats` (option `critique`), `ajouter_or`,
-    `ajouter_objet`, `apprendre_sort`, `gagner_xp`, `changer_alignement`.
+    `ajouter_objet`, `retirer_objet`, `apprendre_sort`, `gagner_xp`,
+    `changer_alignement`.
     Ex. `[{"action": "soigner", "valeur": 5}, {"action": "ajouter_or", "valeur": 50}]`.
+
+    `retirer_objet` enlève un objet de l'inventaire (joueur qui jette, perd,
+    casse, donne ou consomme un objet) — passe le nom tel que le joueur le nomme
+    (« graisse de griffon », « le bocal ») : la correspondance est tolérante.
+    IMPORTANT : dès qu'un objet quitte la fiche du personnage en fiction, appelle
+    cette action pour le retirer de l'inventaire, sinon il y reste à tort.
     """
     return r_perso.modifier_personnage(nom, {"actions": actions}, _CLE)
 

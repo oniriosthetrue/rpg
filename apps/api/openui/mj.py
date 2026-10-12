@@ -1113,10 +1113,50 @@ def charger_personnage(nom: str) -> dict[str, Any]:
     }
 
 
+def _retirer_objet(p: models.Personnage, objet: str) -> str | None:
+    """Retire de l'inventaire l'objet désigné par `objet` (tolérant aux accents,
+    à la casse et aux formulations partielles). Renvoie le libellé exact retiré,
+    ou None si aucun objet ne correspond.
+
+    Le joueur nomme souvent un objet par un surnom ou un fragment (« le bocal »,
+    « la graisse de griffon ») alors que l'inventaire porte un libellé long
+    (« Bocal en verre renfermant du lard, avec l'étiquette « Graisse de
+    griffon » »). On apparie donc par : égalité exacte, puis mot-à-mot, puis
+    sous-chaîne (dans un sens ou l'autre). Si plusieurs objets se disputent la
+    même correspondance, on ne devine pas : on renvoie None (le MJ précise).
+    """
+    objets = p.equipement.objets
+    demande = _norme(objet)
+    if not demande:
+        return None
+
+    def score(entree: str) -> int:
+        e = _norme(entree)
+        if e == demande:
+            return 3
+        if re.search(r"\b" + re.escape(demande) + r"\b", e):
+            return 2
+        if demande in e or e in demande:
+            return 1
+        return 0
+
+    meilleurs = [(score(o), i) for i, o in enumerate(objets)]
+    meilleurs = [(s, i) for (s, i) in meilleurs if s > 0]
+    if not meilleurs:
+        return None
+    meilleur = max(s for s, _ in meilleurs)
+    candidats = [i for s, i in meilleurs if s == meilleur]
+    if len(candidats) > 1:
+        # Plusieurs objets correspondent aussi bien : on refuse de trancher.
+        return None
+    idx = candidats[0]
+    return objets.pop(idx)
+
+
 def modifier_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
     """Applique une liste d'actions closes à un personnage sauvegardé (contrat §5).
 
-    Actions acceptées : soigner, degats, ajouter_or, ajouter_objet,
+    Actions acceptées : soigner, degats, ajouter_or, ajouter_objet, retirer_objet,
     apprendre_sort, gagner_xp, changer_alignement.
     Toute action inconnue fait échouer la requête (aucune modification partielle).
     """
@@ -1184,6 +1224,20 @@ def modifier_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
                 return {"ok": False, "type": "erreur", "erreur": "Valeur invalide : objet manquant."}
             p.equipement.objets.append(objet)
             modifications.append(f"objet ajouté : {objet}")
+        elif nom_action == "retirer_objet":
+            objet = str(valeur or "").strip()
+            if not objet:
+                return {"ok": False, "type": "erreur", "erreur": "Valeur invalide : objet manquant."}
+            retire = _retirer_objet(p, objet)
+            if retire is None:
+                inventaire = ", ".join(p.equipement.objets) or "(inventaire vide)"
+                return {
+                    "ok": False,
+                    "type": "erreur",
+                    "erreur": f"Objet introuvable dans l'inventaire : « {objet} ». "
+                    f"Inventaire actuel : {inventaire}.",
+                }
+            modifications.append(f"objet retiré : {retire}")
         elif nom_action == "apprendre_sort":
             sort = str(valeur or "").strip()
             if not sort:

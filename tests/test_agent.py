@@ -119,6 +119,7 @@ class TestDlegationOutils(unittest.TestCase):
 
         args = {
             "combattants": [
+                {"type": "pj", "nom": "Elminster"},
                 {"type": "monstre", "nom": "Gobelin", "pv": 7, "ca": 15,
                  "attaque": 4, "degats": "1d6+2", "mod_degats": 2, "init_bonus": 2},
                 {"type": "monstre", "nom": "Orc", "pv": 11, "ca": 13,
@@ -549,6 +550,100 @@ class TestCompetencePasSort(unittest.TestCase):
     def test_cite_les_deux_listes(self):
         self.assertIn("## Compétences", self.p)
         self.assertIn("## Sorts connus", self.p)
+
+
+# ─── 8. Retirer un objet de l'inventaire (joueur qui jette / perd un objet) ───
+
+
+class TestRetirerObjet(unittest.TestCase):
+    """`modifier_personnage` doit pouvoir RETIRER un objet de l'inventaire : quand
+    le joueur jette / casse / perd un objet, il doit disparaître de la fiche. On
+    travaille dans un dossier temporaire (aucune écriture sur les vraies fiches)."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+
+        from dnd_perso import export, extract, models
+        from openui import mj
+
+        self.mj = mj
+        self.models = models
+        self._tmp = tempfile.TemporaryDirectory()
+        self._orig_dir = extract.PERSO_DIR
+        extract.PERSO_DIR = Path(self._tmp.name)
+        # Fiche avec l'objet long du scénario (bocal de graisse de griffon).
+        p = models.Personnage(
+            nom="Conan",
+            classe="Barbare",
+            espece="Humain",
+            historique="Soldat",
+            equipement=models.Equipement(
+                objets=[
+                    "hache à deux mains",
+                    "15 po",
+                    "Bocal en verre renfermant du lard, avec l'étiquette « Graisse de griffon »",
+                ]
+            ),
+        )
+        export.sauvegarder(p)
+
+    def tearDown(self):
+        from dnd_perso import extract
+
+        extract.PERSO_DIR = self._orig_dir
+        self._tmp.cleanup()
+
+    def _objets(self, nom="Conan"):
+        r = self.mj.charger_personnage(nom)
+        return r["personnage"]["equipement"]
+
+    def test_retirer_par_nom_partiel(self):
+        # Le joueur dit « graisse de griffon » → retire le bocal au libellé long.
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "graisse de griffon"}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertNotIn(
+            "Bocal en verre renfermant du lard, avec l'étiquette « Graisse de griffon »",
+            self._objets(),
+        )
+        self.assertIn("hache à deux mains", self._objets())
+
+    def test_retirer_par_sous_chaine(self):
+        # « le bocal » (sans accent, article) doit aussi correspondre.
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "bocal"}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertEqual(len(self._objets()), 2)
+
+    def test_objet_introuvable_erreur(self):
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "retirer_objet", "valeur": "épée longue"}]
+        )
+        self.assertFalse(r["ok"])
+        self.assertIn("introuvable", r["erreur"])
+        # Rien n'a été retiré sur erreur.
+        self.assertEqual(len(self._objets()), 3)
+
+    def test_ambigu_erreur_sans_devine(self):
+        # Deux objets contenant « hache » → le moteur refuse de trancher.
+        from dnd_perso import export
+
+        p = self.models.Personnage(
+            nom="Ambroise",
+            equipement=self.models.Equipement(
+                objets=["hache à deux mains", "hache de jet", "corde"]
+            ),
+        )
+        export.sauvegarder(p)
+        r = self.mj.modifier_personnage(
+            "Ambroise", [{"action": "retirer_objet", "valeur": "hache"}]
+        )
+        self.assertFalse(r["ok"])
+        self.assertIn("introuvable", r["erreur"])
+        self.assertEqual(len(self._objets("Ambroise")), 3)
 
 
 if __name__ == "__main__":
