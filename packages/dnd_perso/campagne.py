@@ -249,7 +249,14 @@ class Rencontre:
 
 @dataclass
 class Lieu:
-    """Un lieu clé : description, obstacles, piliers représentés, rencontre."""
+    """Un lieu clé : description, obstacles, piliers représentés, rencontre.
+
+    `zone` qualifie explicitement le lieu pour le moteur de combat :
+    - `"dangereuse"` : un affrontement y est possible (une `rencontre` y est
+      planifiée, ou le MJ l'a déclarée comme telle) ;
+    - `"sure"` : aucun combat ne doit y éclore — le MJ y raconte sans arme.
+    Par défaut, un lieu est dangereux s'il porte une `rencontre`, sûr sinon.
+    """
 
     nom: str
     description: str = ""
@@ -257,6 +264,17 @@ class Lieu:
     piliers: list[str] = field(default_factory=list)
     rencontre: Rencontre | None = None
     decouvert: bool = False
+    zone: str = ""  # "sure" | "dangereuse" (vide = déduit de la rencontre)
+
+    @property
+    def est_dangereuse(self) -> bool:
+        """Le combat est-il licite dans ce lieu ?"""
+        z = (self.zone or "").strip().lower()
+        if z in ("dangereuse", "dangereux", "danger"):
+            return True
+        if z in ("sure", "sur", "safe", "paix"):
+            return False
+        return self.rencontre is not None  # défaut : déduit de la rencontre planifiée
 
     def vers_dict(self) -> dict[str, Any]:
         return {
@@ -266,6 +284,7 @@ class Lieu:
             "piliers": list(self.piliers),
             "rencontre": self.rencontre.vers_dict() if self.rencontre else None,
             "decouvert": self.decouvert,
+            "zone": self.zone or ("dangereuse" if self.est_dangereuse else "sure"),
         }
 
     @classmethod
@@ -280,6 +299,7 @@ class Lieu:
             piliers=[str(p) for p in d.get("piliers", [])],
             rencontre=Rencontre.depuis_dict(ren) if isinstance(ren, dict) else None,
             decouvert=bool(d.get("decouvert", False)),
+            zone=str(d.get("zone", "")).strip().lower(),
         )
 
 

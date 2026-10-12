@@ -125,6 +125,7 @@ def ouvrir_un_combat(
     combattants: list[dict],
     titre: str = "",
     combat_id: str = "",
+    lieu: str = "",
 ) -> dict[str, Any]:
     """Ouvrir une rencontre : le serveur lance TOUTES les initiatives (d20 + bonus)
     et renvoie l'ordre de jeu.
@@ -134,6 +135,13 @@ def ouvrir_un_combat(
     "mod_degats":0,"init_bonus":2,"nb":2}`. Les stats du monstre viennent de sa
     fiche SRD (jamais inventées). `nb` crée plusieurs exemplaires. ≥ 2 combattants.
 
+    `lieu` : le **nom exact du lieu** de la campagne où se déroule le combat. Le
+    serveur n'autorise un affrontement que dans une **zone dangereuse** (un lieu du
+    scénario portant une `rencontre` planifiée) et refuse si les monstres ou leur
+    effectif ne correspondent pas à cette rencontre. **Ne jamais faire apparaître
+    d'ennemis dans une zone sûre** : si le lieu n'a pas de `rencontre`, raconte la
+    scène sans combat (ou déclare d'abord une rencontre via `ecrire_le_scenario`).
+
     La rencontre est automatiquement rattachée à la campagne active : supprimer
     cette campagne supprimera aussi ce combat.
     """
@@ -142,6 +150,8 @@ def ouvrir_un_combat(
         corps["titre"] = titre
     if combat_id:
         corps["id"] = combat_id
+    if lieu:
+        corps["lieu"] = lieu
     campagne_id = ctx.deps.campagne_id if ctx and ctx.deps else ""
     if campagne_id:
         corps["campagne_id"] = campagne_id
@@ -333,8 +343,13 @@ def ecrire_le_scenario(
       (≥2 crochets liés aux PJ, un par PJ au minimum).
     - `defis` : `[{"nom","approches":[...]}]` — ≥2 approches par défi.
     - `lieux` : `[{"nom","description","obstacles","piliers":["exploration","social",
-      "combat"],"rencontre":{"titre","terrain","monstres":[{"nom","nb","cr",
+      "combat"],"zone":"sure|dangereuse","rencontre":{"titre","terrain","monstres":[{"nom","nb","cr",
       "comportement","pouvoirs_a_utiliser":[...]}]}}]` (CR lus dans la fiche SRD).
+      **`zone` est important** : un lieu `"dangereuse"` porte une `rencontre` et le
+      combat y est licite ; un lieu `"sure"` (village, carrefour, repaire social…) est
+      une zone **sans combat possible** — n'y fais jamais apparaître d'ennemis. Par
+      défaut un lieu est dangereux s'il a une `rencontre`, sûr sinon. Seules les zones
+      dangereuses autorisent `ouvrir_un_combat`.
     - `blocs` : `[{"id","titre","contenu","position":"actif|reserve"}]`.
     Renvoie l'état + `avertissements_structure` (à corriger si non vide).
     """

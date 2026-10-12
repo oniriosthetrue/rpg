@@ -26,6 +26,7 @@ from typing import Any
 from fastapi import APIRouter, Body, Header
 
 from dnd_perso import combat, extract, models
+from dnd_perso import campagne as cp
 from openui import mj
 
 from jdr_api.commun import V, autorise, enveloppe
@@ -68,6 +69,50 @@ def _sauvegarder(r: combat.Rencontre) -> None:
     _chemin(r.id).write_text(
         json.dumps(r.vers_dict(), ensure_ascii=False, indent=2), encoding="utf-8"
     )
+
+
+# ---------------------------------------------------------------------------
+# Garde « zone sûre / zone dangereuse » (option moteur)
+# ---------------------------------------------------------------------------
+
+def _norm_nom(nom: str) -> str:
+    """Normalise un nom (lieu ou monstre) pour comparaison tolérante (cas, accents)."""
+    import unicodedata
+
+    s = unicodedata.normalize("NFKD", (nom or "").strip().lower())
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return re.sub(r"[^a-z0-9]+", " ", s).strip()
+
+
+def _zones_dangereuses(campagne_id: str) -> dict[str, dict[str, int]] | None:
+    """Pour la campagne, les **zones dangereuses** (lieux où le combat est licite) et,
+    pour chacune, l'effectif max planifié par type de monstre (nom normalisé -> nb).
+    Renvoie None si la campagne est introuvable (on ne bloque pas alors). Un lieu « sûr »
+    (aucune rencontre planifiée, `zone` non dangereuse) n'apparaît pas ici : y ouvrir un
+    combat est donc refusé par le moteur — le scénario doit déclarer explicitement la
+    rencontre pour qu'un affrontement puisse y éclore."""
+    campagne_id = (campagne_id or "").strip()
+    if not campagne_id:
+        return None
+    chemin = extract.CAMPAGNE_DIR / f"campagne-{campagne_id}.json"
+    if not chemin.exists():
+        return None
+    try:
+        c = cp.Campagne.depuis_dict(json.loads(chemin.read_text(encoding="utf-8")))
+    except (OSError, ValueError):
+        return None
+    zones: dict[str, dict[str, int]] = {}
+    for lieu in c.lieux:
+        if not lieu.est_dangereuse or not lieu.rencontre:
+            continue
+        plan: dict[str, int] = {}
+        for m in lieu.rencontre.monstres:
+            cle = _norm_nom(m.nom)
+            if cle:
+                plan[cle] = max(plan.get(cle, 0), max(1, m.nb))
+        if plan:
+            zones[_norm_nom(lieu.nom)] = plan
+    return zones
 
 
 # ---------------------------------------------------------------------------
@@ -192,6 +237,64 @@ def ouvrir(
     # des rencontres fantômes (monstres contre monstres) qui polluent data-combat/.
     if not any(c.camp == "pj" for c in combattants):
         return enveloppe({"ok": False, "type": "erreur", "erreur": "Une rencontre exige au moins un personnage joueur (PJ)."})
+
+    # Garde « zone sûre / zone dangereuse » : quand la rencontre est rattachée à une
+    # campagne, le combat n'est licite que dans une **zone dangereuse** explicitement
+    # déclarée par le scénario (un lieu portant une `rencontre` planifiée), et les
+    # monstres/effectifs doivent correspondre à cette rencontre. Cela empêche le MJ de
+    # faire « apparaître d'un coup » une bande d'ennemis dans une zone sûre.
+    campagne_id = str(body.get("campagne_id", "")).strip()
+    lieu_declare = str(body.get("lieu", "")).strip()
+    zones = _zones_dangereuses(campagne_id)
+    if zones is not None:
+        if not zones:
+            return enveloppe({"ok": False, "type": "erreur", "erreur": (
+                "Aucune zone dangereuse n'est déclarée dans le scénario : le combat "
+                "n'est possible nulle part. Déclare une `rencontre` sur un lieu "
+                "(`ecrire_le_scenario`) avant d'ouvrir un affrontement."
+            )})
+        # Effectifs ouverts, agrégés par type de monstre (sans le suffixe « N »).
+        ouverts: dict[str, int] = {}
+        for c in combattants:
+            if c.camp == "monstre":
+                cle = _norm_nom(re.sub(r"\s+\d+$", "", c.nom))
+                ouverts[cle] = ouverts.get(cle, 0) + 1
+        # Zone visée : celle déclarée par le MJ, sinon toute zone dangereuse compatible.
+        if lieu_declare:
+            cible = _norm_nom(lieu_declare)
+            if cible not in zones:
+                noms = ", ".join(sorted(zones)) or "aucune"
+                return enveloppe({"ok": False, "type": "erreur", "erreur": (
+                    f"« {lieu_declare} » n'est pas une zone dangereuse du scénario "
+                    f"(zones où le combat est licite : {noms}). Un lieu sûr ne devient "
+                    "pas une arène : raconte la scène sans combat, ou déclare une "
+                    "`rencontre` sur ce lieu."
+                )})
+            candidats = {cible: zones[cible]}
+        else:
+            candidats = zones
+        # La rencontre est conforme si, pour AU MOINS UNE zone dangereuse candidate,
+        # chaque monstre ouvert y est planifié et n'y dépasse pas l'effectif prévu.
+        conforme = False
+        for plan in candidats.values():
+            if ouverts and all(n in plan and qt <= plan[n] for n, qt in ouverts.items()):
+                conforme = True
+                break
+        if not conforme:
+            inconnus = [n for n in ouverts if not any(n in p for p in candidats.values())]
+            surnombre = [
+                f"{n} ({qt} ouverts / {max((p.get(n, 0) for p in candidats.values()), default=0)} prévu(s))"
+                for n, qt in ouverts.items()
+                if any(n in p for p in candidats.values())
+                and qt > max(p.get(n, 0) for p in candidats.values())
+            ]
+            msg = "Rencontre non conforme au scénario (zone dangereuse et rencontre planifiée)."
+            if inconnus:
+                msg += f" Monstres non planifiés : {', '.join(inconnus)}."
+            if surnombre:
+                msg += f" Effectif supérieur au plan : {', '.join(surnombre)}."
+            msg += " Ouvre le combat sur la `rencontre` planifiée d'une zone dangereuse (mêmes monstres, même effectif)."
+            return enveloppe({"ok": False, "type": "erreur", "erreur": msg})
 
     rng = random.Random(body.get("seed")) if body.get("seed") is not None else random.Random()
     r = combat.Rencontre.ouvrir(
