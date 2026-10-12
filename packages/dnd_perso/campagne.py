@@ -481,6 +481,22 @@ class Campagne:
                 problemes.append(
                     f"PNJ « {p.nom} » incomplet : objectif, faille et attitude requis."
                 )
+        # Cohérence zone / rencontre : le combat n'est licite que dans une zone
+        # dangereuse, qui doit donc porter une rencontre planifiée (et l'inverse :
+        # une zone sûre ne doit pas en porter).
+        for l in self.lieux:
+            if l.est_dangereuse and not l.rencontre:
+                problemes.append(
+                    f"Lieu « {l.nom} » est une zone dangereuse mais n'a aucune "
+                    "`rencontre` planifiée : le combat y serait refusé. Soit y "
+                    "déclarer une rencontre, soit le passer en zone « sure »."
+                )
+            if not l.est_dangereuse and l.rencontre:
+                problemes.append(
+                    f"Lieu « {l.nom} » est une zone sûre mais porte une `rencontre` : "
+                    "le combat y serait refusé par le moteur. Passe-le en zone "
+                    "« dangereuse » (et la rencontre devient exploitable)."
+                )
         return problemes
 
     # -- transitions déclarées ----------------------------------------------

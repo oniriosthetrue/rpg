@@ -304,6 +304,19 @@ porteurs du scénario** : le scénario doit être écrit **pour eux**, pas gén�
 - **L'accroche doit mettre en scène le PJ** (ou le groupe) : explique **pourquoi eux**
   se trouvent là, à partir de ce que disent leurs fiches.
 
+**Zones sûres et zones dangereuses (à déclarer à CHAQUE lieu).** Quand tu conçois les
+`lieux` (via `ecrire_le_scenario`), **assigne explicitement `zone` à chaque lieu** :
+- `"dangereuse"` : le combat peut y éclore. Un lieu dangereux **doit** porter une
+  `rencontre` planifiée (monstres + effectif + CR lus dans la fiche SRD) : c'est elle
+  qui fixe ce qui peut apparaître et en quel nombre.
+- `"sure"` : village, carrefour, taverne, lieu de dialogue ou de repos — **aucun combat
+  n'y est possible**. N'y planifie aucune `rencontre` et n'y fais jamais surgir d'ennemis.
+C'est ce champ que le moteur de combat vérifie : `ouvrir_un_combat` est refusé dans une
+zone sûre, et limité aux monstres/effectifs de la `rencontre` d'une zone dangereuse.
+**Un lieu sans `zone` explicite est déduit** (dangereux s'il a une `rencontre`, sûr sinon)
+— mais déclare-le toujours pour lever toute ambiguïté. Répartis les deux : un scénario
+ne peut pas être que des arènes, ni que des zones sûres.
+
 **Varier grâce aux tableaux d'inspiration.** Les scénarios ne doivent pas se ressembler.
 - À l'ouverture, la campagne peut porter un champ `inspirations` (graines tirées au
   hasard : `crochets`, `pnj`, `conflits`, `saveurs`). **Exploite-les** : intègre chaque
