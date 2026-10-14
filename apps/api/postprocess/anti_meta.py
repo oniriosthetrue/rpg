@@ -91,6 +91,26 @@ _SEP_HR = re.compile(r"^\s*-{3,}\s*$")
 # Question courte de clôture (« Que fais-tu ? », « Tu fais quoi ? ») : on la garde.
 _QUESTION_CLOTURE = re.compile(r"^\s*\S.{0,58}\?\s*$")
 
+# Question de DÉCISION adressée par le MJ au joueur pour lui soutirer son action
+# (« Que fais-tu ? », « Que décides-tu ? », « À toi de jouer ? »…). En mode expert,
+# on la retire en queue de message (le MJ doit faire avancer le récit au lieu de
+# rendre la balle). On ne cible que la 2e personne et ces tournures précises, pour
+# ne jamais toucher une question de PNJ (« Où vas-tu ? ») ni une ligne de lancer
+# (qui ne finit pas par « ? »).
+_QUESTION_DECISION = re.compile(
+    r"^\s*(?:\W+\s*)?"
+    r"(?:"
+    r"(?:qu(?:e'|e))\s+(?:donc\s+|maintenant\s+|bien\s+)?"
+    r"(?:fais|faites|d[ée]cides?|d[ée]cidez|choisis|choisissez|agis|agissez|"
+    r"tentes|tentez)[-\s](?:tu|vous)"
+    r"|qu'est-ce\s+que\s+tu\s+(?:fais|d[ée]cides|choisis|vas\s+faire)"
+    r"|qu'est-ce\s+que\s+vous\s+(?:faites|d[ée]cidez|choisissez)"
+    r"|à\s+toi\s+(?:de\s+)?(?:jouer|la\s+balle)"
+    r")"
+    r"\s*\?\s*$",
+    re.IGNORECASE,
+)
+
 # Filet de sécurité contre les « menus » servis sous forme de TABLEAU Markdown
 # (ex. « | Option | Type de jet | »). Un tableau n'est retiré que si son en-tête
 # contient un vocabulaire de menu (option / action / jet / compétence / type /
@@ -270,13 +290,50 @@ def retirer_synthese(texte: str) -> str:
     return "\n".join(gardees)
 
 
-def nettoyer(texte: str) -> str:
-    """Chaîne complète appliquée à la réponse du MJ."""
+def retirer_question_decision(texte: str) -> str:
+    """Retire la question de décision en QUEUE de message (« Que fais-tu ? »…).
+
+    Utilisé en **mode expert** uniquement : le MJ doit faire avancer le récit au
+    lieu de rendre la balle au joueur. On ne retire que les dernières lignes du
+    message qui sont des questions de décision (2e personne), jamais une question
+    de PNJ en milieu de narration ni une ligne de lancer (sans « ? »).
+    """
+    if not isinstance(texte, str) or "?" not in texte:
+        return texte
+    lignes = texte.split("\n")
+    # Parcourt depuis la fin et retire les lignes vides puis les questions de
+    # décision consécutives ; on s'arrête à la première ligne qui n'est pas une
+    # question de décision (en ignorant les lignes vides intermédiaires).
+    i = len(lignes)
+    while i > 0:
+        ligne = lignes[i - 1]
+        if not ligne.strip():
+            i -= 1
+            continue
+        if _QUESTION_DECISION.match(ligne):
+            i -= 1
+            continue
+        break
+    return "\n".join(lignes[:i]).rstrip()
+
+
+def nettoyer(texte: str, *, expert: bool = False) -> str:
+    """Chaîne complète appliquée à la réponse du MJ.
+
+    ``expert=True`` (mode expert, défaut de l'app) retire en plus la question de
+    décision en queue de message (« Que fais-tu ? ») : le MJ avance le récit au
+    lieu de réclamer l'action du joueur. En mode débutant (``expert=False``), la
+    question/piste reste autorisée.
+    """
     texte = masquer_stats_monstre(corriger_emphase(texte))
     # Retirer les menus/synthèses AVANT la réflexion : `retirer_reflexion` découpe
     # en phrases et recolle sans égard aux sauts de ligne, ce qui détruirait la
     # structure en lignes dont `retirer_menu`/`retirer_synthese` ont besoin.
     texte = retirer_menu(texte)
     texte = retirer_synthese(texte)
+    # La question de décision se retire ici (avant la réflexion) : `retirer_reflexion`
+    # recolle les phrases sans les sauts de ligne, ce qui empêcherait le retrait par ligne.
+    if expert:
+        texte = retirer_question_decision(texte)
     texte = retirer_reflexion(texte)
     return texte.strip()

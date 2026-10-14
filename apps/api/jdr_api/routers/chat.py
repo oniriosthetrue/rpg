@@ -168,7 +168,10 @@ async def chat(
                 yield chunk
             if await request.is_disconnected():
                 return
-            complet = anti_meta.nettoyer("".join(texte_final))
+            # Mode expert (aucun coup de pouce demandé) : on retire la question de
+            # décision en queue (« Que fais-tu ? ») — le MJ doit avancer le récit.
+            expert = not (hint_mode or demande_indice)
+            complet = anti_meta.nettoyer("".join(texte_final), expert=expert)
             yield _sse("fin", {"texte": complet})
         except Exception as exc:  # ne jamais casser le flux silencieusement
             yield _sse("erreur", {"message": f"Erreur agent : {exc}"})

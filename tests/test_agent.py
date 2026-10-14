@@ -322,6 +322,50 @@ class TestAntiMeta(unittest.TestCase):
         self.assertIn("Vous êtes au bord", out)
         self.assertIn("Que faites-vous ?", out)
 
+    # -- Mode expert : retrait de la question de décision en queue --------------
+
+    def test_expert_retire_question_decision(self):
+        # En mode expert, la question de décision en queue est retirée, la narration gardée.
+        texte = "Le couloir descend vers le nord. L'air sent la cendre.\n\nQue fais-tu ?"
+        out = anti_meta.nettoyer(texte, expert=True)
+        self.assertIn("Le couloir descend", out)
+        self.assertNotIn("Que fais-tu ?", out)
+
+    def test_expert_retire_variantes(self):
+        for q in (
+            "Que décides-tu ?",
+            "Que choisis-tu ?",
+            "Qu'est-ce que tu fais ?",
+            "À toi de jouer ?",
+            "Que faites-vous ?",
+        ):
+            with self.subTest(q=q):
+                out = anti_meta.nettoyer(f"La porte s'ouvre.\n\n{q}", expert=True)
+                self.assertIn("La porte s'ouvre", out)
+                self.assertNotIn(q, out)
+
+    def test_debutant_garde_question_decision(self):
+        # Mode débutant (expert=False, défaut) : la question reste autorisée.
+        texte = "Le couloir descend vers le nord.\n\nQue fais-tu ?"
+        out = anti_meta.nettoyer(texte)
+        self.assertIn("Que fais-tu ?", out)
+
+    def test_expert_garde_question_de_pnj(self):
+        # Une question de PNJ dans le dialogue (guillemets, hors liste de décision)
+        # n'est PAS une question de décision adressée au joueur : on la garde.
+        texte = 'Le garde croise les bras. « Où vas-tu comme ça ? »'
+        out = anti_meta.nettoyer(texte, expert=True)
+        self.assertIn("Où vas-tu comme ça ?", out)
+
+    def test_expert_garde_ligne_de_lancer(self):
+        # La ligne de lancer (dé à demander) ne finit pas par « ? » : jamais retirée.
+        texte = (
+            "La herse grince au-dessus de toi. "
+            "Jette un d20 pour Dextérité (Acrobaties), + 4."
+        )
+        out = anti_meta.nettoyer(texte, expert=True)
+        self.assertIn("Jette un d20 pour Dextérité", out)
+
 
 # ─── 3. RAG : contexte borné + citation ──────────────────────────────────────
 
