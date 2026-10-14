@@ -197,17 +197,31 @@ class TestCascadeSuppressionCampagne(unittest.TestCase):
         cls.tmp = tempfile.mkdtemp(prefix="cascade-")
         cls.dossier_campagne = Path(cls.tmp) / "campagne"
         cls.dossier_combat = Path(cls.tmp) / "combat"
+        cls.dossier_perso = Path(cls.tmp) / "perso"
         cls.dossier_campagne.mkdir(parents=True, exist_ok=True)
         cls.dossier_combat.mkdir(parents=True, exist_ok=True)
+        cls.dossier_perso.mkdir(parents=True, exist_ok=True)
         os.environ["DND_API_KEY"] = "test-key"
         from fastapi.testclient import TestClient
         from jdr_api.main import app
         from dnd_perso import extract
 
+        # Le router combat exige ≥1 PJ (lu depuis une fiche) et, quand la rencontre
+        # est rattachée à une campagne, une zone dangereuse déclarée : on fournit les
+        # deux pour que la cascade s'exerce dans un état licite.
+        (cls.dossier_perso / "Heros.json").write_text(
+            json.dumps({"nom": "Heros", "classe": "Guerrier", "niveau": 1,
+                        "carac": {"Force": 16, "Dextérité": 14, "Constitution": 14}},
+                       ensure_ascii=False),
+            encoding="utf-8",
+        )
+
         cls._campagne_dir_origine = extract.CAMPAGNE_DIR
         cls._combat_dir_origine = extract.COMBAT_DIR
+        cls._perso_dir_origine = extract.PERSO_DIR
         extract.CAMPAGNE_DIR = cls.dossier_campagne
         extract.COMBAT_DIR = cls.dossier_combat
+        extract.PERSO_DIR = cls.dossier_perso
         cls.client = TestClient(app)
         cls.H = {"X-API-Key": "test-key"}
 
@@ -217,6 +231,24 @@ class TestCascadeSuppressionCampagne(unittest.TestCase):
 
         extract.CAMPAGNE_DIR = cls._campagne_dir_origine
         extract.COMBAT_DIR = cls._combat_dir_origine
+        extract.PERSO_DIR = cls._perso_dir_origine
+
+    def _declarer_zone(self, campagne_id: str) -> None:
+        """Déclare sur la campagne une zone dangereuse où la rencontre (Gobelin +
+        Orc) est planifiée — sinon le garde « zone » du router combat refuse l'ouverture."""
+        r = self.client.post(
+            f"/api/campagne/{campagne_id}/ecrire",
+            json={
+                "lieux": [{
+                    "nom": "Antre",
+                    "zone": "dangereuse",
+                    "rencontre": {"titre": "Raid", "monstres": [
+                        {"nom": "Gobelin", "nb": 1}, {"nom": "Orc", "nb": 1}]},
+                }],
+            },
+            headers=self.H,
+        )
+        self.assertTrue(r.json()["ok"], r.json())
 
     def _ouvrir_combat(self, campagne_id: str, cid: str) -> str:
         r = self.client.post(
@@ -226,6 +258,7 @@ class TestCascadeSuppressionCampagne(unittest.TestCase):
                 "campagne_id": campagne_id,
                 "titre": "Escarmouche",
                 "combattants": [
+                    {"type": "pj", "nom": "Heros"},
                     {"type": "monstre", "nom": "Gobelin", "pv": 7, "ca": 15,
                      "attaque": 4, "degats": "1d6+2", "mod_degats": 2, "init_bonus": 2},
                     {"type": "monstre", "nom": "Orc", "pv": 11, "ca": 13,
@@ -243,6 +276,9 @@ class TestCascadeSuppressionCampagne(unittest.TestCase):
         cid_a = ra.json()["id"]
         ra = self.client.post("/api/campagne/ouvrir", json={"id": "casc-b", "titre": "B"}, headers=self.H)
         cid_b = ra.json()["id"]
+        # Zones dangereuses déclarées pour A et B (les combats y sont rattachés).
+        self._declarer_zone(cid_a)
+        self._declarer_zone(cid_b)
 
         combat_a1 = self._ouvrir_combat(cid_a, "ca1")
         combat_a2 = self._ouvrir_combat(cid_a, "ca2")

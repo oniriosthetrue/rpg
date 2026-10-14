@@ -19,6 +19,7 @@ Lancement :
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 import unittest
@@ -62,6 +63,38 @@ def _a_deja_reponse_outil(messages) -> bool:
 # ─── 1. Cerveau règles : délégation aux outils ───────────────────────────────
 
 class TestDlegationOutils(unittest.TestCase):
+    def setUp(self):
+        # `extract.PERSO_DIR` est figé à l'import (constante partagée) : selon
+        # l'ordre des modules de test, il peut pointer ailleurs et rendre la
+        # fiche « Elminster » introuvable (le router combat lit les PJ depuis
+        # ce dossier). On la fournit dans un dossier temporaire dédié.
+        import tempfile
+        from pathlib import Path
+
+        from dnd_perso import extract
+
+        self._tmp = tempfile.TemporaryDirectory()
+        self._orig_dir = extract.PERSO_DIR
+        extract.PERSO_DIR = Path(self._tmp.name)
+        (extract.PERSO_DIR / "Elminster.json").write_text(
+            json.dumps(
+                {
+                    "nom": "Elminster",
+                    "classe": "Magicien",
+                    "niveau": 1,
+                    "carac": {"Force": 8, "Dextérité": 14, "Constitution": 12},
+                },
+                ensure_ascii=False,
+            ),
+            encoding="utf-8",
+        )
+
+    def tearDown(self):
+        from dnd_perso import extract
+
+        extract.PERSO_DIR = self._orig_dir
+        self._tmp.cleanup()
+
     def _lancer(self, outil, args_1er_tour, prompt="…"):
         """Agent factice : 1er tour = appel d'outil avec `args`, puis texte."""
         appelee: list[tuple[str, Any]] = []
