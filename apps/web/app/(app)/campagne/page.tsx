@@ -133,20 +133,14 @@ export default function PageCampagne() {
       setErreur("");
       try {
         // Le backend réinitialise la partie ET renvoie l'amorce d'ouverture
-        // canonique (identique à celle envoyée à la création). On ne la construit
-        // plus ici : une campagne recommencée s'ouvre avec le même prompt qu'une
-        // campagne neuve.
+        // canonique (source unique, identique à celle de la création). On ne la
+        // construit plus ici : aucune duplication frontend.
         const j = await jdr.post<{ message?: string }>(
           `/campagne/${encodeURIComponent(cid)}/rejouer`,
         );
         await chargerEtat(cid);
         await chargerListe();
-        const message =
-          j.message ??
-          "Ouvre la campagne : raconte l'accroche en expliquant pourquoi le " +
-            "personnage est là et donne-lui une raison personnelle et concrète " +
-            "d'avancer dans la quête (un objectif immédiat, ce qu'il risque ou " +
-            "gagne, lié à son crochet personnel). Puis lance la partie.";
+        const message = j.message ?? "";
         window.location.href = `/chat?campagne=${encodeURIComponent(
           cid,
         )}&nouveau=1&message=${encodeURIComponent(message)}`;

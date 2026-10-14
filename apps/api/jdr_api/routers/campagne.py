@@ -121,6 +121,9 @@ def ouvrir(
     # Graines d'inspiration (variété) : 2 par dimension à l'ouverture, renvoyées au
     # client pour être injectées dans la consigne du MJ. Transitoires — NON persistées.
     etat["inspirations"] = variete.tirer_inspirations(nb=2)
+    # Amorce d'ouverture canonique (source unique backend) : le wizard l'envoie au
+    # « Commencer l'aventure », identique à celle renvoyée par /rejouer.
+    etat["message"] = _message_ouverture(c.mode)
     return enveloppe(etat)
 
 
