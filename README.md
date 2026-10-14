@@ -56,10 +56,16 @@ Le réseau à rejoindre est préfixé par le nom du projet compose de l'autre st
 ```bash
 cp .env.example .env          # renseigner URL/clés + DOCKER_NETWORK de la stack existante
 # MJ_MODEL = le nom exposé par litellm (GET /v1/models), pas l'id vLLM (ex. « IA »).
+# Définir WEB_AUTH_USERNAME et un WEB_AUTH_PASSWORD dédié avant le déploiement.
 docker compose up -d qdrant
 docker compose build api web
 docker compose up -d api web
 ```
+
+Le site et ses routes API demandent une authentification HTTP Basic. Si
+`WEB_AUTH_PASSWORD` est vide, `DND_API_KEY` sert de mot de passe de secours;
+préférer un mot de passe dédié dans `.env`. L'authentification est prévue derrière
+HTTPS et utilise un compte partagé.
 
 Vérification (les conteneurs `api`/`web` n'ont pas de port publié — on teste depuis
 l'intérieur) :

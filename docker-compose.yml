@@ -27,6 +27,9 @@ services:
       - API_INTERNAL_URL=http://api:8000
       # Clé injectée par Next dans l'en-tête X-API-Key des appels serveur → api.
       - DND_API_KEY=${DND_API_KEY}
+      # Préférer une clé dédiée; à défaut, l'auth HTTP Basic réutilise la clé API.
+      - WEB_AUTH_USERNAME=${WEB_AUTH_USERNAME:-mj}
+      - WEB_AUTH_PASSWORD=${WEB_AUTH_PASSWORD:-${DND_API_KEY}}
       - NEXT_PUBLIC_APP_HOST=rpg.minervia.fr
     depends_on:
       - api

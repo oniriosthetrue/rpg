@@ -4,15 +4,16 @@ import { enTetes, url } from "@/lib/api";
 // Requête JSON générique vers le backend. La clé X-API-Key est injectée ici
 // (côté serveur Next), jamais dans le navigateur. GET/POST/PATCH/DELETE.
 
-type Ctx = { params: { chemin: string[] } };
+type Ctx = { params: Promise<{ chemin: string[] }> };
 
 async function relais(req: NextRequest, method: string, ctx: Ctx) {
+  const { chemin } = await ctx.params;
   const q = req.nextUrl.search;
   const corps =
     method === "GET" || method === "DELETE"
       ? undefined
       : await req.text();
-  const reponse = await fetch(url(`/api/${ctx.params.chemin.join("/")}${q}`), {
+  const reponse = await fetch(url(`/api/${chemin.join("/")}${q}`), {
     method,
     headers: enTetes(),
     cache: "no-store",
