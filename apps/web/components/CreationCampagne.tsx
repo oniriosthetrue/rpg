@@ -153,15 +153,13 @@ export default function CreationCampagne({
       // partie dans une nouvelle conversation liée à la campagne. L'ouverture doit
       // expliquer POURQUOI le PJ est là et lui donner une RAISON PERSONNELLE
       // d'avancer (objectif concret tiré d'un crochet lie_a_pj) — pas un décor seul.
+      // Identique quel que soit le mode (guide ou surprise), et identique à
+      // l'amorce renvoyée par le backend sur /rejouer (source unique).
       const message =
-        mode === "surprise"
-          ? "Ouvre la campagne : raconte l'accroche en expliquant pourquoi le " +
-            "personnage est là et donne-lui une raison personnelle et concrète " +
-            "d'avancer dans la quête (un objectif immédiat, ce qu'il risque ou " +
-            "gagne, lié à son crochet personnel). Puis lance la partie."
-          : "Ouvre la campagne : explique pourquoi le personnage est là et " +
-            "donne-lui une raison personnelle et concrète d'avancer dans la quête " +
-            "(objectif immédiat lié à son crochet), puis lance la partie.";
+        "Ouvre la campagne : raconte l'accroche en expliquant pourquoi le " +
+        "personnage est là et donne-lui une raison personnelle et concrète " +
+        "d'avancer dans la quête (un objectif immédiat, ce qu'il risque ou " +
+        "gagne, lié à son crochet personnel). Puis lance la partie.";
       // L'écran de création lit ce payload (sessionStorage) puis pilote la
       // génération lui-même — on n'affiche pas le chat pendant la création.
       try {

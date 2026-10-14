@@ -38,25 +38,19 @@ _ID_RE = re.compile(r"[\w-]{1,80}", re.UNICODE)
 # Message d'ouverture canonique d'une campagne (relance d'une partie). C'est la
 # MÊME amorce envoyée à la création (wizard) et à chaque « Rejouer » : le backend
 # en est la source unique, pour qu'une partie recommencée s'ouvre exactement comme
-# une partie neuve (le frontend ne le construit plus lui-même). Dépend du `mode`.
-_MESSAGE_OUVERTURE = {
-    "surprise": (
-        "Ouvre la campagne : raconte l'accroche en expliquant pourquoi le "
-        "personnage est là et donne-lui une raison personnelle et concrète "
-        "d'avancer dans la quête (un objectif immédiat, ce qu'il risque ou "
-        "gagne, lié à son crochet personnel). Puis lance la partie."
-    ),
-    "guide": (
-        "Ouvre la campagne : explique pourquoi le personnage est là et "
-        "donne-lui une raison personnelle et concrète d'avancer dans la quête "
-        "(objectif immédiat lié à son crochet), puis lance la partie."
-    ),
-}
+# une partie neuve (le frontend ne le construit plus lui-même). Identique quel que
+# soit le `mode` (guide ou surprise) — l'ouverture raconte toujours l'accroche.
+_MESSAGE_OUVERTURE = (
+    "Ouvre la campagne : raconte l'accroche en expliquant pourquoi le "
+    "personnage est là et donne-lui une raison personnelle et concrète "
+    "d'avancer dans la quête (un objectif immédiat, ce qu'il risque ou "
+    "gagne, lié à son crochet personnel). Puis lance la partie."
+)
 
 
-def _message_ouverture(mode: str) -> str:
-    """Amorce d'ouverture d'une campagne selon son mode (défaut : surprendre)."""
-    return _MESSAGE_OUVERTURE.get(mode, _MESSAGE_OUVERTURE["surprise"])
+def _message_ouverture(mode: str = "") -> str:
+    """Amorce d'ouverture d'une campagne (identique pour tous les modes)."""
+    return _MESSAGE_OUVERTURE
 
 
 # ---------------------------------------------------------------------------
