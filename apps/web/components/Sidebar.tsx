@@ -25,6 +25,26 @@ export default function Sidebar() {
     router.refresh();
   }
 
+  async function supprimerCompte() {
+    const mdp = window.prompt(
+      "Supprimer DÉFINITIVEMENT ton compte et toutes tes données (fiches, campagnes, combats) ?\n" +
+        "Cette action est irréversible.\n\nTape ton mot de passe pour confirmer :",
+    );
+    if (mdp === null) return; // annulé
+    const res = await fetch("/api/auth/delete", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mot_de_passe: mdp }),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (json?.type === "supprime") {
+      router.replace("/connexion");
+      router.refresh();
+    } else {
+      window.alert(json?.erreur || "Échec de la suppression.");
+    }
+  }
+
   return (
     <>
       {/* Barre supérieure (mobile uniquement) */}
@@ -78,6 +98,13 @@ export default function Sidebar() {
           >
             <span>🚪</span>
             Déconnexion
+          </button>
+          <button
+            onClick={supprimerCompte}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-sang/80 hover:bg-sang/10 hover:text-sang w-full"
+          >
+            <span>🗑️</span>
+            Supprimer mon compte
           </button>
         </div>
       </aside>

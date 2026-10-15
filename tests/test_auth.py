@@ -123,6 +123,32 @@ class TestAuth(unittest.TestCase):
         r = self.client.post("/api/auth/login", json={"email": "reset@exemple.fr", "mot_de_passe": "noueaumotdepasse"})
         self.assertEqual(r.json()["type"], "connecte")
 
+    def test_suppression_compte(self):
+        self._inscrire("a-supprimer@exemple.fr")
+        session = self._connecter("a-supprimer@exemple.fr")
+        # Crée une fiche de données pour le compte, puis vérifie qu'elle disparaît.
+        from auth import store
+
+        compte = store.par_email("a-supprimer@exemple.fr")
+        dossier = Path(os.environ["DND_PERSO_DIR"]) / compte.id
+        dossier.mkdir(parents=True, exist_ok=True)
+        (dossier / "Heros.json").write_text("{}", encoding="utf-8")
+        self.assertTrue(dossier.exists())
+
+        # Mauvais mot de passe → refus, compte conservé.
+        r = self.client.post("/api/auth/delete", json={"mot_de_passe": "mauvais"}, headers={"X-Session": session})
+        self.assertIs(r.json()["ok"], False)
+        self.assertTrue(dossier.exists())
+
+        # Bon mot de passe → supprimé, données effacées.
+        r = self.client.post("/api/auth/delete", json={"mot_de_passe": "motdepasse1"}, headers={"X-Session": session})
+        self.assertEqual(r.json()["type"], "supprime")
+        self.assertFalse(dossier.exists())
+        self.assertIsNone(store.par_email("a-supprimer@exemple.fr"))
+        # La session ne donne plus accès aux routes protégées.
+        r = self.client.get("/api/personnages", headers={"X-Session": session})
+        self.assertEqual(r.status_code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()

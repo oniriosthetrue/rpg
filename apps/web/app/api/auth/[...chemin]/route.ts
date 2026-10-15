@@ -17,9 +17,14 @@ const cookieEfface = `${COOKIE_SESSION}=; Path=/; HttpOnly; SameSite=Lax; Max-Ag
 
 async function relais(req: NextRequest, chemin: string[]): Promise<NextResponse> {
   const corps = await req.text();
+  const jetonSession = req.cookies.get(COOKIE_SESSION)?.value;
   const reponse = await fetch(url(`/api/auth/${chemin.join("/")}`), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      // Certaines routes auth sont protégées (ex. /delete) : on relaie la session.
+      ...(jetonSession ? { "X-Session": jetonSession } : {}),
+    },
     body: corps,
     cache: "no-store",
   });
@@ -52,7 +57,7 @@ async function relais(req: NextRequest, chemin: string[]): Promise<NextResponse>
     avecCookie.headers.append("Set-Cookie", cookieSession(session));
     return avecCookie;
   }
-  if (action === "deconnecte") {
+  if (action === "deconnecte" || action === "supprime") {
     sortie.headers.append("Set-Cookie", cookieEfface);
   }
   return sortie;

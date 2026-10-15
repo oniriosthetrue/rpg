@@ -61,6 +61,18 @@ def _sous_dossier(base: Path) -> Path:
     return base / sous if sous else base
 
 
+def dossiers_utilisateur(user_id: str) -> "list[Path]":
+    """Dossiers de données rattachés à un compte (perso/campagne/combat).
+
+    Utilisé par la suppression de compte. Retourne uniquement des sous-dossiers
+    directs des bases ; vide si `user_id` est absent (jamais la racine partagée).
+    """
+    sous = (user_id or "").strip()
+    if not sous or "/" in sous or "\\" in sous or sous in (".", ".."):
+        return []
+    return [_PERSO_BASE / sous, _CAMPAGNE_BASE / sous, _COMBAT_BASE / sous]
+
+
 # Dossier des scénarios importables (fichiers Markdown à front-matter, lecture seule).
 SCENARIO_DIR = RACINE / "dnd" / "scenarios"
 

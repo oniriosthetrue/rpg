@@ -121,3 +121,28 @@ def reset(body: dict[str, Any] = Body(...)) -> dict[str, Any]:
 @router.get("/api/auth/me")
 def moi(compte: scope.Compte = Depends(scope.utilisateur_courant)) -> dict[str, Any]:
     return enveloppe({"ok": True, "type": "moi", "email": compte.email, "verifie": compte.verifie})
+
+
+@router.post("/api/auth/delete")
+def supprimer(
+    body: dict[str, Any] = Body(...),
+    compte: scope.Compte = Depends(scope.utilisateur_courant),
+) -> dict[str, Any]:
+    """Supprime définitivement le compte courant et toutes ses données.
+
+    Exige le mot de passe (confirmation). Irréversible : la ligne SQLite et les
+    dossiers perso/campagne/combat du compte sont effacés. Le frontend (Next)
+    efface le cookie de session sur le type `supprime`.
+    """
+    import shutil
+
+    from dnd_perso import extract
+
+    mdp = str(body.get("mot_de_passe", ""))
+    if not mdp:
+        return _erreur("Le mot de passe est requis pour confirmer la suppression.")
+    if not store.supprimer_utilisateur(compte.id, mdp):
+        return _erreur("Mot de passe incorrect.")
+    for dossier in extract.dossiers_utilisateur(compte.id):
+        shutil.rmtree(dossier, ignore_errors=True)
+    return enveloppe({"ok": True, "type": "supprime", "email": compte.email})

@@ -163,5 +163,22 @@ def reinitialiser_mdp(token: str, nouveau_mdp: str) -> Utilisateur | None:
     return Utilisateur(id=ligne["id"], email=ligne["email"], verifie=bool(ligne["verifie"]))
 
 
+def supprimer_utilisateur(uid: str, mot_de_passe: str) -> bool:
+    """Supprime définitivement le compte si le mot de passe est correct.
+
+    Retourne True si le compte a été supprimé, False sinon (compte inexistant
+    ou mot de passe erroné). Ne supprime PAS les données de jeu : c'est à
+    l'appelant de le faire (via `extract.dossiers_utilisateur`).
+    """
+    with _connexion() as conn:
+        ligne = conn.execute(
+            "SELECT id, hash_mdp FROM utilisateurs WHERE id = ?", (uid,)
+        ).fetchone()
+        if not ligne or not security.verifier_mot_de_passe(mot_de_passe, ligne["hash_mdp"]):
+            return False
+        conn.execute("DELETE FROM utilisateurs WHERE id = ?", (uid,))
+    return True
+
+
 def _vers_utilisateur(ligne: sqlite3.Row) -> Utilisateur:
     return Utilisateur(id=ligne["id"], email=ligne["email"], verifie=bool(ligne["verifie"]))
