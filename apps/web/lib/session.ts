@@ -21,7 +21,7 @@ export function identifiantSession(jeton: string | undefined | null): string | n
   const secret = process.env.AUTH_SECRET?.trim();
   if (!jeton || !secret || !jeton.includes(".")) return null;
 
-  const [corps, , sig] = jeton.split(".");
+  const [corps, sig] = jeton.split(".");
   if (!corps || !sig) return null;
 
   const attendu = createHmac("sha256", secret).update(corps, "utf8").digest("base64url");

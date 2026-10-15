@@ -64,3 +64,19 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const { chemin } = await ctx.params;
   return relais(req, chemin);
 }
+
+// GET /api/auth/me — renvoie le compte courant (relais avec la session).
+export async function GET(req: NextRequest, ctx: Ctx) {
+  const { chemin } = await ctx.params;
+  const session = req.cookies.get(COOKIE_SESSION)?.value;
+  const reponse = await fetch(url(`/api/auth/${chemin.join("/")}`), {
+    method: "GET",
+    headers: session ? { "X-Session": session } : {},
+    cache: "no-store",
+  });
+  const texte = await reponse.text();
+  return new NextResponse(texte, {
+    status: reponse.status,
+    headers: { "Content-Type": "application/json", "Cache-Control": "no-store" },
+  });
+}
