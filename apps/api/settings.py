@@ -42,5 +42,23 @@ class Settings:
     # Clé interne (X-API-Key) — identique à celle que Traefik/Next injecte.
     dnd_api_key: str = _env("DND_API_KEY", "")
 
+    # ─── Authentification par compte (email + mot de passe) ────────────────
+    # Secret de signature des jetons (sessions + liens email). OBLIGATOIRE en prod.
+    auth_secret: str = _env("AUTH_SECRET", "")
+    # Durée de vie d'une session (cookie), en secondes. Défaut : 30 jours.
+    session_duree_s: int = int(_env("SESSION_DUREE_S", "2592000") or "2592000")
+    # Durée de validité des liens de vérification / réinitialisation (1 h).
+    lien_duree_s: int = int(_env("LIEN_DUREE_S", "3600") or "3600")
+    # URL publique de l'app (pour les liens des emails).
+    base_url: str = _env("BASE_URL", "https://rpg.minervia.fr").rstrip("/")
+
+    # SMTP (optionnel). Sans `SMTP_HOST`, l'envoi passe en mode console (loggé).
+    smtp_host: str = _env("SMTP_HOST", "")
+    smtp_port: int = int(_env("SMTP_PORT", "587") or "587")
+    smtp_user: str = _env("SMTP_USER", "")
+    smtp_pass: str = _env("SMTP_PASS", "")
+    smtp_from: str = _env("SMTP_FROM", "")
+    smtp_starttls: bool = _env("SMTP_STARTTLS", "1") not in ("0", "false", "no", "")
+
 
 settings = Settings()

@@ -21,19 +21,10 @@ def enveloppe(d: dict[str, Any]) -> dict[str, Any]:
 
 
 def autorise(x_api_key: str | None) -> dict[str, Any] | None:
-    """Vérifie l'en-tête `X-API-Key` quand `DND_API_KEY` est configuré.
-
-    Renvoie None si l'accès est libre ou autorisé, sinon une enveloppe
-    `type: "erreur"` que le router doit renvoyer telle quelle.
+    """Contrôle d'accès déprécié : l'authentification passe désormais par la
+    session par compte (`scope.utilisateur_courant`, en-tête `X-Session`),
+    appliquée au niveau des routers dans `main.py`. Cette fonction ne bloque
+    donc plus rien et n'est conservée que pour ne pas casser d'éventuels
+    appels résiduels ; elle retournera `None` (accès libre) dans tous les cas.
     """
-    attendue = os.environ.get("DND_API_KEY", "").strip()
-    if not attendue:
-        return None
-    if (x_api_key or "").strip() == attendue:
-        return None
-    return {
-        "ok": False,
-        "v": V,
-        "type": "erreur",
-        "erreur": "Accès refusné : clé d'API manquante ou invalide.",
-    }
+    return None

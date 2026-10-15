@@ -12,6 +12,7 @@ Le corpus (`dnd/srd-5.2.1/`, `dnd/classes/`) n'est JAMAIS modifié.
 
 from __future__ import annotations
 
+import contextvars
 import json
 import os
 import re
@@ -29,17 +30,52 @@ RACINE = Path(__file__).resolve().parent.parent
 CORPUS = Path(os.environ.get("DND_CORPUS_DIR") or (RACINE / "corpus" / "srd-5.2.1"))
 CLASSES_DIR = CORPUS / "classes"
 DATA_DIR = Path(__file__).resolve().parent / "data"
-# Dossier des fiches personnage : configurable via l'env DND_PERSO_DIR
-# (le conteneur jdr-api le monte en rw sur /app/data/perso) ; défaut conservé.
-PERSO_DIR = Path(os.environ.get("DND_PERSO_DIR") or (Path(__file__).resolve().parent / "perso"))
-# Dossier des rencontres de combat (état de combat persistant) : configurable via
-# l'env DND_COMBAT_DIR (le conteneur jdr-api le monte en rw sur /app/data/combat).
-COMBAT_DIR = Path(os.environ.get("DND_COMBAT_DIR") or (RACINE / "data-combat"))
-# Dossier des campagnes / scénarios suivis (état canonique persistant) : configurable
-# via l'env DND_CAMPAGNE_DIR (le conteneur jdr-api le monte en rw sur /app/data/campagne).
-CAMPAGNE_DIR = Path(os.environ.get("DND_CAMPAGNE_DIR") or (RACINE / "data-campagne"))
+# Dossiers de données « par utilisateur ». Chaque base est configurable via l'env
+# (le conteneur jdr-api les monte en rw) ; on y ajoute un SOUS-DOSSIER d'utilisateur
+# résolu à la lecture (voir `_USER_SUBDIR` + `__getattr__` plus bas), ce qui isole
+# les fiches/campagnes/combats de chaque compte sans toucher aux sites d'appel.
+_PERSO_BASE = Path(os.environ.get("DND_PERSO_DIR") or (Path(__file__).resolve().parent / "perso"))
+_COMBAT_BASE = Path(os.environ.get("DND_COMBAT_DIR") or (RACINE / "data-combat"))
+_CAMPAGNE_BASE = Path(os.environ.get("DND_CAMPAGNE_DIR") or (RACINE / "data-campagne"))
+
+# Sous-dossier d'utilisateur courant (identifiant de compte). Vide = racine
+# (comportement historique, utilisé par les tests et le moteur hors requête HTTP).
+# Fixé par l'API à chaque requête via `auth.scope.utilisateur_courant`.
+_USER_SUBDIR: "contextvars.ContextVar[str]" = contextvars.ContextVar(
+    "dnd_user_subdir", default=""
+)
+
+
+def definir_utilisateur(user_id: str | None) -> contextvars.Token[str]:
+    """Fixe le sous-dossier d'utilisateur pour la tâche courante. Retourne le
+    token à passer à `restaurer_utilisateur` en fin de requête."""
+    return _USER_SUBDIR.set((user_id or "").strip())
+
+
+def restaurer_utilisateur(token: "contextvars.Token[str]") -> None:
+    _USER_SUBDIR.reset(token)
+
+
+def _sous_dossier(base: Path) -> Path:
+    sous = _USER_SUBDIR.get()
+    return base / sous if sous else base
+
+
 # Dossier des scénarios importables (fichiers Markdown à front-matter, lecture seule).
 SCENARIO_DIR = RACINE / "dnd" / "scenarios"
+
+
+def __getattr__(name: str) -> Path:
+    """Résout `PERSO_DIR` / `COMBAT_DIR` / `CAMPAGNE_DIR` à la volée selon
+    l'utilisateur courant (`_USER_SUBDIR`). Les tests qui affectent directement
+    `extract.COMBAT_DIR = tmp` créent un attribut réel qui masque ce résolveur."""
+    if name == "PERSO_DIR":
+        return _sous_dossier(_PERSO_BASE)
+    if name == "COMBAT_DIR":
+        return _sous_dossier(_COMBAT_BASE)
+    if name == "CAMPAGNE_DIR":
+        return _sous_dossier(_CAMPAGNE_BASE)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 _FICHE_RE = re.compile(
     r"<<<FICHE>>>\n(?P<keys>.*?)<<<CONTENU>>>\n(?P<corps>.*?)<<<FIN>>>",

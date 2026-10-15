@@ -23,6 +23,20 @@ sys.path.insert(0, str(RACINE / "apps" / "api"))
 sys.path.insert(0, str(RACINE / "packages"))
 
 
+def _session_test(suffixe: str = "defaut") -> dict[str, str]:
+    """Crée un compte de test et renvoie les en-têtes d'une session valide.
+
+    Les routes protégées exigent désormais une session (`X-Session`) ; on
+    fabrique un jeton signé via le module d'authentification lui-même.
+    """
+    from auth import scope, store
+
+    store.initialiser()
+    email = f"test-{suffixe}@exemple.fr"
+    utilisateur = store.par_email(email) or store.creer_utilisateur(email, "motdepasse1", verifie=True)
+    return {"X-Session": scope.emettre_session(utilisateur.id)}
+
+
 class TestListerCombat(unittest.TestCase):
     """`GET /api/combat` liste les rencontres persistées (resume)."""
 
@@ -43,7 +57,7 @@ class TestListerCombat(unittest.TestCase):
         extract.COMBAT_DIR = cls.dossier
 
         cls.client = TestClient(app)
-        cls.H = {"X-API-Key": "test-key"}
+        cls.H = _session_test("combat-list")
 
     @classmethod
     def tearDownClass(cls):
@@ -67,10 +81,9 @@ class TestListerCombat(unittest.TestCase):
         )
 
     def test_liste_vide_puis_peuplee(self):
-        # Auth refusée sans clé.
+        # Auth refusée sans session.
         r = self.client.get("/api/combat")
-        self.assertEqual(r.status_code, 200)
-        self.assertIs(r.json()["ok"], False)
+        self.assertEqual(r.status_code, 401)
 
         self._ecrire("aaa", titre="Embuscade", ordre=[{"cle": "mon:0"}, {"cle": "pj:a"}])
         self._ecrire("bbb", titre="Siège", active=False, tour=4, ordre=[{"cle": "pj:a"}])
@@ -132,7 +145,7 @@ class TestEcrireCampagne(unittest.TestCase):
         cls._campagne_dir_origine = extract.CAMPAGNE_DIR
         extract.CAMPAGNE_DIR = cls.dossier
         cls.client = TestClient(app)
-        cls.H = {"X-API-Key": "test-key"}
+        cls.H = _session_test("campagne-ecrire")
 
     @classmethod
     def tearDownClass(cls):
@@ -181,7 +194,7 @@ class TestEcrireCampagne(unittest.TestCase):
 
     def test_ecrire_sans_cle_refuse(self):
         r = self.client.post("/api/campagne/abc/ecrire", json={"titre": "X"})
-        self.assertFalse(r.json()["ok"])
+        self.assertEqual(r.status_code, 401)
 
     def test_ecrire_campagne_introuvable(self):
         r = self.client.post("/api/campagne/nexiste-pas/ecrire", json={"titre": "X"}, headers=self.H)
@@ -223,7 +236,7 @@ class TestCascadeSuppressionCampagne(unittest.TestCase):
         extract.COMBAT_DIR = cls.dossier_combat
         extract.PERSO_DIR = cls.dossier_perso
         cls.client = TestClient(app)
-        cls.H = {"X-API-Key": "test-key"}
+        cls.H = _session_test("cascade")
 
     @classmethod
     def tearDownClass(cls):
@@ -301,7 +314,7 @@ class TestCascadeSuppressionCampagne(unittest.TestCase):
 
     def test_supprimer_sans_cle_refuse(self):
         r = self.client.delete("/api/campagne/abc")
-        self.assertFalse(r.json()["ok"])
+        self.assertEqual(r.status_code, 401)
 
 
 if __name__ == "__main__":
