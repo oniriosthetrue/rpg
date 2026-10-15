@@ -1,54 +1,47 @@
-import { createHash, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { COOKIE_SESSION, identifiantSession } from "@/lib/session";
 
-function empreinte(value: string) {
-  return createHash("sha256").update(value, "utf8").digest();
+// Middleware d'accès. L'authentification passe par un cookie de session signé
+// (`mj_session`, émis par `/api/auth/login`). On vérifie la signature du
+// cookie localement (sans appeler le backend) pour décider d'autoriser ou non.
+
+// Chemins accessibles sans session (auth + health).
+function estPublic(pathname: string): boolean {
+  if (pathname === "/connexion" || pathname === "/inscription") return true;
+  if (pathname === "/reinitialiser" || pathname === "/verifier") return true;
+  if (pathname === "/api/auth" || pathname.startsWith("/api/auth/")) return true;
+  return false;
 }
 
-function correspond(value: string, expected: string) {
-  return timingSafeEqual(empreinte(value), empreinte(expected));
-}
-
-function identifiantsValides(header: string | null, username: string, password: string) {
-  if (!header?.startsWith("Basic ")) return false;
-
-  const encoded = header.slice(6);
-  if (!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)) return false;
-
-  const decoded = Buffer.from(encoded, "base64");
-  if (decoded.toString("base64") !== encoded) return false;
-
-  const credentials = decoded.toString("utf8");
-  const separator = credentials.indexOf(":");
-  if (separator < 1) return false;
-
-  const usernameMatches = correspond(credentials.slice(0, separator), username);
-  const passwordMatches = correspond(credentials.slice(separator + 1), password);
-  return usernameMatches && passwordMatches;
+function pageConnexion(request: NextRequest): NextResponse {
+  // Pour les pages : redirection ; pour les API : 401 JSON.
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json(
+      { ok: false, v: 1, type: "erreur", erreur: "Authentification requise." },
+      { status: 401, headers: { "Cache-Control": "no-store" } },
+    );
+  }
+  const url = new URL("/connexion", request.url);
+  const retour = request.nextUrl.pathname + request.nextUrl.search;
+  if (retour !== "/") url.searchParams.set("retour", retour);
+  const reponse = NextResponse.redirect(url);
+  reponse.headers.set("Cache-Control", "no-store");
+  return reponse;
 }
 
 export function proxy(request: NextRequest) {
-  const username = process.env.WEB_AUTH_USERNAME?.trim();
-  const password = process.env.WEB_AUTH_PASSWORD;
+  const { pathname } = request.nextUrl;
 
-  if (!username || !password) {
-    return new NextResponse("Authentification non configurée.", {
-      status: 503,
-      headers: { "Cache-Control": "no-store" },
-    });
-  }
-
-  if (identifiantsValides(request.headers.get("authorization"), username, password)) {
+  if (estPublic(pathname)) {
     return NextResponse.next();
   }
 
-  return new NextResponse("Authentification requise.", {
-    status: 401,
-    headers: {
-      "Cache-Control": "no-store",
-      "WWW-Authenticate": 'Basic realm="MJ D&D", charset="UTF-8"',
-    },
-  });
+  const uid = identifiantSession(request.cookies.get(COOKIE_SESSION)?.value);
+  if (!uid) {
+    return pageConnexion(request);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

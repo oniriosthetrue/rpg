@@ -3,7 +3,7 @@
 // Barre de navigation latérale (repliable sur mobile). Liens vers les 4 domaines.
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 const LIENS = [
@@ -16,7 +16,14 @@ const LIENS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [ouvert, setOuvert] = useState(false);
+
+  async function deconnexion() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.replace("/connexion");
+    router.refresh();
+  }
 
   return (
     <>
@@ -64,6 +71,15 @@ export default function Sidebar() {
             );
           })}
         </nav>
+        <div className="p-2 border-t border-white/10">
+          <button
+            onClick={deconnexion}
+            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-parchemin/70 hover:bg-white/5 hover:text-parchemin w-full"
+          >
+            <span>🚪</span>
+            Déconnexion
+          </button>
+        </div>
       </aside>
     </>
   );

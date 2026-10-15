@@ -27,9 +27,8 @@ services:
       - API_INTERNAL_URL=http://api:8000
       # Clé injectée par Next dans l'en-tête X-API-Key des appels serveur → api.
       - DND_API_KEY=${DND_API_KEY}
-      # Préférer une clé dédiée; à défaut, l'auth HTTP Basic réutilise la clé API.
-      - WEB_AUTH_USERNAME=${WEB_AUTH_USERNAME:-mj}
-      - WEB_AUTH_PASSWORD=${WEB_AUTH_PASSWORD:-${DND_API_KEY}}
+      # Secret de signature des sessions — DOIT être identique à celui de l'API.
+      - AUTH_SECRET=${AUTH_SECRET}
       - NEXT_PUBLIC_APP_HOST=rpg.minervia.fr
     depends_on:
       - api
@@ -71,10 +70,24 @@ services:
       - QDRANT_URL=http://qdrant:6333
       - QDRANT_COLLECTION=${QDRANT_COLLECTION}
       - RAG_TOP_K=${RAG_TOP_K}
+      # Authentification par compte.
+      - AUTH_SECRET=${AUTH_SECRET}
+      - DND_AUTH_DB=/app/data/auth/auth.db
+      - SESSION_DUREE_S=${SESSION_DUREE_S:-2592000}
+      - LIEN_DUREE_S=${LIEN_DUREE_S:-3600}
+      - BASE_URL=${BASE_URL:-https://rpg.minervia.fr}
+      # SMTP (optionnel). Sans SMTP_HOST, les emails passent en mode console (loggés).
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - SMTP_STARTTLS=${SMTP_STARTTLS:-1}
     volumes:
       - ./data-perso:/app/data/perso:rw
       - ./data-combat:/app/data/combat:rw
       - ./data-campagne:/app/data/campagne:rw
+      - ./data-auth:/app/data/auth:rw
     depends_on:
       qdrant:
         condition: service_started

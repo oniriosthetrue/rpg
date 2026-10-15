@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { enTetes, url } from "@/lib/api";
+import { enTetes, sessionDe, url } from "@/lib/api";
 
 // Relaye la requête de chat vers le backend et renvoie le flux SSE tel quel.
 // Le navigateur ne voit jamais la clé X-API-Key (injectée ici côté serveur).
@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   // devient vrai côté FastAPI pour interrompre le run et libérer le GPU.
   const reponse = await fetch(url("/api/chat"), {
     method: "POST",
-    headers: enTetes(),
+    headers: enTetes(sessionDe(req)),
     body: JSON.stringify(corps),
     signal: req.signal,
   });
