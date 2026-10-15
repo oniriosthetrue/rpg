@@ -16,14 +16,18 @@ out/
 .turbo/
 *.tsbuildinfo
 
-# Données d'exécution (état de jeu — hors repo, monté en volume)
-data-perso/*.json
-data-perso/*.md
-data-combat/*.json
-data-campagne/*.json
+# Données d'exécution (état de jeu — hors repo, monté en volume).
+# Depuis l'auth, chaque compte a son sous-dossier data-<type>/<user_id>/ :
+# on ignore tout le contenu, en conservant uniquement les .gitkeep de la racine.
+data-perso/**
+data-combat/**
+data-campagne/**
 !data-perso/.gitkeep
 !data-combat/.gitkeep
 !data-campagne/.gitkeep
+
+# Base d'authentification (comptes, hors repo — monté en volume).
+data-auth/
 
 # Qdrant local
 .qdrant/
