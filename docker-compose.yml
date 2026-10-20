@@ -13,7 +13,7 @@
 #   docker compose build api web && docker compose up -d
 # =============================================================================
 
-name: mj-dnd
+name: rpg
 
 services:
   # ─── Frontend Next.js — servi sur rpg.minervia.fr ────────────────────────

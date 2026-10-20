@@ -16,7 +16,7 @@ from urllib.parse import quote
 
 RACINE = Path(__file__).resolve().parent.parent
 DOSSIER_PERSO = RACINE / "data-perso"
-PREFIXE_ARCHIVE = "mj-dnd-"
+PREFIXE_ARCHIVE = "rpg-"
 
 _CREER_SNAPSHOT = """
 import json

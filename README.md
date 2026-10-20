@@ -24,7 +24,7 @@ d'un outil qui renvoie du JSON. Tout ce qui est factuel vient du RAG, avec citat
 ## Structure
 
 ```
-mj-dnd/
+rpg/
 ├─ apps/
 │  ├─ web/          # Next.js — chat streaming + panneaux fiche/combat/campagne
 │  └─ api/          # FastAPI + Pydantic-AI — agent, tools, RAG, contrat JSON v1
@@ -108,7 +108,7 @@ Pour une exécution quotidienne à 03:00, ajouter cette ligne au crontab de
 l'utilisateur propriétaire des conteneurs Docker :
 
 ```cron
-0 3 * * * /usr/bin/python3 /home/linus/mj-dnd/scripts/backup.py --destination /home/linus/backups/mj-dnd --retention-days 14 >> /home/linus/backups/mj-dnd/backup.log 2>&1
+0 3 * * * /usr/bin/python3 /home/linus/rpg/scripts/backup.py --destination /home/linus/backups/mj-dnd --retention-days 14 >> /home/linus/backups/mj-dnd/backup.log 2>&1
 ```
 
 Adapter les chemins si le dépôt ou le répertoire d'archives se trouvent
