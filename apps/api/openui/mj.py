@@ -72,6 +72,7 @@ _ALIAS_HISTORIQUE = {
 ETAPES = [
     "classe",
     "espece",
+    "genre",
     "historique",
     "competences",
     "langues",
@@ -170,6 +171,7 @@ _RETOUR = (
 _QUESTIONS = {
     "classe": "Commençons par la classe : qu'aimeriez-vous jouer ?",
     "espece": "Quelle espèce choisissez-vous ?",
+    "genre": "Votre personnage est-il un homme ou une femme ?",
     "historique": "Quel antécédent (historique) a votre personnage ?",
     "competences": "Quelles compétences choisissez-vous ?",
     "langues": "Quelles langues votre personnage connaît-il ?",
@@ -430,6 +432,13 @@ def _remplir(session: dict[str, Any], r: str) -> list[str]:
         if nom:
             etat["espece"] = nom
 
+    # --- genre (homme / femme) ---
+    elif etape == "genre":
+        if re.search(r"\bfemme\b|\bféminin\b|\bf\b", nr):
+            etat["genre"] = "Femme"
+        elif re.search(r"\bhomme\b|\bmasculin\b|\bm\b", nr):
+            etat["genre"] = "Homme"
+
     # --- historique ---
     elif etape == "historique":
         nom = _trouver(r, list(donnees["historiques"]))
@@ -565,6 +574,9 @@ def _remplir_etape_hasard(session: dict[str, Any], etape: str) -> None:
     elif etape == "espece":
         if "espece" not in etat:
             etat["espece"] = rng.choice(list(donnees["especes"]))
+    elif etape == "genre":
+        if "genre" not in etat:
+            etat["genre"] = rng.choice(["Homme", "Femme"])
     elif etape == "historique":
         if "historique" not in etat:
             etat["historique"] = rng.choice(list(donnees["historiques"]))
@@ -792,6 +804,8 @@ def _options(etape: str, etat: dict[str, Any]) -> list[str]:
         return sorted(donnees["classes"])
     if etape == "espece":
         return sorted(donnees["especes"])
+    if etape == "genre":
+        return ["Homme", "Femme"]
     if etape == "historique":
         # Enrichit chaque historique de ses bénéfices SRD (don, compétences,
         # outil) pour que le MJ puisse les annoncer au joueur.
@@ -975,6 +989,7 @@ def _vers_personnage(etat: dict[str, Any]) -> models.Personnage:
     return models.Personnage(
         nom=etat.get("nom", ""),
         espece=etat.get("espece", ""),
+        genre=etat.get("genre", ""),
         classe=etat.get("classe", ""),
         historique=etat.get("historique", ""),
         alignement=etat.get("alignement", "Neutre"),

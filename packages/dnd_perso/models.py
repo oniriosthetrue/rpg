@@ -150,6 +150,9 @@ class Personnage:
 
     nom: str = ""
     espece: str = ""
+    # Genre du personnage (« Homme » / « Femme ») : choisi par le joueur, le MJ
+    # ne le déduit pas de l'espèce ou du nom.
+    genre: str = ""
     classe: str = ""
     historique: str = ""
     alignement: str = "Neutre"
@@ -256,6 +259,7 @@ class Personnage:
         d: dict[str, Any] = {
             "nom": self.nom,
             "espece": self.espece,
+            "genre": self.genre,
             "classe": self.classe,
             "historique": self.historique,
             "alignement": self.alignement,
@@ -309,6 +313,7 @@ class Personnage:
         return cls(
             nom=str(d.get("nom", "sans_nom")),
             espece=str(d.get("espece", "")),
+            genre=str(d.get("genre", "")),
             classe=str(d.get("classe", "")),
             historique=str(d.get("historique", "")),
             alignement=str(d.get("alignement", "Neutre")),

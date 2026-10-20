@@ -10,6 +10,7 @@ import { jdr, ErreurJdr } from "@/lib/jdr";
 type Personnage = {
   nom: string;
   espece: string;
+  genre?: string;
   classe: string;
   historique: string;
   alignement: string;
@@ -112,7 +113,9 @@ export default function FichePerso({ nom }: { nom: string }) {
       <div>
         <div className="text-2xl font-bold text-or">{p.nom}</div>
         <div className="text-parchemin/60">
-          {p.espece} · {p.classe} niv. {p.niveau} · {p.alignement}
+          {[p.espece, p.genre, `${p.classe} niv. ${p.niveau}`, p.alignement]
+            .filter(Boolean)
+            .join(" · ")}
         </div>
       </div>
 

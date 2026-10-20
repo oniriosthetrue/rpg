@@ -34,6 +34,7 @@ def en_markdown(p: models.Personnage) -> str:
     lignes: list[str] = []
     lignes += [
         f"- Espèce : {p.espece}",
+        *([f"- Genre : {p.genre}"] if p.genre else []),
         f"- Classe : {p.classe}",
         f"- Historique : {p.historique}",
         f"- Alignement : {p.alignement}",

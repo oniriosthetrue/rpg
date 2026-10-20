@@ -198,7 +198,7 @@ _PAGE = """<!doctype html>
 
     // Identité
     h += '<div class="id"><div class="id-nom">' + esc(p.nom) + '</div>' +
-         '<div class="id-sub">' + esc([p.espece, p.classe, p.historique].filter(Boolean).join(' · ')) +
+         '<div class="id-sub">' + esc([p.espece, p.genre, p.classe, p.historique].filter(Boolean).join(' · ')) +
          (p.alignement ? ' · ' + esc(p.alignement) : '') + '</div></div>';
 
     // Statistiques clés
