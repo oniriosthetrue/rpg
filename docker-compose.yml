@@ -24,7 +24,11 @@ services:
     container_name: mj-web
     environment:
       # Base de l'API, côté SERVEUR Next (route handlers) — jamais dans le navigateur.
-      - API_INTERNAL_URL=http://api:8000
+      # ⚠️ On cible le NOM de conteneur unique `mj-api` et non l'alias `api` :
+      # le réseau externe partagé `qwen_38_vnimanieai_mynetwork` contient AUSSI
+      # `news-api` enregistré sous l'alias `api`. Docker fait du round-robin sur
+      # `api` → ~1 log/2 tombe sur news-api (champ `password`) → 422 aléatoire.
+      - API_INTERNAL_URL=http://mj-api:8000
       # Clé injectée par Next dans l'en-tête X-API-Key des appels serveur → api.
       - DND_API_KEY=${DND_API_KEY}
       # Secret de signature des sessions — DOIT être identique à celui de l'API.
