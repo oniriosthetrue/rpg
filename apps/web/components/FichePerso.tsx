@@ -87,20 +87,24 @@ type Infos = { sorts?: Record<string, string>; competences?: Record<string, stri
 let INFOS_CACHE: Infos | null = null;
 let INFOS_PROMESSE: Promise<Infos> | null = null;
 function chargerInfos(): Promise<Infos> {
-  if (INFOS_CACHE) return Promise.resolve(INFOS_CACHE);
+  const deja = INFOS_CACHE;
+  if (deja) return Promise.resolve(deja);
   if (!INFOS_PROMESSE) {
     INFOS_PROMESSE = fetch("/api/jdr/infos", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => {
-        INFOS_CACHE = d && typeof d === "object" ? d : {};
-        return INFOS_CACHE;
+        const data: Infos = d && typeof d === "object" ? d : {};
+        INFOS_CACHE = data;
+        return data;
       })
       .catch(() => {
-        INFOS_CACHE = { sorts: {}, competences: {} };
-        return INFOS_CACHE;
+        const data: Infos = { sorts: {}, competences: {} };
+        INFOS_CACHE = data;
+        return data;
       });
   }
-  return INFOS_PROMESSE;
+  const p = INFOS_PROMESSE;
+  return p;
 }
 
 export default function FichePerso({ nom }: { nom: string }) {
