@@ -58,12 +58,20 @@ function Bulle({
   return (
     <span
       className={`relative cursor-help ${className}`}
-      onMouseEnter={(e) => montrer(e.currentTarget)}
-      onMouseLeave={() => setPos(null)}
-      onClick={(e) => {
-        e.stopPropagation();
-        if (pos) setPos(null);
-        else montrer(e.currentTarget);
+      // Souris : survol. Tactile : tap (un tap émettait mouseenter PUIS click,
+      // ce qui masquait aussitôt l'infobulle — d'où les Pointer Events).
+      onPointerEnter={(e) => {
+        if (e.pointerType === "mouse") montrer(e.currentTarget);
+      }}
+      onPointerLeave={(e) => {
+        if (e.pointerType === "mouse") setPos(null);
+      }}
+      onPointerDown={(e) => {
+        if (e.pointerType !== "mouse") {
+          e.stopPropagation();
+          if (pos) setPos(null);
+          else montrer(e.currentTarget);
+        }
       }}
     >
       {children}
