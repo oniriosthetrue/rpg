@@ -79,8 +79,8 @@ ETAPES = [
     "caracteristiques",
     "alignement",
     "equipement",
-    "nom",
     "sorts",
+    "nom",
     "finalisation",
 ]
 

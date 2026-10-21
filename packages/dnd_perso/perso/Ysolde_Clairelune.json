@@ -1,0 +1,107 @@
+{
+  "nom": "Ysolde Clairelune",
+  "espece": "Elfe",
+  "genre": "Femme",
+  "classe": "Clerc",
+  "historique": "Acolyte",
+  "alignement": "Loyal mauvais",
+  "niveau": 1,
+  "xp": 0,
+  "carac": {
+    "Force": 13,
+    "Dextérité": 12,
+    "Constitution": 10,
+    "Intelligence": 8,
+    "Sagesse": 15,
+    "Charisme": 14
+  },
+  "mods": {
+    "Force": 1,
+    "Dextérité": 1,
+    "Constitution": 0,
+    "Intelligence": -1,
+    "Sagesse": 2,
+    "Charisme": 2
+  },
+  "competences": [
+    {
+      "nom": "Persuasion",
+      "maitrisee": true
+    },
+    {
+      "nom": "Religion",
+      "maitrisee": true
+    },
+    {
+      "nom": "Intuition",
+      "maitrisee": true
+    }
+  ],
+  "langues": [
+    "Commun",
+    "Nain"
+  ],
+  "equipement": [
+    "chemise de mailles",
+    "bouclier",
+    "masse d'armes",
+    "symbole sacré",
+    "paquetage d'ecclésiastique",
+    "7 po",
+    "matériel de calligraphe",
+    "livre (de prières)",
+    "parchemin (10 feuilles)",
+    "robe",
+    "8 po",
+    "Flèche ancestrale de facture elfique"
+  ],
+  "sorts": [
+    "Thaumaturgie",
+    "Flamme sacrée",
+    "Assistance",
+    "Imprécation",
+    "Bénédiction",
+    "Détection du poison et des maladies",
+    "Rayon traçant"
+  ],
+  "bonus_maitrise": 2,
+  "pv": 8,
+  "initiative": 1,
+  "ca": 16,
+  "jets": {
+    "bonus_maitrise": 2,
+    "competences": {
+      "Acrobaties": 1,
+      "Arcanes": -1,
+      "Athlétisme": 1,
+      "Discrétion": 1,
+      "Dressage": 2,
+      "Escamotage": 1,
+      "Équitation": 1,
+      "Histoire": -1,
+      "Intimidation": 2,
+      "Intuition": 4,
+      "Investigation": -1,
+      "Médecine": 2,
+      "Nature": -1,
+      "Perception": 2,
+      "Persuasion": 4,
+      "Religion": 1,
+      "Survie": 2,
+      "Tromperie": 2
+    },
+    "sauvegardes": {
+      "Force": 1,
+      "Dextérité": 1,
+      "Constitution": 0,
+      "Intelligence": -1,
+      "Sagesse": 4,
+      "Charisme": 4
+    },
+    "carac_incantation": "Sagesse",
+    "attaque_sort": 4,
+    "dd_sort": 12
+  },
+  "don": "Initié à la magie (Clerc)",
+  "outils": "matériel de calligraphe"
+}

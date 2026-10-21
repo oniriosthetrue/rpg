@@ -1,0 +1,104 @@
+{
+  "nom": "Babette Malice",
+  "espece": "Gnome",
+  "genre": "Homme",
+  "classe": "Guerrier",
+  "historique": "Sage",
+  "alignement": "Neutre mauvais",
+  "niveau": 1,
+  "xp": 0,
+  "carac": {
+    "Force": 15,
+    "Dextérité": 14,
+    "Constitution": 13,
+    "Intelligence": 12,
+    "Sagesse": 10,
+    "Charisme": 8
+  },
+  "mods": {
+    "Force": 2,
+    "Dextérité": 2,
+    "Constitution": 1,
+    "Intelligence": 1,
+    "Sagesse": 0,
+    "Charisme": -1
+  },
+  "competences": [
+    {
+      "nom": "Athlétisme",
+      "maitrisee": true
+    },
+    {
+      "nom": "Persuasion",
+      "maitrisee": true
+    },
+    {
+      "nom": "Arcanes",
+      "maitrisee": true
+    },
+    {
+      "nom": "Histoire",
+      "maitrisee": true
+    }
+  ],
+  "langues": [
+    "Commun",
+    "Nain"
+  ],
+  "equipement": [
+    "cotte de mailles",
+    "épée à deux mains",
+    "fléau d'armes",
+    "8 javelines",
+    "paquetage d'exploration souterraine",
+    "4 po",
+    "bâton de combat",
+    "matériel de calligraphe",
+    "livre (d'histoire)",
+    "parchemin (8 feuilles)",
+    "robe",
+    "8 po",
+    "Fragment d'obsidienne au contact toujours chaud"
+  ],
+  "sorts": [],
+  "bonus_maitrise": 2,
+  "pv": 11,
+  "initiative": 2,
+  "ca": 16,
+  "jets": {
+    "bonus_maitrise": 2,
+    "competences": {
+      "Acrobaties": 2,
+      "Arcanes": 3,
+      "Athlétisme": 4,
+      "Discrétion": 2,
+      "Dressage": -1,
+      "Escamotage": 2,
+      "Équitation": 2,
+      "Histoire": 3,
+      "Intimidation": -1,
+      "Intuition": 0,
+      "Investigation": 1,
+      "Médecine": 0,
+      "Nature": 1,
+      "Perception": 0,
+      "Persuasion": 1,
+      "Religion": 1,
+      "Survie": 0,
+      "Tromperie": -1
+    },
+    "sauvegardes": {
+      "Force": 4,
+      "Dextérité": 2,
+      "Constitution": 3,
+      "Intelligence": 1,
+      "Sagesse": 0,
+      "Charisme": -1
+    },
+    "carac_incantation": "",
+    "attaque_sort": 0,
+    "dd_sort": 0
+  },
+  "don": "Initié à la magie (Magicien)",
+  "outils": "matériel de calligraphe"
+}
