@@ -35,6 +35,7 @@ from pydantic_ai.messages import (
 from agent.agent import agent
 from agent.tools import Deps
 from jdr_api.commun import autorise
+from openui import mj
 from postprocess import anti_meta
 from rag import retriever
 
@@ -57,6 +58,7 @@ async def chat(
     message = str(body.get("message", "") or "").strip()
     chat_id = str(body.get("chat_id") or "defaut")
     campagne_id = str(body.get("campagne_id") or "").strip()
+    personnage_nom = str(body.get("personnage") or "").strip()
     historique = body.get("historique") or []
     # Mode débutant (persistant, par conversation) et demande d'indice ponctuelle.
     # Les deux déclenchent une piste en prose ; aucun des deux = aucun indice.
@@ -81,6 +83,28 @@ async def chat(
             f"(etat_de_la_campagne, faire_avancer_la_campagne, …) sans le redemander "
             f"au joueur.]\n\n{prompt}"
         )
+
+    # 2quater) Personnage actif choisi dans l'app : on ANCRE sa fiche complète
+    # (dont `## Sorts connus`) dans le prompt. Sans ça, le MJ doit deviner le PJ
+    # et penser à appeler `charger_le_personnage` ; s'il ne le fait pas, il n'a
+    # aucune liste de sorts et peut en INVENTER un que le perso ne possède pas.
+    # La fiche injectée rend la contrainte « uniquement les sorts de la fiche »
+    # vérifiable à chaque tour, sans appel d'outil.
+    if personnage_nom:
+        fiche = mj.charger_personnage(personnage_nom)
+        if fiche.get("ok") and fiche.get("fiche"):
+            prompt = (
+                f"[Personnage actif du joueur : **{personnage_nom}**. Voici sa fiche "
+                f"officielle et à jour. RÈGLE ABSOLUE : ce personnage ne peut lancer "
+                f"QUE les sorts listés dans la section `## Sorts connus` ci-dessous, "
+                f"et uniquement ceux dont le niveau est autorisé par son niveau. "
+                f"N'invente, ne suggère et ne décris JAMAIS un sort absent de cette "
+                f"liste — si le joueur en demande un absent, dis qu'il ne le connaît "
+                f"pas et propose une alternative parmi ses sorts ou une approche non "
+                f"magique. Pour tout changement d'état (PV, or, objets, sorts), "
+                f"passe le nom `{personnage_nom}` à `modifier_le_personnage`.]\n\n"
+                f"{fiche['fiche']}\n\n---\n\n{prompt}"
+            )
 
     # 2ter) Mode débutant / demande d'indice : le joueur réclame un coup de pouce.
     # On LÈVE explicitement l'interdiction du menu de choix pour CE tour, mais on
