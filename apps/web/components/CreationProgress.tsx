@@ -196,12 +196,20 @@ export default function CreationProgress({
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link
-                href={urlChat}
+              {/* Navigation « dure » (window.location.href), comme « Rejouer » et
+                  le repli de l'assistant : un rechargement complet garantit que
+                  Chat se monte à la bonne URL et lit `campagne`/`message`/`nouveau`
+                  depuis window.location.search. Un <Link> (navigation client) ne
+                  met pas window.location à jour au moment du montage de Chat →
+                  l'amorce est perdue et l'aventure ne démarre pas. */}
+              <button
+                onClick={() => {
+                  window.location.href = urlChat;
+                }}
                 className="rounded-lg bg-emerald-700/70 hover:bg-emerald-700 text-white font-semibold px-5 py-2.5 text-sm"
               >
                 ▶ Commencer l'aventure
-              </Link>
+              </button>
               <Link
                 href="/"
                 className="rounded-lg bg-white/10 hover:bg-white/20 px-5 py-2.5 text-sm"
