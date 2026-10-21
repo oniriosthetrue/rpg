@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { jdr, ErreurJdr } from "@/lib/jdr";
 
 // Panneau « fiche de personnage » — rendu du JSON canonique `personnage`
@@ -37,11 +37,80 @@ function signe(n: number) {
   return n >= 0 ? `+${n}` : `${n}`;
 }
 
+// Infobulle : affiche `texte` au survol (desktop) ou au tap (mobile). En
+// `position: fixed` ancré sur l'élément, pour ne jamais être rogné par le
+// conteneur de la fiche qui défile (overflow).
+function Bulle({
+  texte,
+  children,
+  className = "",
+}: {
+  texte?: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  if (!texte) return <span className={className}>{children}</span>;
+  const montrer = (el: HTMLElement) => {
+    const r = el.getBoundingClientRect();
+    setPos({ x: r.left + r.width / 2, y: r.top });
+  };
+  return (
+    <span
+      className={`relative cursor-help ${className}`}
+      onMouseEnter={(e) => montrer(e.currentTarget)}
+      onMouseLeave={() => setPos(null)}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (pos) setPos(null);
+        else montrer(e.currentTarget);
+      }}
+    >
+      {children}
+      {pos && (
+        <span
+          className="pointer-events-none fixed z-50 w-56 -translate-x-1/2 -translate-y-full rounded-lg border border-or/30 bg-encre/95 px-3 py-2 text-xs leading-snug text-parchemin shadow-xl"
+          style={{ left: pos.x, top: pos.y - 6 }}
+        >
+          {texte}
+        </span>
+      )}
+    </span>
+  );
+}
+
+// Descriptions SRD (infobulles) : mappages nom → texte pour sorts et compétences.
+type Infos = { sorts?: Record<string, string>; competences?: Record<string, string> };
+
+// Cache au niveau module : une seule requête /api/jdr/infos pour toute la page,
+// partagée entre tous les panneaux FichePerso montés.
+let INFOS_CACHE: Infos | null = null;
+let INFOS_PROMESSE: Promise<Infos> | null = null;
+function chargerInfos(): Promise<Infos> {
+  if (INFOS_CACHE) return Promise.resolve(INFOS_CACHE);
+  if (!INFOS_PROMESSE) {
+    INFOS_PROMESSE = fetch("/api/jdr/infos", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => {
+        INFOS_CACHE = d && typeof d === "object" ? d : {};
+        return INFOS_CACHE;
+      })
+      .catch(() => {
+        INFOS_CACHE = { sorts: {}, competences: {} };
+        return INFOS_CACHE;
+      });
+  }
+  return INFOS_PROMESSE;
+}
+
 export default function FichePerso({ nom }: { nom: string }) {
   const [p, setP] = useState<Personnage | null>(null);
   const [erreur, setErreur] = useState("");
   const [msg, setMsg] = useState("");
   const [enCours, setEnCours] = useState(false);
+  // Descriptions SRD des sorts & compétences (infobulles au survol). Chargées
+  // une fois, partagées via une promesse en module (cache).
+  const [infos, setInfos] = useState<Infos>(INFOS_CACHE ?? {});
 
   const charger = useCallback(async () => {
     if (!nom) return;
@@ -66,6 +135,16 @@ export default function FichePerso({ nom }: { nom: string }) {
     setMsg("");
     charger();
   }, [charger]);
+
+  useEffect(() => {
+    let ok = true;
+    chargerInfos().then((d) => {
+      if (ok) setInfos(d);
+    });
+    return () => {
+      ok = false;
+    };
+  }, []);
 
   const appliquer = useCallback(
     async (action: string, valeur: unknown) => {
@@ -199,10 +278,14 @@ export default function FichePerso({ nom }: { nom: string }) {
             .slice()
             .sort((a, b) => Number(b.maitrisee) - Number(a.maitrisee))
             .map((c) => (
-              <span key={c.nom} className={c.maitrisee ? "text-or" : "text-parchemin/70"}>
+              <Bulle
+                key={c.nom}
+                texte={infos.competences?.[c.nom]}
+                className={c.maitrisee ? "text-or" : "text-parchemin/70"}
+              >
                 {c.maitrisee ? "● " : "○ "}
                 {c.nom}
-              </span>
+              </Bulle>
             ))}
         </div>
       </section>
@@ -214,9 +297,13 @@ export default function FichePerso({ nom }: { nom: string }) {
           </h2>
           <div className="flex flex-wrap gap-2">
             {p.sorts.map((s) => (
-              <span key={s} className="bg-white/5 rounded px-2 py-0.5">
+              <Bulle
+                key={s}
+                texte={infos.sorts?.[s]}
+                className="bg-white/5 rounded px-2 py-0.5"
+              >
                 {s}
-              </span>
+              </Bulle>
             ))}
           </div>
         </section>
