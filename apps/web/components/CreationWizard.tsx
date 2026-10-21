@@ -30,7 +30,6 @@ export default function CreationWizard({
   );
   const [etat, setEtat] = useState<"debut" | "enCours" | "fini" | "abandon">("debut");
   const [q, setQ] = useState<Reponse | null>(null);
-  const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState("");
   // Double confirmation pour « Finaliser » : cette action complète TOUTES les
@@ -85,7 +84,6 @@ export default function CreationWizard({
           { reponse },
         );
         setQ(r);
-        setSaisie("");
         setSelection([]);
         setConfirmerFinal(false);
         if (r.type === "fiche") setEtat("fini");
@@ -108,7 +106,6 @@ export default function CreationWizard({
         `/creation/${encodeURIComponent(chatId)}/retour`,
       );
       setQ(r);
-      setSaisie("");
       setSelection([]);
       setConfirmerFinal(false);
     } catch (e) {
@@ -150,8 +147,7 @@ export default function CreationWizard({
       <div className="p-4 space-y-3">
         <p className="text-parchemin/70">
           Le MJ te pose une série de questions (classe, espèce, caractéristiques…)
-          pour bâtir ton personnage. Tu peux répondre, taper « au hasard », ou
-          « continue ».
+          pour bâtir ton personnage. Choisis une option, ou tape « 🎲 Au hasard ».
         </p>
         {erreur && <div className="text-red-400 text-sm">{erreur}</div>}
         <button
@@ -283,25 +279,6 @@ export default function CreationWizard({
       )}
 
       {erreur && <div className="text-red-400 text-sm">{erreur}</div>}
-
-      <div className="flex gap-2">
-        <input
-          value={saisie}
-          onChange={(e) => setSaisie(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && saisie.trim()) repondre(saisie.trim());
-          }}
-          placeholder="Ta réponse (ou « au hasard »)…"
-          className="flex-1 bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-or/50"
-        />
-        <button
-          onClick={() => saisie.trim() && repondre(saisie.trim())}
-          disabled={enCours}
-          className="rounded-lg bg-or/80 hover:bg-or text-encre font-semibold px-3 disabled:opacity-40"
-        >
-          OK
-        </button>
-      </div>
 
       <div className="flex gap-2 text-xs">
         <button
