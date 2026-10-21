@@ -68,7 +68,7 @@ export default function Sidebar() {
         <div className="hidden md:block px-4 py-3 font-bold text-or">
           MJ D&amp;D
         </div>
-        <nav className="flex md:flex-col gap-1 p-2">
+        <nav className="flex flex-wrap md:flex-col gap-1 p-2">
           {LIENS.map((l) => {
             const actif =
               l.href === "/"
