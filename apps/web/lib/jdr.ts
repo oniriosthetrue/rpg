@@ -20,8 +20,34 @@ async function dechiffrer<T>(reponse: Response): Promise<T> {
   try {
     json = await reponse.json();
   } catch {
+    // Corps illisible (ex. page HTML d'erreur, réponse vide). Sur un statut
+    // HTTP d'échec, on lève une erreur explicite plutôt que de renvoyer
+    // `undefined` (qui ferait planter les composants à la lecture de `.length`).
+    if (!reponse.ok) {
+      throw new ErreurJdr(
+        reponse.status === 401
+          ? "Session expirée. Reconnecte-toi."
+          : `Erreur serveur (${reponse.status}).`,
+        reponse.status === 401 ? "non_autorise" : "erreur",
+      );
+    }
     throw new ErreurJdr(
       `Réponse invalide du serveur (${reponse.status}).`,
+    );
+  }
+  // Statut HTTP d'échec : on lève toujours, même si le corps ne porte pas
+  // `ok:false` (ex. le proxy renvoie `{ detail: ... }` sur un 401/403/500).
+  if (!reponse.ok) {
+    throw new ErreurJdr(
+      String(
+        json.erreur ??
+          json.message ??
+          json.detail ??
+          (reponse.status === 401
+            ? "Session expirée. Reconnecte-toi."
+            : `Erreur serveur (${reponse.status}).`),
+      ),
+      String(json.type ?? (reponse.status === 401 ? "non_autorise" : "erreur")),
     );
   }
   if (json.ok === false) {
