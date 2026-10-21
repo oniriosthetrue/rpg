@@ -170,7 +170,16 @@ export default function CreationProgress({
               }`}
             >
               <span className="w-5 text-center">
-                {e.etat === "fait" ? "✓" : <span className="animate-pulse">⚙</span>}
+                {e.etat === "fait" ? (
+                  "✓"
+                ) : (
+                  <span
+                    className="inline-block animate-bounce drop-shadow-[0_0_6px_rgba(212,175,55,0.7)]"
+                    title="Étape en cours"
+                  >
+                    🐉
+                  </span>
+                )}
               </span>
               {e.phrase}
             </li>
