@@ -507,3 +507,24 @@ def cloturer(
     res = r.cloturer()  # type: ignore[union-attr]
     _sauvegarder(r)  # type: ignore[arg-type]
     return enveloppe(res)
+
+
+@router.delete("/api/combat/{id}")
+def supprimer(
+    id: str,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+) -> dict[str, Any]:
+    """Supprime définitivement une rencontre (son fichier JSON persisté).
+
+    Les PV des PJ déjà répercutés sur leur fiche restent acquis : on ne supprime
+    que la rencontre elle-même, pas les personnages.
+    """
+    if (err := autorise(x_api_key)) is not None:
+        return err
+    if (err := _valider_id(id)) is not None:
+        return err
+    chemin = _chemin(id)
+    if not chemin.exists():
+        return {"ok": False, "v": V, "type": "erreur", "erreur": f"Rencontre introuvable : {id}"}
+    chemin.unlink(missing_ok=True)
+    return {"ok": True, "v": V, "type": "supprime", "id": id}

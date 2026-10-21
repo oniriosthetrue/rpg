@@ -84,6 +84,26 @@ export default function PageCombat() {
     [id, chargerEtat],
   );
 
+  const supprimer = useCallback(
+    async (rencontreId: string, titre: string) => {
+      if (
+        !window.confirm(
+          `Supprimer définitivement la rencontre « ${titre || rencontreId} » ?`,
+        )
+      )
+        return;
+      setErreur("");
+      try {
+        await jdr.del(`/combat/${encodeURIComponent(rencontreId)}`);
+        if (id === rencontreId) setId("");
+        await chargerListe();
+      } catch (e) {
+        setErreur(e instanceof ErreurJdr ? e.message : "Erreur de suppression.");
+      }
+    },
+    [id, chargerListe],
+  );
+
   return (
     <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
       {/* Colonne gauche : liste + ouverture */}
@@ -98,18 +118,32 @@ export default function PageCombat() {
             </p>
           )}
           {liste.map((r) => (
-            <button
+            <div
               key={r.id}
               onClick={() => setId(r.id)}
-              className={`w-full text-left rounded-lg px-3 py-2 text-sm ${
+              className={`group flex items-center gap-2 w-full text-left rounded-lg px-3 py-2 text-sm cursor-pointer ${
                 r.id === id ? "bg-or/20 text-or" : "hover:bg-white/5"
               }`}
             >
-              <div className="truncate">{r.titre || r.id}</div>
-              <div className="text-[11px] text-parchemin/50">
-                {r.active ? `tour ${r.tour}` : "clôturée"} · {r.nb_combattants} combattants
+              <div className="flex-1 min-w-0">
+                <div className="truncate">{r.titre || r.id}</div>
+                <div className="text-[11px] text-parchemin/50">
+                  {r.active ? `tour ${r.tour}` : "clôturée"} · {r.nb_combattants}{" "}
+                  combattants
+                </div>
               </div>
-            </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  supprimer(r.id, r.titre);
+                }}
+                title="Supprimer la rencontre"
+                aria-label="Supprimer la rencontre"
+                className="shrink-0 p-1 -m-1 text-parchemin/50 hover:text-red-400 active:text-red-400"
+              >
+                🗑
+              </button>
+            </div>
           ))}
         </div>
         <FormulaireOuverture
