@@ -30,6 +30,7 @@ export default function CreationWizard({
   );
   const [etat, setEtat] = useState<"debut" | "enCours" | "fini" | "abandon">("debut");
   const [q, setQ] = useState<Reponse | null>(null);
+  const [saisie, setSaisie] = useState("");
   const [enCours, setEnCours] = useState(false);
   const [erreur, setErreur] = useState("");
   // Double confirmation pour « Finaliser » : cette action complète TOUTES les
@@ -40,6 +41,9 @@ export default function CreationWizard({
   // voit qu'une, tire le reste au hasard et passe à l'étape suivante).
   const [selection, setSelection] = useState<string[]>([]);
   const multi = !!q && (q.etape === "competences" || q.etape === "sorts");
+  // Étape en saisie libre (aucune option proposée) : ex. le « nom ». On affiche
+  // alors un champ texte + OK, en plus du bouton « Au hasard ».
+  const libre = !!q && (!q.options || q.options.length === 0);
 
   // Groupe d'une option pour les limites : « total » pour les compétences,
   // « mineur » / « 1er niveau » pour les sorts (selon le préfixe de l'option).
@@ -84,6 +88,7 @@ export default function CreationWizard({
           { reponse },
         );
         setQ(r);
+        setSaisie("");
         setSelection([]);
         setConfirmerFinal(false);
         if (r.type === "fiche") setEtat("fini");
@@ -106,6 +111,7 @@ export default function CreationWizard({
         `/creation/${encodeURIComponent(chatId)}/retour`,
       );
       setQ(r);
+      setSaisie("");
       setSelection([]);
       setConfirmerFinal(false);
     } catch (e) {
@@ -275,6 +281,27 @@ export default function CreationWizard({
               puis Valider. Le reste sera tiré au hasard.
             </span>
           </div>
+        </div>
+      )}
+
+      {libre && (
+        <div className="flex gap-2">
+          <input
+            value={saisie}
+            onChange={(e) => setSaisie(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && saisie.trim()) repondre(saisie.trim());
+            }}
+            placeholder="Ta réponse…"
+            className="flex-1 bg-white/5 rounded-lg px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-or/50"
+          />
+          <button
+            onClick={() => saisie.trim() && repondre(saisie.trim())}
+            disabled={enCours}
+            className="rounded-lg bg-or/80 hover:bg-or text-encre font-semibold px-3 disabled:opacity-40"
+          >
+            OK
+          </button>
         </div>
       )}
 
