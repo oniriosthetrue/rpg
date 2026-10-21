@@ -81,7 +81,8 @@ export default function PagePersos() {
                   supprimer(p.nom);
                 }}
                 title="Supprimer"
-                className="opacity-0 group-hover:opacity-100 text-parchemin/50 hover:text-red-400"
+                aria-label="Supprimer le personnage"
+                className="shrink-0 p-1 -m-1 text-parchemin/50 hover:text-red-400 active:text-red-400"
               >
                 🗑
               </button>
