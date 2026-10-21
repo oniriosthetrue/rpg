@@ -16,7 +16,10 @@ moteur n'en garde que des champs de texte opaques et la structure du brief.
 from __future__ import annotations
 
 import json
+import os
 import re
+import tempfile
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -80,11 +83,40 @@ def _charger(id_: str) -> tuple[cp.Campagne | None, dict[str, Any] | None]:
     return cp.Campagne.depuis_dict(donnees), None
 
 
+# Verrou d'écriture : les appels d'outils du MJ (ecrire_le_scenario, puis
+# faire_avancer_la_campagne, …) peuvent toucher la MÊME campagne de façon
+# quasi simultanée. Sans sérialisation, deux `open('w')` concurrents tronquent
+# puis écrivent en parallèle sur le même fichier → contenu entrelacé → JSON
+# illisible (« Extra data »), et la campagne paraît « ne pas démarrer ».
+# Le verrou sérialise les écritures, et l'écriture atomique (temp + os.replace)
+# garantit qu'un lecteur ne voie jamais un fichier à moitié écrit.
+_LOCK_ECRITURE = threading.Lock()
+
+
 def _sauvegarder(c: cp.Campagne) -> None:
     extract.CAMPAGNE_DIR.mkdir(parents=True, exist_ok=True)
-    _chemin(c.id).write_text(
-        json.dumps(c.vers_dict(), ensure_ascii=False, indent=2), encoding="utf-8"
-    )
+    chemin = _chemin(c.id)
+    contenu = json.dumps(c.vers_dict(), ensure_ascii=False, indent=2)
+    with _LOCK_ECRITURE:
+        # Écriture atomique : on remplit un fichier temporaire du même
+        # répertoire puis on le renomme par-dessus la cible (opération
+        # atomique sur le même système de fichiers). Un lecteur concurrent
+        # voit soit l'ancien, soit le nouveau fichier entier — jamais un mix.
+        fd, tmp = tempfile.mkstemp(
+            dir=str(extract.CAMPAGNE_DIR), prefix=".tmp-campagne-", suffix=".json"
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                f.write(contenu)
+                f.flush()
+                os.fsync(f.fileno())
+            os.replace(tmp, chemin)
+        except BaseException:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
 
 
 # ---------------------------------------------------------------------------
