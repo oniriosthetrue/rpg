@@ -92,7 +92,10 @@ class TestDlegationOutils(unittest.TestCase):
     def tearDown(self):
         from dnd_perso import extract
 
-        extract.PERSO_DIR = self._orig_dir
+        # `PERSO_DIR` est une propriété calculée (résolue par __getattr__ selon
+        # l'utilisateur). L'assignation dans setUp crée un attribut réel qui masque
+        # ce résolveur : on le SUPPRIME (et non on le réassigne) pour le rétablir.
+        del extract.PERSO_DIR
         self._tmp.cleanup()
 
     def _lancer(self, outil, args_1er_tour, prompt="…"):
@@ -668,7 +671,7 @@ class TestRetirerObjet(unittest.TestCase):
     def tearDown(self):
         from dnd_perso import extract
 
-        extract.PERSO_DIR = self._orig_dir
+        del extract.PERSO_DIR  # rétablit le résolveur par-utilisateur (voir setUp)
         self._tmp.cleanup()
 
     def _objets(self, nom="Conan"):
@@ -753,7 +756,7 @@ class TestRetirerQuantite(unittest.TestCase):
     def tearDown(self):
         from dnd_perso import extract
 
-        extract.PERSO_DIR = self._orig_dir
+        del extract.PERSO_DIR  # rétablit le résolveur par-utilisateur (voir setUp)
         self._tmp.cleanup()
 
     def _objets(self):
@@ -854,7 +857,7 @@ class TestEmplacementsSort(unittest.TestCase):
     def tearDown(self):
         from dnd_perso import extract
 
-        extract.PERSO_DIR = self._orig_dir
+        del extract.PERSO_DIR  # rétablit le résolveur par-utilisateur (voir setUp)
         self._tmp.cleanup()
 
     def _emplacements(self, nom="Merlin"):

@@ -34,9 +34,21 @@ DATA_DIR = Path(__file__).resolve().parent / "data"
 # (le conteneur jdr-api les monte en rw) ; on y ajoute un SOUS-DOSSIER d'utilisateur
 # résolu à la lecture (voir `_USER_SUBDIR` + `__getattr__` plus bas), ce qui isole
 # les fiches/campagnes/combats de chaque compte sans toucher aux sites d'appel.
-_PERSO_BASE = Path(os.environ.get("DND_PERSO_DIR") or (Path(__file__).resolve().parent / "perso"))
-_COMBAT_BASE = Path(os.environ.get("DND_COMBAT_DIR") or (RACINE / "data-combat"))
-_CAMPAGNE_BASE = Path(os.environ.get("DND_CAMPAGNE_DIR") or (RACINE / "data-campagne"))
+# Résolus À LA LECTURE (et non au moment de l'import) : les tests fixent
+# `DND_PERSO_DIR`/… dans leur environnement APRÈS qu'un autre module a déjà
+# importé `extract`. Figées à l'import, ces bases pointeraient sur les vrais
+# dossiers partagés au lieu du répertoire temporaire du test (ordre d'exécution
+# `unittest discover`). Un appel à chaque lecture rend l'ordre d'import sans effet.
+def _base_perso() -> Path:
+    return Path(os.environ.get("DND_PERSO_DIR") or (Path(__file__).resolve().parent / "perso"))
+
+
+def _base_combat() -> Path:
+    return Path(os.environ.get("DND_COMBAT_DIR") or (RACINE / "data-combat"))
+
+
+def _base_campagne() -> Path:
+    return Path(os.environ.get("DND_CAMPAGNE_DIR") or (RACINE / "data-campagne"))
 
 # Sous-dossier d'utilisateur courant (identifiant de compte). Vide = racine
 # (comportement historique, utilisé par les tests et le moteur hors requête HTTP).
@@ -70,7 +82,7 @@ def dossiers_utilisateur(user_id: str) -> "list[Path]":
     sous = (user_id or "").strip()
     if not sous or "/" in sous or "\\" in sous or sous in (".", ".."):
         return []
-    return [_PERSO_BASE / sous, _CAMPAGNE_BASE / sous, _COMBAT_BASE / sous]
+    return [_base_perso() / sous, _base_campagne() / sous, _base_combat() / sous]
 
 
 # Dossier des scénarios importables (fichiers Markdown à front-matter, lecture seule).
@@ -82,11 +94,11 @@ def __getattr__(name: str) -> Path:
     l'utilisateur courant (`_USER_SUBDIR`). Les tests qui affectent directement
     `extract.COMBAT_DIR = tmp` créent un attribut réel qui masque ce résolveur."""
     if name == "PERSO_DIR":
-        return _sous_dossier(_PERSO_BASE)
+        return _sous_dossier(_base_perso())
     if name == "COMBAT_DIR":
-        return _sous_dossier(_COMBAT_BASE)
+        return _sous_dossier(_base_combat())
     if name == "CAMPAGNE_DIR":
-        return _sous_dossier(_CAMPAGNE_BASE)
+        return _sous_dossier(_base_campagne())
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 _FICHE_RE = re.compile(
