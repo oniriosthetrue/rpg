@@ -1204,6 +1204,23 @@ def _retirer_objet(
     return f"objet retiré : {entree}"
 
 
+# Cache (mémoire) du niveau de sort par nom normalisé, chargé une fois du corpus.
+_NIVEAU_SORT_CACHE: dict[str, int] | None = None
+
+
+def _niveau_sort(sort: str) -> int:
+    """Niveau de sort (0 = tour de magie) d'après le corpus, par nom apparié de
+    façon tolérante (accents/casse ignorés). -1 si le sort est inconnu du corpus."""
+    global _NIVEAU_SORT_CACHE
+    if _NIVEAU_SORT_CACHE is None:
+        try:
+            niveaux = extract.charger_niveaux_sorts()
+        except Exception:
+            niveaux = {}
+        _NIVEAU_SORT_CACHE = {_norme(k): int(v) for k, v in niveaux.items()}
+    return _NIVEAU_SORT_CACHE.get(_norme(sort), -1)
+
+
 def modifier_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
     """Applique une liste d'actions closes à un personnage sauvegardé (contrat §5).
 
@@ -1303,6 +1320,71 @@ def modifier_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
                 return {"ok": False, "type": "erreur", "erreur": "Valeur invalide : sort manquant."}
             p.sorts.append(sort)
             modifications.append(f"sort appris : {sort}")
+        elif nom_action == "lancer_sort":
+            sort = str(valeur or "").strip()
+            if not sort:
+                return {"ok": False, "type": "erreur", "erreur": "Valeur invalide : sort manquant."}
+            # Niveau du sort : fourni explicitement, sinon lu dans le corpus.
+            niveau_explicite = action.get("niveau")
+            if niveau_explicite is not None:
+                try:
+                    niveau = int(niveau_explicite)
+                except (TypeError, ValueError):
+                    return {"ok": False, "type": "erreur", "erreur": f"Niveau invalide : {niveau_explicite}"}
+            else:
+                niveau = _niveau_sort(sort)
+            if niveau < 0:
+                return {
+                    "ok": False, "type": "erreur",
+                    "erreur": f"Niveau du sort inconnu : « {sort} ». "
+                    "Précise « niveau\": N (0 = tour de magie).",
+                }
+            if niveau == 0:
+                modifications.append(f"tour de magie lancé : {sort} (aucun emplacement consommé)")
+            else:
+                if not models.emplacements_max(p.classe, p.niveau):
+                    return {
+                        "ok": False, "type": "erreur",
+                        "erreur": f"{p.classe} n'a pas d'emplacements de sort.",
+                    }
+                max_par_niveau = models.emplacements_max(p.classe, p.niveau)
+                # Emplacement du niveau requis, sinon le plus petit niveau
+                # supérieur encore disponible (lancement amélioré / upcast).
+                consomme = next(
+                    (
+                        n for n in sorted(max_par_niveau)
+                        if n >= niveau
+                        and p.emplacements_utilises.get(n, 0) < max_par_niveau[n]
+                    ),
+                    None,
+                )
+                if consomme is None:
+                    dispo = ", ".join(
+                        f"{n}e niveau : {max_par_niveau[n] - p.emplacements_utilises.get(n, 0)}"
+                        for n in sorted(max_par_niveau)
+                    ) or "(aucun)"
+                    return {
+                        "ok": False, "type": "erreur",
+                        "erreur": f"Plus d'emplacement pour lancer « {sort} » "
+                        f"(niveau {niveau}). Disponibles → {dispo}.",
+                    }
+                p.emplacements_utilises[consomme] = p.emplacements_utilises.get(consomme, 0) + 1
+                restant = max_par_niveau[consomme] - p.emplacements_utilises[consomme]
+                if consomme > niveau:
+                    modifications.append(
+                        f"{sort} lancé avec un emplacement de {consomme}e niveau "
+                        f"(sur {max_par_niveau[consomme]}, {restant} restants)"
+                    )
+                else:
+                    modifications.append(
+                        f"{sort} lancé ({consomme}e niveau, {restant}/{max_par_niveau[consomme]} restants)"
+                    )
+        elif nom_action == "repos_long":
+            if p.emplacements_utilises:
+                p.emplacements_utilises = {}
+                modifications.append("repos long : tous les emplacements de sort restaurés")
+            else:
+                modifications.append("repos long : aucun emplacement à restaurer")
         elif nom_action == "gagner_xp":
             try:
                 v = int(valeur)

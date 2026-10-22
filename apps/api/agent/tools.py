@@ -91,12 +91,22 @@ def charger_le_personnage(nom: str) -> dict[str, Any]:
 
 def modifier_le_personnage(nom: str, actions: list[dict]) -> dict[str, Any]:
     """Appliquer des modifications à un personnage (soins, dégâts, or, objets,
-    sorts, XP, alignement) et renvoyer la fiche mise à jour.
+    sorts, emplacements, XP, alignement) et renvoyer la fiche mise à jour.
 
     Actions acceptées : `soigner`, `degats` (option `critique`), `ajouter_or`,
-    `ajouter_objet`, `retirer_objet`, `apprendre_sort`, `gagner_xp`,
-    `changer_alignement`.
+    `ajouter_objet`, `retirer_objet`, `apprendre_sort`, `lancer_sort`,
+    `repos_long`, `gagner_xp`, `changer_alignement`.
     Ex. `[{"action": "soigner", "valeur": 5}, {"action": "ajouter_or", "valeur": 50}]`.
+
+    `lancer_sort` **consomme un emplacement de sort** : passe le nom du sort
+    (`"valeur"`), éventuellement `"niveau": N` (0 = tour de magie, jamais
+    consommé). Le niveau est sinon lu dans le corpus. La fiche du personnage
+    porte une section `## Emplacements de sort` (restants/max par niveau) :
+    **appelle `lancer_sort` à chaque sort lancé** (sauf un tour de magie), sinon
+    les emplacements ne diminuent jamais. Si la réponse est une erreur
+    « Plus d'emplacement », le sort ne peut pas être lancé — le dire au joueur.
+    `repos_long` restaure **tous** les emplacements (à appeler après un repos
+    long en fiction).
 
     `retirer_objet` enlève un objet de l'inventaire (joueur qui jette, perd,
     casse, donne ou consomme un objet) — passe le nom tel que le joueur le nomme

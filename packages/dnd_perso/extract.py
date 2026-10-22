@@ -743,6 +743,75 @@ def charger_sorts_1() -> dict[str, list[str]]:
     return par_classe
 
 
+# Chiffres (lettres) des niveaux de sort dans la ligne d'école d'une fiche.
+_NIVEURS_LETTRES = {
+    "premier": 1, "second": 2, "seconde": 2, "deuxieme": 2, "deuxième": 2,
+    "troisieme": 3, "troisième": 3, "quatrieme": 4, "quatrième": 4,
+    "cinquieme": 5, "cinquième": 5, "sixieme": 6, "sixième": 6,
+    "septieme": 7, "septième": 7, "huitieme": 8, "huitième": 8,
+    "neuvieme": 9, "neuvième": 9,
+}
+
+# Ligne d'école d'un sort (1re ligne de prose de la fiche) :
+#   « École mineure (…) » (tour de magie) ou « École du Xe niveau (…) ».
+# Le niveau est en chiffres (« 1er », « 2e », « 9 ») ou, plus rare, en lettres.
+_LIGNE_ECOLE_RE = re.compile(
+    r"^[A-Za-zÀ-ÿ]+\s+(mineure|du\s+(?:\d+\s*(?:er|ème|eme|e)?|[a-zà-ÿ]+)\s+niveau)",
+    re.M,
+)
+
+
+def _niveau_de_sort_depuis_ecole(ligne_ecole: str) -> int:
+    """Extrait le niveau de sort (0 = tour de magie) d'une ligne d'école.
+
+    « Nécromancie mineure (…) » → 0 ; « Abjuration du 1er niveau (…) » → 1 ;
+    « … du 7e niveau » → 7. -1 si la ligne n'est pas la ligne d'école.
+    """
+    m = _LIGNE_ECOLE_RE.match(ligne_ecole.strip())
+    if not m:
+        return -1
+    groupe = m.group(1).lower()
+    if "mineure" in groupe:
+        return 0
+    m2 = re.search(r"du\s+(\d+)", groupe)
+    if m2:
+        return int(m2.group(1))
+    m3 = re.search(r"du\s+([a-zà-ÿ]+)\s+niveau", groupe)
+    if m3:
+        return _NIVEURS_LETTRES.get(m3.group(1), -1)
+    return -1
+
+
+def charger_niveaux_sorts() -> dict[str, int]:
+    """Niveau de sort par nom (« Bouclier » → 1, « Bouffée de poison » → 0),
+    parsé depuis la ligne d'école de chaque fiche `02-sorts/*.md`.
+
+    Cache JSON dans `dnd_perso/data/sorts_niveau.json`. Sert à savoir quel
+    emplacement consommer quand un personnage lance un sort.
+    """
+    cache = _charger_json_cache("sorts_niveau.json")
+    if cache is not None:
+        return {str(k): int(v) for k, v in cache.items()}
+    if not CORPUS.is_dir():
+        raise RuntimeError(
+            f"Corpus introuvable : {CORPUS} — vérifiez que le dossier "
+            "dnd/srd-5.2.1/ est présent."
+        )
+    niveaux: dict[str, int] = {}
+    for f in sorted((CORPUS / "02-sorts").glob("*.md")):
+        texte = f.read_text(encoding="utf-8")
+        keys, _corps = _parse_fiche(texte)
+        nom = keys.get("nom", f.stem.replace("-", " "))
+        for ligne in texte.splitlines():
+            niveau = _niveau_de_sort_depuis_ecole(ligne)
+            if niveau >= 0:
+                niveaux[nom] = niveau
+                break
+    if niveaux:
+        _sauvegarder_json_cache("sorts_niveau.json", niveaux)
+    return niveaux
+
+
 def charger_descriptions_sorts() -> dict[str, str]:
     """Descriptions courtes des sorts (cantrips + 1er niveau), extraites
     du corps des fiches. Cache JSON dans `dnd_perso/data/sorts_desc.json`."""

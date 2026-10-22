@@ -820,5 +820,113 @@ class TestRetirerQuantite(unittest.TestCase):
         self.assertIn("20 flèches", self._objets())  # rien retiré sur erreur
 
 
+# ─── 10. Emplacements de sort (lancer_sort / repos_long) ─────────────────────
+
+
+class TestEmplacementsSort(unittest.TestCase):
+    """`modifier_personnage` doit COMPTABILISER les emplacements de sort : un
+    sort lancé consomme un emplacement du bon niveau, un tour de magie n'en
+    consomme aucun, l'épuisement fait échouer l'action, et `repos_long` restaure.
+    Dossier temporaire (aucune écriture sur les vraies fiches)."""
+
+    def setUp(self):
+        import tempfile
+        from pathlib import Path
+
+        from dnd_perso import export, extract, models
+        from openui import mj
+
+        self.mj = mj
+        self._tmp = tempfile.TemporaryDirectory()
+        self._orig_dir = extract.PERSO_DIR
+        extract.PERSO_DIR = Path(self._tmp.name)
+        # Magicien de niveau 1 : 2 emplacements de 1er niveau, tours de magie illimités.
+        p = models.Personnage(
+            nom="Merlin",
+            classe="Magicien",
+            espece="Humain",
+            historique="Sage",
+            niveau=1,
+            sorts=["Flamme sacrée", "Bouclier", "Boule de feu"],
+        )
+        export.sauvegarder(p)
+
+    def tearDown(self):
+        from dnd_perso import extract
+
+        extract.PERSO_DIR = self._orig_dir
+        self._tmp.cleanup()
+
+    def _emplacements(self, nom="Merlin"):
+        return self.mj.charger_personnage(nom)["personnage"].get("emplacements", {})
+
+    def test_cantrip_ne_consomme_rien(self):
+        # « Flamme sacrée » = tour de magie (niveau 0) → aucun emplacement retiré.
+        r = self.mj.modifier_personnage(
+            "Merlin", [{"action": "lancer_sort", "valeur": "Flamme sacrée"}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertEqual(self._emplacements().get("1", {}).get("restants"), 2)
+
+    def test_sort_niveau1_decremente(self):
+        r = self.mj.modifier_personnage(
+            "Merlin", [{"action": "lancer_sort", "valeur": "Bouclier"}]
+        )
+        self.assertTrue(r["ok"], r)
+        self.assertEqual(self._emplacements()["1"]["restants"], 1)
+        self.assertEqual(self._emplacements()["1"]["utilises"], 1)
+
+    def test_epuisement_erreur(self):
+        # 2 emplacements → les épuiser, le 3e échoue.
+        self.mj.modifier_personnage("Merlin", [{"action": "lancer_sort", "valeur": "Bouclier"}])
+        r2 = self.mj.modifier_personnage(
+            "Merlin", [{"action": "lancer_sort", "valeur": "Bouclier"}]
+        )
+        self.assertTrue(r2["ok"], r2)
+        self.assertEqual(self._emplacements()["1"]["restants"], 0)
+        r3 = self.mj.modifier_personnage(
+            "Merlin", [{"action": "lancer_sort", "valeur": "Bouclier"}]
+        )
+        self.assertFalse(r3["ok"])
+        self.assertIn("Plus d'emplacement", r3["erreur"])
+        # Rien de plus consommé sur l'échec.
+        self.assertEqual(self._emplacements()["1"]["utilises"], 2)
+
+    def test_repos_longRestaure(self):
+        self.mj.modifier_personnage("Merlin", [{"action": "lancer_sort", "valeur": "Bouclier"}])
+        self.mj.modifier_personnage("Merlin", [{"action": "lancer_sort", "valeur": "Bouclier"}])
+        self.assertEqual(self._emplacements()["1"]["restants"], 0)
+        r = self.mj.modifier_personnage("Merlin", [{"action": "repos_long"}])
+        self.assertTrue(r["ok"], r)
+        self.assertEqual(self._emplacements()["1"]["restants"], 2)
+
+    def test_sort_haut_niveau_sans_emplacement(self):
+        # « Boule de feu » = niveau 3 ; un Magicien niv.1 n'a pas d'emplacement 3.
+        r = self.mj.modifier_personnage(
+            "Merlin", [{"action": "lancer_sort", "valeur": "Boule de feu"}]
+        )
+        self.assertFalse(r["ok"])
+        self.assertIn("Plus d'emplacement", r["erreur"])
+
+    def test_non_lanceur_erreur(self):
+        from dnd_perso import export, models
+
+        p = models.Personnage(nom="Conan", classe="Barbare", sorts=["Bouclier"])
+        export.sauvegarder(p)
+        r = self.mj.modifier_personnage(
+            "Conan", [{"action": "lancer_sort", "valeur": "Bouclier", "niveau": 1}]
+        )
+        self.assertFalse(r["ok"])
+        self.assertIn("n'a pas d'emplacements", r["erreur"])
+
+    def test_niveau_explicite_upcast(self):
+        # Niveau 5 explicite sur un niv.1 → pas d'emplacement 5 → erreur claire.
+        r = self.mj.modifier_personnage(
+            "Merlin", [{"action": "lancer_sort", "valeur": "Bouclier", "niveau": 5}]
+        )
+        self.assertFalse(r["ok"])
+        self.assertIn("Plus d'emplacement", r["erreur"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

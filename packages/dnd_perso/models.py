@@ -162,6 +162,10 @@ class Personnage:
     langues: list[str] = field(default_factory=lambda: ["Commun"])
     equipement: Equipement = field(default_factory=Equipement)
     sorts: list[str] = field(default_factory=list)
+    # Emplacements de sort consommés, par niveau de sort ({niveau_de_sort: nb_utilises}).
+    # Le max est dérivé de la classe et du niveau (voir `emplacements_max`) ; seuls les
+    # compteurs d'usage sont stockés. Un repos long remet ce dict à vide.
+    emplacements_utilises: dict[int, int] = field(default_factory=dict)
     babiole: str = ""
     # Don d'origines accordé par l'historique (ex. « Initié à la magie (Magicien) »).
     don: str = ""
@@ -205,6 +209,26 @@ class Personnage:
         if any(o.strip().lower() == "bouclier" for o in self.equipement.objets):
             ca += BONUS_BOUCLIER
         return ca
+
+    @property
+    def emplacements(self) -> dict[int, dict[str, int]]:
+        """Emplacements de sort par niveau : `{niveau: {max, utilises, restants}}`.
+
+        Le `max` vient de la table d'incantation (classe + niveau) ; `utilises`
+        est le compteur stocké ; `restants = max - utilises`. Vide pour une
+        classe non lanceuse. Les tours de magie (niveau 0) ne consomment rien.
+        """
+        max_par_niveau = emplacements_max(self.classe, self.niveau)
+        resultat: dict[int, dict[str, int]] = {}
+        for niveau_sort, max_n in max_par_niveau.items():
+            utilises = int(self.emplacements_utilises.get(niveau_sort, 0))
+            utilises = max(0, min(utilises, max_n))
+            resultat[niveau_sort] = {
+                "max": max_n,
+                "utilises": utilises,
+                "restants": max_n - utilises,
+            }
+        return resultat
 
     def table_des_jets(self) -> dict[str, Any]:
         """Table **pré-calculée** des bonus de jet (le MJ la lit, ne calcule jamais).
@@ -271,6 +295,12 @@ class Personnage:
             "langues": list(self.langues),
             "equipement": equip,
             "sorts": list(self.sorts),
+            "emplacements_utilises": {
+                str(k): int(v) for k, v in self.emplacements_utilises.items()
+            },
+            "emplacements": {
+                str(k): dict(v) for k, v in self.emplacements.items()
+            },
             "bonus_maitrise": self.bonus_maitrise,
             "pv": self.pv,
             "initiative": self.initiative,
@@ -323,6 +353,10 @@ class Personnage:
             langues=list(d.get("langues", ["Commun"])),
             equipement=Equipement(objets=equip),
             sorts=[str(s) for s in d.get("sorts", [])],
+            emplacements_utilises={
+                int(k): int(v)
+                for k, v in (d.get("emplacements_utilises") or {}).items()
+            },
             babiole="",
             don=str(d.get("don", "") or ""),
             outils=str(d.get("outils", "") or ""),
@@ -338,3 +372,57 @@ _DE_VIE: dict[str, int] = {
     "Guerrier": 10, "Magicien": 6, "Moine": 8, "Occultiste": 8, "Paladin": 10,
     "Rôdeur": 10, "Roublard": 8,
 }
+
+# ---------------------------------------------------------------------------
+# Emplacements de sort (SRD 5.2.1, table « Emplacements de sort par niveau »)
+# ---------------------------------------------------------------------------
+# Rythme d'incantation par classe : « complet » (1 palier de niveau = 1 palier
+# de la table complète), « demi » (Paladin / Rôdeur : arrondi au palier
+# supérieur, table amputée au 5e niveau de sort) ou absent = non-lanceur.
+_RYTHME_INCANTATION: dict[str, str] = {
+    "Barde": "complet", "Clerc": "complet", "Druide": "complet",
+    "Ensorceleur": "complet", "Magicien": "complet", "Occultiste": "complet",
+    "Paladin": "demi", "Rôdeur": "demi",
+}
+
+# Table d'incantation COMPLÈTE (Barde, Clerc, Druide, Ensorceleur, Magicien,
+# Occultiste), recopiée de la table « Incantateur multiclassé » du corpus
+# (`creer_personnage/05-progression-et-multiclassage.md`). Clé = niveau de
+# personnage (1-20), valeur = {niveau_de_sort: nb}. Les niveaux sans emplacement
+# d'un palier donné sont simplement absents (ex. pas de 2e niveau au niveau 1-2).
+_TABLE_COMPLETE: dict[int, dict[int, int]] = {
+    1: {1: 2}, 2: {1: 3}, 3: {1: 4, 2: 2}, 4: {1: 4, 2: 3}, 5: {1: 4, 2: 3, 3: 2},
+    6: {1: 4, 2: 3, 3: 3}, 7: {1: 4, 2: 3, 3: 3, 4: 1}, 8: {1: 4, 2: 3, 3: 3, 4: 2},
+    9: {1: 4, 2: 3, 3: 3, 4: 3, 5: 1}, 10: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2},
+    11: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1}, 12: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1},
+    13: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1},
+    14: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1},
+    15: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1},
+    16: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1},
+    17: {1: 4, 2: 3, 3: 3, 4: 3, 5: 2, 6: 1, 7: 1, 8: 1, 9: 1},
+    18: {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 1, 7: 1, 8: 1, 9: 1},
+    19: {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 1, 8: 1, 9: 1},
+    20: {1: 4, 2: 3, 3: 3, 4: 3, 5: 3, 6: 2, 7: 2, 8: 1, 9: 1},
+}
+
+# Table d'incantation à DEMI (Paladin, Rôdeur) : le niveau de lanceur effectif
+# est `ceil(niveau / 2)` ; on lit la table complète à ce niveau effectif, amputée
+# au 5e niveau de sort (un lanceur à demi n'accède jamais au-delà du 5e).
+def _table_demi(niveau: int) -> dict[int, int]:
+    effectif = max(1, min(-(-niveau // 2), 20))  # ceil(niveau/2), borné [1,20]
+    return {n: v for n, v in _TABLE_COMPLETE.get(effectif, {}).items() if n <= 5}
+
+
+def emplacements_max(classe: str, niveau: int) -> dict[int, int]:
+    """Table d'emplacements de sort d'une classe à un niveau donné.
+
+    Retourne `{niveau_de_sort: nb_max}` (clé 0 = tours de magie, jamais limité :
+    absent). Vide pour une classe non lanceuse ou un niveau < 1.
+    """
+    rythme = _RYTHME_INCANTATION.get(classe)
+    if not rythme:
+        return {}
+    niveau = max(1, min(int(niveau), 20))
+    if rythme == "demi":
+        return _table_demi(niveau)
+    return dict(_TABLE_COMPLETE.get(niveau, {}))

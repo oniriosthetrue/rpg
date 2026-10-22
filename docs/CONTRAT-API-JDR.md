@@ -167,6 +167,8 @@ Exemple de `type: "options"` :
     {"action": "ajouter_or", "valeur": 50},
     {"action": "ajouter_objet", "valeur": "Corde de soie (10 m)"},
     {"action": "apprendre_sort", "valeur": "Bouclier"},
+    {"action": "lancer_sort", "valeur": "Bouclier", "niveau": 1},
+    {"action": "repos_long"},
     {"action": "gagner_xp",  "valeur": 300},
     {"action": "changer_alignement", "valeur": "Loyal Bon"}
   ]
@@ -179,6 +181,12 @@ Règles :
 - Une action inconnue → `erreur` (pas d'ignorance silencieuse).
 - `degats`/`soigner` ajustent `pv` (plafonné au max, plancher 0 + `à_la_mort: true` si 0).
 - `gagner_xp` peut déclencher un passage de niveau (le backend gère la table).
+- `lancer_sort` **consomme un emplacement de sort** : `valeur` = nom du sort,
+  `niveau` optionnel (sinon lu dans le corpus ; `0` = tour de magie, jamais
+  consommé). Le max par niveau est dérivé de la classe + du niveau (table
+  d'incantation SRD) ; seul l'usage est stocké. Si aucun emplacement du niveau
+  requis (ou supérieur) n'est libre → `erreur` « Plus d'emplacement… ».
+- `repos_long` remet à zéro tous les compteurs d'emplacements consommés.
 - Réponse : un `type: "personnage"` complet (la fiche à jour), + `modifications`
   listant ce qui a été appliqué (pour honnêteté envers le joueur).
 
@@ -227,6 +235,8 @@ ne renomme ni ne retire rien sans changer `v`.
   "langues": ["Commun", "Halfelin"],
   "equipement": ["Dague", "Tenue commune", "Une petite cloche en laiton"],
   "sorts": ["Tour de magie", "Bouclier"],
+  "emplacements_utilises": {"1": 1},
+  "emplacements": {"1": {"max": 2, "utilises": 1, "restants": 1}},
   "bonus_maitrise": 2,
   "pv": 11,
   "initiative": 2,
@@ -238,6 +248,10 @@ Règles :
 - `carac` : 6 clés fixes (accents inclus). `mods` : mêmes 6 clés, entiers signés.
 - `competences` : objets `{nom, maitrisee}` — **jamais** de liste de chaînes.
 - `langues` / `sorts` : listes de chaînes (noms exacts du corpus).
+- `emplacements_utilises` : `{niveau_de_sort: nb_consommes}` (entier, stocké).
+  `emplacements` : vue dérivée `{niveau: {max, utilises, restants}}` — le `max`
+  vient de la table d'incantation (classe + niveau), absent pour une classe non
+  lanceuse. Les tours de magie (niveau 0) ne consomment jamais d'emplacement.
 - `equipement` : liste de chaînes (une ligne = un objet, l'or en « 50 po »).
   **La babiole fait partie de l'équipement** : c'est le dernier objet de la liste
   (règle SRD : la babiole est un objet porté). Il n'y a **pas** de champ `babiole`

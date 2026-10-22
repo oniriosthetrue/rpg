@@ -22,6 +22,9 @@ type Personnage = {
   langues: string[];
   equipement: string[];
   sorts: string[];
+  // Emplacements de sort par niveau (clé = niveau de sort en chaîne) :
+  // { max, utilises, restants }. Absent pour une classe non lanceuse.
+  emplacements?: Record<string, { max: number; utilises: number; restants: number }>;
   bonus_maitrise: number;
   pv: number;
   initiative: number;
@@ -254,6 +257,13 @@ export default function FichePerso({ nom }: { nom: string }) {
         >
           + Sort
         </button>
+        <button
+          onClick={() => appliquer("repos_long", null)}
+          disabled={enCours}
+          className="rounded bg-indigo-700/60 hover:bg-indigo-700 px-2 py-1 text-xs disabled:opacity-40"
+        >
+          Repos long
+        </button>
       </div>
       {msg && <div className="text-xs text-or/80">{msg}</div>}
 
@@ -317,6 +327,38 @@ export default function FichePerso({ nom }: { nom: string }) {
                 {s}
               </Bulle>
             ))}
+          </div>
+        </section>
+      )}
+
+      {p.emplacements && Object.keys(p.emplacements).length > 0 && (
+        <section>
+          <h2 className="text-xs uppercase tracking-wide text-parchemin/50 border-b border-white/10 pb-1 mb-2">
+            Emplacements de sort
+          </h2>
+          <div className="flex flex-wrap gap-2">
+            {Object.keys(p.emplacements)
+              .map(Number)
+              .sort((a, b) => a - b)
+              .map((n) => {
+                const e = p.emplacements?.[String(n)];
+                if (!e) return null;
+                const epuise = e.restants <= 0;
+                return (
+                  <span
+                    key={n}
+                    className={`rounded px-2 py-0.5 ${
+                      epuise ? "bg-sang/30 text-red-300" : "bg-white/5"
+                    }`}
+                  >
+                    {n}
+                    <sup>e</sup> niv. {e.restants}/{e.max}
+                  </span>
+                );
+              })}
+            <span className="rounded px-2 py-0.5 bg-white/5 text-parchemin/60">
+              Tours de magie : ∞
+            </span>
           </div>
         </section>
       )}

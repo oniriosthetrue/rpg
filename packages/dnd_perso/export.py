@@ -85,6 +85,15 @@ def en_markdown(p: models.Personnage) -> str:
             lignes.append(f"- {s}")
     else:
         lignes.append("- Aucun sort connu")
+    emplacements = p.emplacements
+    if emplacements:
+        lignes += ["", "## Emplacements de sort", ""]
+        for niveau_sort in sorted(emplacements):
+            e = emplacements[niveau_sort]
+            lignes.append(
+                f"- {niveau_sort}e niveau : {e['restants']}/{e['max']} restants"
+            )
+        lignes.append("- Tours de magie : illimités (aucun emplacement consommé)")
     lignes += ["", "## Équipement", ""]
     objets = list(p.equipement.objets)
     if p.babiole:
